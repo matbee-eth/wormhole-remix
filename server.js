@@ -11,20 +11,24 @@ var wormhole = function (io) {
 	var self = this;
 	io.sockets.on('connection', function (socket) {
 		var travel = new traveller(socket);
+		self.syncData(travel);
 		socket.set('wormhole', travel);
-		socket.emit('sync', self.syncData());
+		socket.emit('sync', travel.syncData());
 	});
 	this._methods = {};
-	this._asyncMethods = {};
 	this._clientMethods = {};
-	this._asyncClientMethods = {};
 	this.rpc = {};
 
 	this.sync = function() {
 		io.sockets.emit('sync', self.syncData());
 	};
-	this.syncData = function () {
-		return { async: { serverRPC: Object.keys(this._asyncMethods), clientRPC: this._asyncClientMethods }, serverRPC: Object.keys(this._methods), clientRPC: this._clientMethods };
+	this.syncData = function (traveller) {
+		for (var k in self._clientMethods) {
+			traveller.addClientRpc(k, self._clientMethods[k]);
+		}
+		for (var j in self.methods) {
+			traveller.addRpc(j, self._methods[j]);
+		}
 	};
 	this.transmitAllFrequencies = function (message) {
 		this.io.sockets.emit(message);
@@ -33,33 +37,14 @@ var wormhole = function (io) {
 		this.io.sockets.in(channel).emit(message);
 	};
 	this.methods = function (methods) {
+		var self = this;
 		for (var k in methods) {
-			if (k === "async") {
-				for (var j in methods[k]) {
-					var key = Object.keys(methods[k][j])[0];
-					this._asyncMethods[key] = methods[k][j][key];
-				}
-			} else {
-				this._methods[k] = methods[k];
-			}
+			this._methods[k] = methods[k];
 		}
 	};
 	this.clientMethods = function(methods) {
 		for (var k in methods) {
-			if (k === "async") {
-				for (var j in methods[k]) {
-					var key = Object.keys(methods[k][j])[0];
-					this._asyncClientMethods[key] = methods[k][j][key].toString();
-				}
-			} else {
-				this._clientMethods[k] = methods[k].toString();
-			}
-		}
-	};
-	this.Execute = function (method, parameters, callbackId) {
-		var executeMethod = new methodClass(callbackId);
-		if (self._methods[method]) {
-			self._methods[method].call(executeMethod, parameters, callbackId);
+			this._clientMethods[k] = methods[k];
 		}
 	};
 };
@@ -69,29 +54,15 @@ wormhole.packageFunction = function (func, args) {
   return ret;
 };
 
-var probe = function (callbackId) {
-	this.callbackId = callbackId;
-	this.used = false;
-};
-
-probe.prototype.return = function() {
-	// this is the one-off RPC response.
-	var args = [].slice.call(arguments);
-	if (!this.used) {
-		this.used = true;
-		// send off RPC : args
-	}
-};
-
-probe.prototype.Execute = function () {
-
-};
-
 var traveller = function (socket) {
 	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
 	this.uuidList = {};
+	this._methods = {};
+	this._clientMethods = {};
+	this.rpc = {};
+
 	var self = this;
 	socket.on("rpcResponse", function (uuid) {
 		// The arguments to send to the callback function.
@@ -105,26 +76,50 @@ var traveller = function (socket) {
 			func.apply(self, params);
 		}
 	});
-	this.execute = function (func) {
-		var functionToExecute = this.clientMethods[func];
-		var expectedParamsLength = functionToExecute.length;
-		var params = [].slice.call(arguments).slice(1);
-		var hasCallback = false;
-		var out = {};
-		if (params.length > expectedParamsLength && typeof params[params.length-1] === "function") {
-			// then we assume it's a mofuckin' callback!
-			// register UUID for callback
-			var callbackFunction = params[params.length-1];
-			this.uuidList[__randomString()] = callbackFunction;
-			// remove function from params list.
-			params.splice(params.length-1,1);
-			hasCallback = true;
-			out.callbackId = "1234";
+	var RpcExecute = function (methodName, async) {
+		return function () {
+			var args = [].slice.call(arguments);
+			var callback = null;
+			if (typeof(args[args.length-1]) == "function") {
+				// do something
+				callback = args.splice(args.length-1, 1)[0];
+			}
+			self.executeRPC(methodName, async, args, callback);
+		};
+	};
+	this.addRpc = function (methodName, functino) {
+		this._methods[methodName] = functino;
+	};
+	this.addClientRpc = function (methodName, functino) {
+		this._clientMethods[methodName] = functino.toString();
+		this.rpc[methodName] = RpcExecute(methodName, true);
+		this.rpc[methodName].sync = RpcExecute(methodName, false);
+	};
+	this.methods = function (methods) {
+		var self = this;
+		for (var k in methods) {
+			this._methods[k] = methods[k];
+			this.rpc[k] = RpcExecute(true);
+			this.rpc[k].sync = RpcExecute(false);
 		}
-		// Execute client-side RPC function with parameters.
-		out.function = func;
-		out.arguments = params;
-		this.socket.transmit("rpc", { "function": func, "arguments": params, hasCallback: hasCallback });
+	};
+	this.clientMethods = function(methods) {
+		for (var k in methods) {
+			this._clientMethods[k] = methods[k].toString();
+		}
+	};
+	this.executeRPC = function (functionName, isAsync, args, callback) {
+		var hasCallback = (typeof callback === "function");
+		var out = {
+			"function": functionName,
+			"async": isAsync && hasCallback,
+			"arguments": args
+		};
+		if (hasCallback) {
+			out.callbackId = __randomString();
+			self.uuidList[out.callbackId] = callback;
+		}
+		this.socket.emit("rpc", out);
 	};
 	this.destination = function (channel) {
 		this.socket.join(channel);
@@ -155,6 +150,9 @@ var traveller = function (socket) {
 	this.test = function () {
 
 	};
+	this.syncData = function () {
+		return { serverRPC: Object.keys(self._methods), clientRPC: self._clientMethods };
+	};
 };
 
 traveller.encryptFunction = function (funcString) {
@@ -184,4 +182,28 @@ __randomString = function() {
 		randomstring += chars.substring(rnum,rnum+1);
 	}
 	return randomstring;
+};
+
+
+
+
+
+
+
+var probe = function (callbackId) {
+	this.callbackId = callbackId;
+	this.used = false;
+};
+
+probe.prototype.return = function() {
+	// this is the one-off RPC response.
+	var args = [].slice.call(arguments);
+	if (!this.used) {
+		this.used = true;
+		// send off RPC : args
+	}
+};
+
+probe.prototype.Execute = function () {
+
 };
