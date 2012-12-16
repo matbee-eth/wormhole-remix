@@ -3,9 +3,10 @@ var util = require('util')
   , uglify = require('uglify-js')
   , jsp = uglify.parser
   , pro = uglify.uglify
+  , fs = require('fs')
   , jsdom = require('jsdom');
 
-var wormhole = function (io) {
+var wormhole = function (io, express) {
 	this.io = io;
 	events.EventEmitter.call(this);
 	var self = this;
@@ -26,7 +27,7 @@ var wormhole = function (io) {
 		for (var k in self._clientMethods) {
 			traveller.addClientRpc(k, self._clientMethods[k]);
 		}
-		for (var j in self.methods) {
+		for (var j in self._methods) {
 			traveller.addRpc(j, self._methods[j]);
 		}
 	};
@@ -47,6 +48,20 @@ var wormhole = function (io) {
 			this._clientMethods[k] = methods[k];
 		}
 	};
+
+	if (express) {
+		express.get('/wormhole/client.js', function (req, res) {
+			res.setHeader("Content-Type", "application/javascript");
+			fs.readFile(__dirname + '/client.js', function (err, data) {
+				if (!err) {
+					data = data.toString().replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
+					res.end(data);
+				} else {
+					res.end();
+				}
+			});
+		});
+	}
 };
 
 wormhole.packageFunction = function (func, args) {
@@ -76,7 +91,7 @@ var traveller = function (socket) {
 			func.apply(self, params);
 		}
 	});
-	var RpcExecute = function (methodName, async) {
+	var generateRPCFunction = function (methodName, async) {
 		return function () {
 			var args = [].slice.call(arguments);
 			var callback = null;
@@ -88,19 +103,20 @@ var traveller = function (socket) {
 		};
 	};
 	this.addRpc = function (methodName, functino) {
+		console.log(this._methods, methodName, functino);
 		this._methods[methodName] = functino;
 	};
 	this.addClientRpc = function (methodName, functino) {
 		this._clientMethods[methodName] = functino.toString();
-		this.rpc[methodName] = RpcExecute(methodName, true);
-		this.rpc[methodName].sync = RpcExecute(methodName, false);
+		this.rpc[methodName] = generateRPCFunction(methodName, true);
+		this.rpc[methodName].sync = generateRPCFunction(methodName, false);
 	};
 	this.methods = function (methods) {
 		var self = this;
 		for (var k in methods) {
 			this._methods[k] = methods[k];
-			this.rpc[k] = RpcExecute(true);
-			this.rpc[k].sync = RpcExecute(false);
+			this.rpc[k] = generateRPCFunction(true);
+			this.rpc[k].sync = generateRPCFunction(false);
 		}
 	};
 	this.clientMethods = function(methods) {
@@ -144,13 +160,14 @@ var traveller = function (socket) {
 	this.fire = function (func) {
 		this.transmit({rpc: func, args: [].slice.call(arguments).slice(1)});
 	};
-	this.engageCloak = function () {
-		this.cloakEngaged = true;
+	this.engageCloak = function (engaged) {
+		this.cloakEngaged = engaged;
 	};
 	this.test = function () {
 
 	};
 	this.syncData = function () {
+		console.log("syncData", this._methods, Object.keys(this._methods));
 		return { serverRPC: Object.keys(self._methods), clientRPC: self._clientMethods };
 	};
 };
