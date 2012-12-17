@@ -7,9 +7,24 @@ var wormhole = function (socket) {
 	socket.on("sync", function (data) {
 		self.sync(data);
 	});
+	socket.on("rpc", function (data) {
+		self.executeRpc(data.function, data.async, data.arguments, data.callbackId);
+	});
 };
-wormhole.prototype.executeRpc = function(methodName) {
-	
+wormhole.prototype.executeRpc = function(methodName, isAsync, args, callbackId) {
+	var self = this;
+	if (isAsync && callbackId) {
+		var argsWithCallback = args.slice(0);
+		argsWithCallback.push(function () {
+			self.callbackRpc(callbackId);
+		});
+		this.clientFunctions[methodName].apply(null, argsWithCallback);
+	} else if (callbackId) {
+		var returnValue = this.clientFunctions[methodName].apply(null, args);
+		self.callbackRpc(callbackId, returnValue);
+	} else {
+		this.clientFunctions[methodName].apply(null, args);
+	}
 };
 wormhole.prototype.syncClientRpc = function (data) {
 	for (var k in data) {
@@ -54,8 +69,11 @@ wormhole.prototype.executeRPC = function (functionName, isAsync, args, callback)
 	}
 	this.socket.emit("rpc", out);
 };
+wormhole.prototype.callbackRpc = function(callbackId) {
+	this.socket.emit("rpcResponse", {callbackId: callbackId, args: [].slice.call(arguments).slice(1)});
+};
 wormhole.prototype.executeRPC = function () {
-
+	
 };
 wormhole.prototype.executeServerFunction = function(first_argument) {
 	// body...

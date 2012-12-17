@@ -79,7 +79,8 @@ var traveller = function (socket) {
 	this.rpc = {};
 
 	var self = this;
-	socket.on("rpcResponse", function (uuid) {
+	socket.on("rpcResponse", function (data) {
+		var uuid = data.uuid;
 		// The arguments to send to the callback function.
 		var params = [].slice.call(arguments).slice(1);
 		// Get function to call from uuidList.
@@ -167,7 +168,6 @@ var traveller = function (socket) {
 
 	};
 	this.syncData = function () {
-		console.log("syncData", this._methods, Object.keys(this._methods));
 		return { serverRPC: Object.keys(self._methods), clientRPC: self._clientMethods };
 	};
 };
