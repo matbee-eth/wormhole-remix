@@ -82,7 +82,7 @@ var traveller = function (socket) {
 	socket.on("rpcResponse", function (data) {
 		var uuid = data.uuid;
 		// The arguments to send to the callback function.
-		var params = [].slice.call(arguments).slice(1);
+		var params = [].slice.call(data.args);
 		// Get function to call from uuidList.
 		var func = self.uuidList[uuid];
 		if (func && typeof func === "function") {
@@ -92,6 +92,9 @@ var traveller = function (socket) {
 			func.apply(self, params);
 		}
 	});
+	socket.on("rpc", function (data) {
+		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+	});
 	var generateRPCFunction = function (methodName, async) {
 		return function () {
 			var args = [].slice.call(arguments);
@@ -100,8 +103,25 @@ var traveller = function (socket) {
 				// do something
 				callback = args.splice(args.length-1, 1)[0];
 			}
-			self.executeRPC(methodName, async, args, callback);
+			self.executeClientRpc(methodName, async, args, callback);
 		};
+	};
+	this.executeRpc = function (methodName, isAsync, args, uuid) {
+		if (isAsync && uuid) {
+			var argsWithCallback = args.slice(0);
+			argsWithCallback.push(function () {
+				self.callbackRpc(uuid, [].slice.call(arguments));
+			});
+			this._methods[methodName].apply(null, argsWithCallback);
+		} else if (uuid) {
+			var returnValue = this._methods[methodName].apply(null, args);
+			self.callbackRpc(uuid, returnValue);
+		} else {
+			this._methods[methodName].apply(null, args);
+		}
+	};
+	this.callbackRpc = function(uuid, args) {
+		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
 	};
 	this.addRpc = function (methodName, functino) {
 		console.log(this._methods, methodName, functino);
@@ -125,7 +145,7 @@ var traveller = function (socket) {
 			this._clientMethods[k] = methods[k].toString();
 		}
 	};
-	this.executeRPC = function (functionName, isAsync, args, callback) {
+	this.executeClientRpc = function (functionName, isAsync, args, callback) {
 		var hasCallback = (typeof callback === "function");
 		var out = {
 			"function": functionName,
@@ -133,8 +153,8 @@ var traveller = function (socket) {
 			"arguments": args
 		};
 		if (hasCallback) {
-			out.callbackId = __randomString();
-			self.uuidList[out.callbackId] = callback;
+			out.uuid = __randomString();
+			self.uuidList[out.uuid] = callback;
 		}
 		this.socket.emit("rpc", out);
 	};
@@ -207,8 +227,8 @@ __randomString = function() {
 
 
 
-var probe = function (callbackId) {
-	this.callbackId = callbackId;
+var probe = function (uuid) {
+	this.uuid = uuid;
 	this.used = false;
 };
 
