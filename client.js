@@ -114,7 +114,3 @@ var __randomString = function() {
 	}
 	return randomstring;
 };
-
-// wh.rpc.hello("sayyyywhaaaat?", function (response) {
-// 	alert(response);
-// });

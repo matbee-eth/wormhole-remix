@@ -112,12 +112,12 @@ var traveller = function (socket) {
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
-			this._methods[methodName].apply(null, argsWithCallback);
+			this._methods[methodName].apply(self, argsWithCallback);
 		} else if (uuid) {
-			var returnValue = this._methods[methodName].apply(null, args);
+			var returnValue = this._methods[methodName].apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
-			this._methods[methodName].apply(null, args);
+			this._methods[methodName].apply(self, args);
 		}
 	};
 	this.callbackRpc = function(uuid, args) {
