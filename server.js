@@ -37,6 +37,9 @@ var wormhole = function (io, express) {
 	this.transmit = function (channel, message) {
 		this.io.sockets.in(channel).emit(message);
 	};
+	this.engage = function (cb) {
+		this.wormholeConnectCallback = cb;
+	};
 	this.methods = function (methods) {
 		var self = this;
 		for (var k in methods) {
@@ -60,6 +63,41 @@ var wormhole = function (io, express) {
 					res.end();
 				}
 			});
+		});
+		express.get('/wormhole.connect.js', function (req, res) {
+			res.setHeader("Content-Type", "application/javascript");
+			if (self.wormholeConnectCallback) {
+				self.wormholeConnectCallback(req, res, function (func) {
+					return {
+						using: function () {
+							var args = [].slice.call(arguments);
+							self.wormholeConnectCallbackArguments = args;
+							console.log("SET: self.wormholeConnectCallbackArguments", args);
+							args = JSON.stringify(args);
+							args = args.substring(1);
+							args = args.substring(0, args.length-1);
+							func = "(" + func.toString() + "(" + args +"))";
+							fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+								if (!err) {
+									data = data.toString().replace('"REPLACETHISSTRINGOKAY?"', func || function () {}.toString());
+									res.end(data);
+								} else {
+									res.end();
+								}
+							});
+						}
+					};
+				});
+			} else {
+				fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+					if (!err) {
+						data = data.toString().replace('"REPLACETHISSTRINGOKAY?"', function () {}.toString());
+						res.end(data);
+					} else {
+						res.end();
+					}
+				});
+			}
 		});
 	}
 };
