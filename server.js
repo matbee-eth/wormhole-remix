@@ -64,7 +64,7 @@ var wormhole = function (io, express) {
 				}
 			});
 		});
-		express.get('/wormhole.connect.js', function (req, res) {
+		express.get('/wormhole/wormhole.connect.js', function (req, res) {
 			res.setHeader("Content-Type", "application/javascript");
 			if (self.wormholeConnectCallback) {
 				self.wormholeConnectCallback(req, res, function (func) {
@@ -79,7 +79,8 @@ var wormhole = function (io, express) {
 							func = "(" + func.toString() + "(" + args +"))";
 							fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 								if (!err) {
-									data = data.toString().replace('"REPLACETHISSTRINGOKAY?"', func || function () {}.toString());
+									data = data.toString().replace(/REPLACETHISSTRINGOKAY/g, func || function () {}.toString());
+									data = data.toString().replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
 									res.end(data);
 								} else {
 									res.end();
@@ -91,7 +92,7 @@ var wormhole = function (io, express) {
 			} else {
 				fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 					if (!err) {
-						data = data.toString().replace('"REPLACETHISSTRINGOKAY?"', function () {}.toString());
+						data = data.toString().replace('REPLACETHISSTRINGOKAY', function () {}.toString());
 						res.end(data);
 					} else {
 						res.end();
@@ -132,6 +133,13 @@ var traveller = function (socket) {
 	});
 	socket.on("rpc", function (data) {
 		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+	});
+	socket.on("syncRpcFunctions", function (functinos) {
+		var ff = function (){};
+		for (var i = 0; i < functinos.length; i++) {
+			var methodName = functinos[i];
+			self.addClientRpc(methodName, ff);
+		}
 	});
 	var generateRPCFunction = function (methodName, async) {
 		return function () {

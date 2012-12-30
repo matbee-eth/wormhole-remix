@@ -1,7 +1,18 @@
 (function() {
-	var socket = io.connect('http://wormhole.groupnotes.ca:3000');
+	var socket;
+	if (io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER']) {
+		socket = io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER'];
+		socket.connect();
+	} else {
+		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER', {
+			'reconnect': true,
+			'reconnection delay': 500,
+			'max reconnection attempts': 2,
+			'try multiple transports': false
+		});
+	}
 	var wh = new wormhole(socket);
 	wh.ready(function () {
-		"REPLACETHISSTRINGOKAY?";
+		REPLACETHISSTRINGOKAY;
 	});
 }());

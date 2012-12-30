@@ -6,6 +6,11 @@ var wormhole = function (socket) {
 	this.rpc = {};
 	this.callback = function () {};
 	var self = this;
+	this.setupSocket(socket);
+};
+wormhole.prototype.setupSocket = function(socket) {
+	var self = this;
+	var disconnectTimer;
 	socket.on("sync", function (data) {
 		self.sync(data);
 		self.ready();
@@ -26,6 +31,29 @@ var wormhole = function (socket) {
 			func.apply(self, params);
 		}
 	});
+	var socketTimeout;
+	socket.on('connect', function () {
+		console.log("Connected to server before retrying new server.");
+		if (socketTimeout)
+			clearTimeout(socketTimeout);
+	});
+	socket.on('disconnect', function () {
+		socketTimeout = setTimeout(function () {
+			var script = document.createElement("script");
+			script.src="//dashboard.groupnotes.ca:3002/wormhole.connect.js";
+			document.body.appendChild(script);
+		}, 10000);
+		console.log("Disconnected. Waiting to retry new server.");
+	});
+	socket.on('connect_failed', function () {
+		console.log("client failed to connect, retrying new server.");
+	});
+	socket.on('reconnect_failed', function () {
+		console.log("client failed to connect, retrying new server.");
+	});
+};
+wormhole.prototype.setSocket = function(socket) {
+	this.socket = socket;
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	var self = this;
@@ -88,7 +116,14 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 wormhole.prototype.callbackRpc = function(uuid) {
 	this.socket.emit("rpcResponse", {uuid: uuid, args: [].slice.call(arguments).slice(1)});
 };
-
+wormhole.prototype.methods = function(methods) {
+	var outMethods = [];
+	for (var k in methods) {
+		this.clientFunctions[k] = methods[k];
+		outMethods.push(k);
+	}
+	this.socket.emit("syncRpcFunctions", outMethods);
+};
 wormhole.prototype.execute = function(func) {
 	var args = [].slice.call(arguments).slice(1);
 	var f = eval("("+func+")");
@@ -114,3 +149,12 @@ var __randomString = function() {
 	}
 	return randomstring;
 };
+
+/*
+	---
+ */
+
+wh.methods({
+	updateNoteColor: noteController.updateNoteColor,
+	updateNoteContent: noteController.updateNoteContent
+});
