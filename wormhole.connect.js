@@ -15,4 +15,5 @@
 	wh.ready(function () {
 		REPLACETHISSTRINGOKAY;
 	});
+	window.wh = wh;
 }());
