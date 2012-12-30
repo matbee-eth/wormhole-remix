@@ -154,7 +154,7 @@ var __randomString = function() {
 	---
  */
 
-wh.methods({
-	updateNoteColor: noteController.updateNoteColor,
-	updateNoteContent: noteController.updateNoteContent
-});
+// wh.methods({
+// 	updateNoteColor: noteController.updateNoteColor,
+// 	updateNoteContent: noteController.updateNoteContent
+// });
