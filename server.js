@@ -11,7 +11,7 @@ var wormhole = function (io, express) {
 	events.EventEmitter.call(this);
 	var self = this;
 	io.sockets.on('connection', function (socket) {
-		var travel = new traveller(socket);
+		var travel = new traveller(socket, io);
 		self.syncData(travel);
 		socket.set('wormhole', travel);
 		socket.emit('sync', travel.syncData());
@@ -19,6 +19,7 @@ var wormhole = function (io, express) {
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
+	this.groupRpc = {};
 
 	this.sync = function() {
 		io.sockets.emit('sync', self.syncData());
@@ -108,7 +109,7 @@ wormhole.packageFunction = function (func, args) {
   return ret;
 };
 
-var traveller = function (socket) {
+var traveller = function (socket, io) {
 	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
@@ -116,6 +117,9 @@ var traveller = function (socket) {
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
+	this.groupRpc = {};
+	this.othersRpc = {};
+	this.io = io;
 
 	var self = this;
 	socket.on("rpcResponse", function (data) {
@@ -152,6 +156,23 @@ var traveller = function (socket) {
 			self.executeClientRpc(methodName, async, args, callback);
 		};
 	};
+	this.groupExecuteRpc = function (methodName) {
+		var args = [].slice.call(arguments).slice(1);
+		this.socket.get("channel", function (err, channel) {
+			var sockets = io.sockets.clients(channel);
+			var doit = function (err, wormhole) {
+				wormhole.rpc[methodName].apply(null, arguments);
+			};
+			for (var i in sockets) {
+				var socket = sockets[i];
+				socket.get("wormhole", doit);
+			}
+		});
+	};
+	this.setChannel = function (channel) {
+		this.socket.set("channel", channel);
+		this.socket.join(channel);
+	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
 		if (isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
@@ -173,10 +194,32 @@ var traveller = function (socket) {
 		console.log(this._methods, methodName, functino);
 		this._methods[methodName] = functino;
 	};
+	var generateGroupRpc = function (methodName, skipSelf) {
+		return function () {
+			var args = [].slice.call(arguments);
+			self.socket.get("channel", function (err, channel) {
+				var sockets = io.sockets.clients(channel);
+				var doit = function (err, wormhole) {
+					if (!err) {
+						wormhole.rpc[methodName].apply(null, args);
+					} else {
+						// ERRRRORRRR
+					}
+				};
+				for (var i in sockets) {
+					var socket = sockets[i];
+					if ((skipSelf && socket !== self.socket) || !skipSelf)
+						socket.get("wormhole", doit);
+				}
+			});
+		};
+	};
 	this.addClientRpc = function (methodName, functino) {
 		this._clientMethods[methodName] = functino.toString();
 		this.rpc[methodName] = generateRPCFunction(methodName, true);
 		this.rpc[methodName].sync = generateRPCFunction(methodName, false);
+		this.groupRpc[methodName] = generateGroupRpc(methodName, false);
+		this.othersRpc[methodName] = generateGroupRpc(methodName, true);
 	};
 	this.methods = function (methods) {
 		var self = this;
