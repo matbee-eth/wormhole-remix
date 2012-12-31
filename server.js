@@ -173,6 +173,9 @@ var traveller = function (socket, io) {
 		this.socket.set("channel", channel);
 		this.socket.join(channel);
 	};
+	this.getChannel = function (cb) {
+		this.socket.get("channel", cb);
+	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
 		if (isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
