@@ -40,7 +40,7 @@ wormhole.prototype.setupSocket = function(socket) {
 	socket.on('disconnect', function () {
 		socketTimeout = setTimeout(function () {
 			var script = document.createElement("script");
-			script.src="//dashboard.groupnotes.ca:3002/wormhole.connect.js";
+			script.src="/wormhole.connect.js";
 			document.body.appendChild(script);
 		}, 10000);
 		console.log("Disconnected. Waiting to retry new server.");
