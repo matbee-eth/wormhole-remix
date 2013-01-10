@@ -57,17 +57,19 @@ wormhole.prototype.setSocket = function(socket) {
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	var self = this;
-	if (isAsync && uuid) {
-		var argsWithCallback = args.slice(0);
-		argsWithCallback.push(function () {
-			self.callbackRpc(uuid, [].slice.call(arguments));
-		});
-		this.clientFunctions[methodName].apply(null, argsWithCallback);
-	} else if (uuid) {
-		var returnValue = this.clientFunctions[methodName].apply(null, args);
-		self.callbackRpc(uuid, returnValue);
-	} else {
-		this.clientFunctions[methodName].apply(null, args);
+	if (this.clientFunctions[methodName]) {
+		if (isAsync && uuid) {
+			var argsWithCallback = args.slice(0);
+			argsWithCallback.push(function () {
+				self.callbackRpc(uuid, [].slice.call(arguments));
+			});
+			this.clientFunctions[methodName].apply(null, argsWithCallback);
+		} else if (uuid) {
+			var returnValue = this.clientFunctions[methodName].apply(null, args);
+			self.callbackRpc(uuid, returnValue);
+		} else {
+			this.clientFunctions[methodName].apply(null, args);
+		}
 	}
 };
 wormhole.prototype.syncClientRpc = function (data) {

@@ -161,7 +161,8 @@ var traveller = function (socket, io) {
 		this.socket.get("channel", function (err, channel) {
 			var sockets = io.sockets.clients(channel);
 			var doit = function (err, wormhole) {
-				wormhole.rpc[methodName].apply(null, arguments);
+				if (wormhole.rpc[methodName])
+					wormhole.rpc[methodName].apply(null, arguments);
 			};
 			for (var i in sockets) {
 				var socket = sockets[i];
@@ -177,17 +178,19 @@ var traveller = function (socket, io) {
 		this.socket.get("channel", cb);
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
-		if (isAsync && uuid) {
-			var argsWithCallback = args.slice(0);
-			argsWithCallback.push(function () {
-				self.callbackRpc(uuid, [].slice.call(arguments));
-			});
-			this._methods[methodName].apply(self, argsWithCallback);
-		} else if (uuid) {
-			var returnValue = this._methods[methodName].apply(self, args);
-			self.callbackRpc(uuid, returnValue);
-		} else {
-			this._methods[methodName].apply(self, args);
+		if (this._methods[methodName]) {
+			if (isAsync && uuid) {
+				var argsWithCallback = args.slice(0);
+				argsWithCallback.push(function () {
+					self.callbackRpc(uuid, [].slice.call(arguments));
+				});
+				this._methods[methodName].apply(self, argsWithCallback);
+			} else if (uuid) {
+				var returnValue = this._methods[methodName].apply(self, args);
+				self.callbackRpc(uuid, returnValue);
+			} else {
+				this._methods[methodName].apply(self, args);
+			}
 		}
 	};
 	this.callbackRpc = function(uuid, args) {
@@ -203,8 +206,8 @@ var traveller = function (socket, io) {
 			self.socket.get("channel", function (err, channel) {
 				var sockets = io.sockets.clients(channel);
 				var doit = function (err, wormhole) {
-					if (!err) {
-						wormhole.rpc[methodName].apply(null, args);
+					if (!err && wormhole.rpc[methodName]) {
+							wormhole.rpc[methodName].apply(null, args);
 					} else {
 						// ERRRRORRRR
 					}
