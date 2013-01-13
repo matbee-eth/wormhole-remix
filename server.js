@@ -17,8 +17,7 @@ var wormhole = function (io, express) {
 		socket.emit('sync', travel.syncData());
 		return travel;
 	};
-	io.sockets.on('connection', setupSocket);
-
+	// io.sockets.on('connection', setupSocket);
 
 	this._methods = {};
 	this._clientMethods = {};
@@ -27,14 +26,21 @@ var wormhole = function (io, express) {
 	this._channels = [];
 
 	this.channels = function (channelArray) {
-		for (var i in channelArray) {
-			if (channelArray.hasOwnProperty(channelArray[i])) {
-				this._channels.push(channelArray[i]);
-				io.of(channelArray[i]).on('connection', function (socket) {
-					var wh = setupSocket(socket);
-					wh.setChannel(channelArray[i]);
-				});
-			}
+		for (var i = 0; i < channelArray.length; i++) {
+			var channel = channelArray[i];
+			this._channels.push(channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			console.log("channel", channel);
+			io.of(channel).on('connection', function (socket) {
+				var wh = setupSocket(socket);
+				wh.setChannel(channel);
+			});
 		}
 	};
 

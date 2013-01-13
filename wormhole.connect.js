@@ -4,7 +4,7 @@
 		socket = io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER'];
 		socket.connect();
 	} else {
-		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER', {
+		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/groupnotes', {
 			'reconnect': true,
 			'reconnection delay': 500,
 			'max reconnection attempts': 2,
