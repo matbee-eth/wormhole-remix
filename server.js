@@ -10,8 +10,6 @@ var wormhole = function (io, express) {
 	this.io = io;
 	events.EventEmitter.call(this);
 	var self = this;
-	io.sockets.on('connection', setupSocket);
-
 	var setupSocket = function (socket) {
 		var travel = new traveller(socket, io);
 		self.syncData(travel);
@@ -19,6 +17,8 @@ var wormhole = function (io, express) {
 		socket.emit('sync', travel.syncData());
 		return travel;
 	};
+	io.sockets.on('connection', setupSocket);
+
 
 	this._methods = {};
 	this._clientMethods = {};
