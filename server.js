@@ -10,16 +10,33 @@ var wormhole = function (io, express) {
 	this.io = io;
 	events.EventEmitter.call(this);
 	var self = this;
-	io.sockets.on('connection', function (socket) {
+	io.sockets.on('connection', setupSocket);
+
+	var setupSocket = function (socket) {
 		var travel = new traveller(socket, io);
 		self.syncData(travel);
 		socket.set('wormhole', travel);
 		socket.emit('sync', travel.syncData());
-	});
+		return travel;
+	};
+
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
 	this.groupRpc = {};
+	this._channels = [];
+
+	this.channels = function (channelArray) {
+		for (var i in channelArray) {
+			if (channelArray.hasOwnProperty(channelArray[i])) {
+				this._channels.push(channelArray[i]);
+				io.of(channelArray[i]).on('connection', function (socket) {
+					var wh = setupSocket(socket);
+					wh.setChannel(channelArray[i]);
+				});
+			}
+		}
+	};
 
 	this.sync = function() {
 		io.sockets.emit('sync', self.syncData());
@@ -170,12 +187,26 @@ var traveller = function (socket, io) {
 			}
 		});
 	};
+	this.isInChannel = function (channel, cb) {
+		if (!cb) {
+			return this.currentChannel == channel;
+		} else {
+			this.socket.get("channel", function (chan) {
+				cb(channel == chan);
+			});
+		}
+	};
 	this.setChannel = function (channel) {
 		this.socket.set("channel", channel);
 		this.socket.join(channel);
+		this.currentChannel = channel;
 	};
 	this.getChannel = function (cb) {
-		this.socket.get("channel", cb);
+		if (cb) {
+			this.socket.get("channel", cb);
+		} else {
+			return this.currentChannel;
+		}
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
 		if (this._methods[methodName]) {

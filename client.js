@@ -8,6 +8,9 @@ var wormhole = function (socket) {
 	var self = this;
 	this.setupSocket(socket);
 };
+wormhole.prototype.getSocket = function () {
+	return this.socket;
+};
 wormhole.prototype.setupSocket = function(socket) {
 	var self = this;
 	var disconnectTimer;
@@ -40,7 +43,7 @@ wormhole.prototype.setupSocket = function(socket) {
 	socket.on('disconnect', function () {
 		socketTimeout = setTimeout(function () {
 			var script = document.createElement("script");
-			script.src="/wormhole.connect.js";
+			script.src="//api.groupnotes.ca:3002/deepnote.js";
 			document.body.appendChild(script);
 		}, 10000);
 		console.log("Disconnected. Waiting to retry new server.");
