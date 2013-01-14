@@ -10,10 +10,10 @@ var wormhole = function (io, express) {
 	this.io = io;
 	events.EventEmitter.call(this);
 	var self = this;
-	var setupSocket = function (socket) {
+	var setupSocket = function (socket, namespace) {
 		var travel = new traveller(socket, io);
 		self.syncData(travel);
-		socket.set('wormhole', travel);
+		socket.set('wormhole'+namespace, travel);
 		socket.emit('sync', travel.syncData());
 		return travel;
 	};
@@ -26,8 +26,9 @@ var wormhole = function (io, express) {
 
 	var setupSocketIOForNamespace = function (namespace) {
 		io.of(namespace).on('connection', function (socket) {
-			var wh = setupSocket(socket);
+			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
+			console.log("connection", namespace, wh.getNamespace(), wh.getChannel(), socket.id);
 		});
 	};
 
@@ -184,7 +185,7 @@ var traveller = function (socket, io) {
 			};
 			for (var i in sockets) {
 				var socket = sockets[i];
-				socket.get("wormhole", doit);
+				socket.get("wormhole" + this.getNamespace(), doit);
 			}
 		});
 	};
@@ -215,6 +216,9 @@ var traveller = function (socket, io) {
 	};
 	this.getNamespace = function () {
 		return this.currentNamespace;
+	};
+	this.isInNamespace = function (namespace) {
+		return this.currentNamespace == namespace;
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
 		if (this._methods[methodName]) {
@@ -254,7 +258,7 @@ var traveller = function (socket, io) {
 				for (var i in sockets) {
 					var socket = sockets[i];
 					if ((skipSelf && socket !== self.socket) || !skipSelf)
-						socket.get("wormhole", doit);
+						socket.get("wormhole" + this.getNamespace(), doit);
 				}
 			});
 		};
