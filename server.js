@@ -17,30 +17,25 @@ var wormhole = function (io, express) {
 		socket.emit('sync', travel.syncData());
 		return travel;
 	};
-	// io.sockets.on('connection', setupSocket);
 
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
 	this.groupRpc = {};
-	this._channels = [];
+	this._namespaces = [];
 
-	this.channels = function (channelArray) {
-		for (var i = 0; i < channelArray.length; i++) {
-			var channel = channelArray[i];
-			this._channels.push(channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			console.log("channel", channel);
-			io.of(channel).on('connection', function (socket) {
-				var wh = setupSocket(socket);
-				wh.setChannel(channel);
-			});
+	var setupSocketIOForNamespace = function (namespace) {
+		io.of(namespace).on('connection', function (socket) {
+			var wh = setupSocket(socket);
+			wh.setNamespace(namespace);
+		});
+	};
+
+	this.namespaces = function (namespaceArray) {
+		for (var i = 0; i < namespaceArray.length; i++) {
+			var namespace = namespaceArray[i];
+			this._namespaces.push(namespace);
+			setupSocketIOForNamespace(namespace);
 		}
 	};
 
@@ -213,6 +208,13 @@ var traveller = function (socket, io) {
 		} else {
 			return this.currentChannel;
 		}
+	};
+	this.setNamespace = function (namespace) {
+		this.socket.set("namespace", namespace);
+		this.currentNamespace = namespace;
+	};
+	this.getNamespace = function () {
+		return this.currentNamespace;
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
 		if (this._methods[methodName]) {
