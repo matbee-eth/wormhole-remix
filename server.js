@@ -28,7 +28,7 @@ var wormhole = function (io, express) {
 		io.of(namespace).on('connection', function (socket) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
-			console.log("connection", namespace, wh.getNamespace(), wh.getChannel(), socket.id);
+			// console.log("connection", namespace, wh.getNamespace(), wh.getChannel(), socket.id);
 		});
 	};
 
@@ -92,7 +92,7 @@ var wormhole = function (io, express) {
 						using: function () {
 							var args = [].slice.call(arguments);
 							self.wormholeConnectCallbackArguments = args;
-							console.log("SET: self.wormholeConnectCallbackArguments", args);
+							// console.log("SET: self.wormholeConnectCallbackArguments", args);
 							args = JSON.stringify(args);
 							args = args.substring(1);
 							args = args.substring(0, args.length-1);
@@ -177,25 +177,24 @@ var traveller = function (socket, io) {
 	};
 	this.groupExecuteRpc = function (methodName) {
 		var args = [].slice.call(arguments).slice(1);
-		this.socket.get("channel", function (err, channel) {
-			var sockets = io.sockets.clients(channel);
-			var doit = function (err, wormhole) {
-				if (wormhole.rpc[methodName])
-					wormhole.rpc[methodName].apply(null, arguments);
-			};
-			for (var i in sockets) {
-				var socket = sockets[i];
-				socket.get("wormhole" + this.getNamespace(), doit);
-			}
-		});
+		var channel = this.currentChannel;
+		var sockets = io.sockets.clients(channel);
+		var doit = function (err, wormhole) {
+			if (wormhole.rpc[methodName])
+				wormhole.rpc[methodName].apply(null, arguments);
+		};
+		for (var i in sockets) {
+			var socket = sockets[i];
+			socket.get("wormhole" + this.getNamespace(), doit);
+		}
 	};
 	this.isInChannel = function (channel, cb) {
 		if (!cb) {
+			// console.log("this.isInChannel:", this.currentChannel, channel, this.currentChannel == channel);
 			return this.currentChannel == channel;
 		} else {
-			this.socket.get("channel", function (chan) {
-				cb(channel == chan);
-			});
+			var chan = this.currentChannel;
+			cb(channel == chan);
 		}
 	};
 	this.setChannel = function (channel) {
@@ -205,7 +204,7 @@ var traveller = function (socket, io) {
 	};
 	this.getChannel = function (cb) {
 		if (cb) {
-			this.socket.get("channel", cb);
+			cb(this.currentChannel);
 		} else {
 			return this.currentChannel;
 		}
@@ -218,6 +217,7 @@ var traveller = function (socket, io) {
 		return this.currentNamespace;
 	};
 	this.isInNamespace = function (namespace) {
+		// console.log("this.isInNamespace:", this.currentNamespace, namespace, this.currentNamespace == namespace);
 		return this.currentNamespace == namespace;
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
@@ -240,27 +240,26 @@ var traveller = function (socket, io) {
 		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
 	};
 	this.addRpc = function (methodName, functino) {
-		console.log(this._methods, methodName, functino);
+		// console.log(this._methods, methodName, functino);
 		this._methods[methodName] = functino;
 	};
 	var generateGroupRpc = function (methodName, skipSelf) {
 		return function () {
 			var args = [].slice.call(arguments);
-			self.socket.get("channel", function (err, channel) {
-				var sockets = io.sockets.clients(channel);
-				var doit = function (err, wormhole) {
-					if (!err && wormhole.rpc[methodName]) {
-							wormhole.rpc[methodName].apply(null, args);
-					} else {
-						// ERRRRORRRR
-					}
-				};
-				for (var i in sockets) {
-					var socket = sockets[i];
-					if ((skipSelf && socket !== self.socket) || !skipSelf)
-						socket.get("wormhole" + this.getNamespace(), doit);
+			var channel = self.currentChannel;
+			var sockets = io.of(self.currentNamespace).clients(channel);
+			var doit = function (err, wormhole) {
+				if (!err && wormhole.rpc[methodName]) {
+						wormhole.rpc[methodName].apply(null, args);
+				} else {
+					// ERRRRORRRR
 				}
-			});
+			};
+			for (var i in sockets) {
+				var socket = sockets[i];
+				if ((skipSelf && socket !== self.socket) || !skipSelf)
+					socket.get("wormhole" + self.getNamespace(), doit);
+			}
 		};
 	};
 	this.addClientRpc = function (methodName, functino) {
