@@ -71,7 +71,30 @@ var wormhole = function (io, express) {
 			this._clientMethods[k] = methods[k];
 		}
 	};
-
+	this.clientsInNamespaceChannel = function (namespace, channel) {
+		var sockets = this.io.of(namespace).clients(channel);
+		return {
+			rpc: function (rpcFunction) {
+				var args = [].slice.call(arguments);
+				args.splice(0,1);
+				console.log("ARGUMENTS: ", args);
+				var doit = function (err, wormhole) {
+					if (!err && wormhole.rpc[rpcFunction]) {
+							wormhole.rpc[rpcFunction].apply(null, args);
+					} else {
+						// ERRRRORRRR
+						console.log("NO RPC FUNCTION LOL");
+					}
+				};
+				for (var i in sockets) {
+					var socket = sockets[i];
+					if (socket !== self.socket)
+						socket.get("wormhole" + namespace, doit);
+				}
+			},
+			clients: sockets
+		};
+	};
 	if (express) {
 		express.get('/wormhole/client.js', function (req, res) {
 			res.setHeader("Content-Type", "application/javascript");
