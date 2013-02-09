@@ -79,7 +79,7 @@ var wormhole = function (io, express) {
 				args.splice(0,1);
 				console.log("ARGUMENTS: ", args);
 				var doit = function (err, wormhole) {
-					if (!err && wormhole.rpc[rpcFunction]) {
+					if (!err && wormhole && wormhole.rpc && wormhole.rpc[rpcFunction]) {
 							wormhole.rpc[rpcFunction].apply(null, args);
 					} else {
 						// ERRRRORRRR
