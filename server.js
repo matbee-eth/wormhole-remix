@@ -108,6 +108,14 @@ var wormhole = function (io, express) {
 			});
 		});
 		express.get('/wormhole/wormhole.connect.js', function (req, res) {
+			doIt(req, res, "groupnotes");
+		});
+
+		express.get('/wormhole/extension.connect.js', function (req, res) {
+			doIt(req, res, "extension");
+		});
+
+		var doIt = function (req, res, namespace) {
 			res.setHeader("Content-Type", "application/javascript");
 			if (self.wormholeConnectCallback) {
 				self.wormholeConnectCallback(req, res, function (func) {
@@ -123,6 +131,7 @@ var wormhole = function (io, express) {
 							fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 								if (!err) {
 									data = data.toString().replace(/REPLACETHISSTRINGOKAY/g, func || function () {}.toString());
+									data = data.toString().replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 									data = data.toString().replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
 									res.end(data);
 								} else {
@@ -142,7 +151,7 @@ var wormhole = function (io, express) {
 					}
 				});
 			}
-		});
+		}
 	}
 };
 

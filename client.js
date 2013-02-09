@@ -41,11 +41,11 @@ wormhole.prototype.setupSocket = function(socket) {
 			clearTimeout(socketTimeout);
 	});
 	socket.on('disconnect', function () {
-		socketTimeout = setTimeout(function () {
-			var script = document.createElement("script");
-			script.src="//api.groupnotes.ca:3002/deepnote.js";
-			document.body.appendChild(script);
-		}, 10000);
+		// socketTimeout = setTimeout(function () {
+		// 	var script = document.createElement("script");
+		// 	script.src="//api.groupnotes.ca:3002/deepnote.js";
+		// 	document.body.appendChild(script);
+		// }, 10000);
 		console.log("Disconnected. Waiting to retry new server.");
 	});
 	socket.on('connect_failed', function () {
