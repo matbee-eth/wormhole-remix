@@ -4,7 +4,8 @@ var util = require('util')
   , jsp = uglify.parser
   , pro = uglify.uglify
   , fs = require('fs')
-  , jsdom = require('jsdom');
+  , jsdom = require('jsdom')
+  , async = require('async');
 
 var wormhole = function (io, express) {
 	this.io = io;
@@ -71,8 +72,9 @@ var wormhole = function (io, express) {
 			this._clientMethods[k] = methods[k];
 		}
 	};
-	this.clientsInNamespaceChannel = function (namespace, channel) {
+	this.clientsInNamespaceChannel = function (namespace, channel, asArray, cb) {
 		var sockets = this.io.of(namespace).clients(channel);
+		if (!asArray)
 		return {
 			rpc: function (rpcFunction) {
 				var args = [].slice.call(arguments);
@@ -94,6 +96,9 @@ var wormhole = function (io, express) {
 			},
 			clients: sockets
 		};
+		else {
+			return sockets;
+		}
 	};
 	if (express) {
 		express.get('/wormhole/client.js', function (req, res) {
@@ -281,7 +286,7 @@ var traveller = function (socket, io) {
 			var channel = self.currentChannel;
 			var sockets = io.of(self.currentNamespace).clients(channel);
 			var doit = function (err, wormhole) {
-				if (!err && wormhole.rpc[methodName]) {
+				if (!err && wormhole && wormhole.rpc[methodName]) {
 						wormhole.rpc[methodName].apply(null, args);
 				} else {
 					// ERRRRORRRR
