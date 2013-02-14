@@ -6,9 +6,8 @@
 	} else {
 		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', {
 			'reconnect': true,
-			'reconnection delay': 500,
-			'max reconnection attempts': 2,
-			'try multiple transports': false
+			'reconnection delay': 1000,
+			'try multiple transports': true
 		});
 	}
 	var wh = new wormhole(socket);
