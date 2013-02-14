@@ -6,7 +6,8 @@
 	} else {
 		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', {
 			'reconnect': true,
-			'reconnection delay': 1000,
+			'reconnection delay': 500,
+			'max reconnection attempts': 5,
 			'try multiple transports': true
 		});
 	}
