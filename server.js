@@ -24,6 +24,7 @@ var wormhole = function (io, express) {
 	this.rpc = {};
 	this.groupRpc = {};
 	this._namespaces = [];
+	this.wormholeConnectCallbackNamespace = {};
 
 	var setupSocketIOForNamespace = function (namespace) {
 		io.of(namespace).on('connection', function (socket) {
@@ -58,8 +59,9 @@ var wormhole = function (io, express) {
 	this.transmit = function (channel, message) {
 		this.io.sockets.in(channel).emit(message);
 	};
-	this.engage = function (cb) {
-		this.wormholeConnectCallback = cb;
+	this.engage = function (namespace, cb) {
+		// this.wormholeConnectCallback = cb;
+		this.wormholeConnectCallbackNamespace[namespace] = cb;
 	};
 	this.methods = function (methods) {
 		var self = this;
@@ -122,8 +124,8 @@ var wormhole = function (io, express) {
 
 		var doIt = function (req, res, namespace) {
 			res.setHeader("Content-Type", "application/javascript");
-			if (self.wormholeConnectCallback) {
-				self.wormholeConnectCallback(req, res, function (func) {
+			if (self.wormholeConnectCallbackNamespace[namespace]) {
+				self.wormholeConnectCallbackNamespace[namespace](req, res, function (func) {
 					return {
 						using: function () {
 							var args = [].slice.call(arguments);
@@ -135,7 +137,7 @@ var wormhole = function (io, express) {
 							func = "(" + func.toString() + "(" + args +"))";
 							fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 								if (!err) {
-									data = data.toString().replace(/REPLACETHISSTRINGOKAY/g, func || function () {}.toString());
+									data = data.toString().replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 									data = data.toString().replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 									data = data.toString().replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
 									res.end(data);

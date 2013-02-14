@@ -7,7 +7,7 @@
 		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', {
 			'reconnect': true,
 			'reconnection delay': 500,
-			'max reconnection attempts': 5,
+			'max reconnection attempts': 4,
 			'try multiple transports': true
 		});
 	}
@@ -15,5 +15,6 @@
 	wh.ready(function () {
 		REPLACETHISSTRINGOKAY;
 	});
+	
 	window.wh = wh;
 }());
