@@ -92,7 +92,6 @@ wormhole.prototype.syncClientRpc = function (data) {
 		this.clientFunctions[k] = eval("(function () { return " + data[k] + " }())");
 		this.clientFunctions[k].bindTo = (function (k) {
 			return function (func) {
-				console.log(func);
 				self.clientFunctions[k].bound = func;
 			}
 		})(k);
