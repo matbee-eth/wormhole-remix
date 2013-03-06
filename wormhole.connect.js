@@ -11,10 +11,17 @@
 			'try multiple transports': true
 		});
 	}
-	var wh = new wormhole(socket);
-	wh.ready(function () {
-		REPLACETHISSTRINGOKAY;
-	});
-	
-	window.wh = wh;
+	var theFunctionToDo = function () {
+		REPLACETHISSTRINGOKAY
+	};
+	if (!window.wh) {
+		var wh = new wormhole(socket);
+		wh.ready(theFunctionToDo);
+		
+		window.wh = wh;
+	} else {
+		window.wh.setSocket(socket);
+		window.wh.setupSocket(socket);
+		window.wh.ready(theFunctionToDo);
+	}
 }());
