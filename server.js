@@ -194,8 +194,9 @@ var traveller = function (socket, io) {
 		}
 	});
 	socket.on("rpc", function (data) {
-		if (data && data.function)
-		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+		if (data && data.function) {
+			self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+		}
 	});
 	socket.on("syncRpcFunctions", function (functinos) {
 		var ff = function (){};
