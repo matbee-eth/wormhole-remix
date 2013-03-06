@@ -106,7 +106,7 @@ var wormhole = function (io, express) {
 		}
 	};
 	if (express) {
-		var sendTheClientJs = function () {
+		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
 			res.end(data);
 		}
@@ -116,13 +116,13 @@ var wormhole = function (io, express) {
 				fs.readFile(__dirname + '/client.js', function (err, data) {
 					if (!err) {
 						wormholeClientJs = data.toString();
-						sendTheClientJs();
+						sendTheClientJs(req, res);
 					} else {
 						res.end();
 					}
 				});
 			} else {
-				sendTheClientJs();
+				sendTheClientJs(req, res);
 			}
 		});
 		express.get('/wormhole/wormhole.connect.js', function (req, res) {
