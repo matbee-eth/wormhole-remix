@@ -8,6 +8,9 @@ var util = require('util')
   , async = require('async');
 
 var wormhole = function (io, express) {
+	var wormholeConnectJs;
+	var wormholeClientJs;
+
 	this.io = io;
 	events.EventEmitter.call(this);
 	var self = this;
@@ -103,16 +106,24 @@ var wormhole = function (io, express) {
 		}
 	};
 	if (express) {
+		var sendTheClientJs = function () {
+			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
+			res.end(data);
+		}
 		express.get('/wormhole/client.js', function (req, res) {
 			res.setHeader("Content-Type", "application/javascript");
-			fs.readFile(__dirname + '/client.js', function (err, data) {
-				if (!err) {
-					data = data.toString().replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
-					res.end(data);
-				} else {
-					res.end();
-				}
-			});
+			if (!wormholeClientJs) {
+				fs.readFile(__dirname + '/client.js', function (err, data) {
+					if (!err) {
+						wormholeClientJs = data.toString();
+						sendTheClientJs();
+					} else {
+						res.end();
+					}
+				});
+			} else {
+				sendTheClientJs();
+			}
 		});
 		express.get('/wormhole/wormhole.connect.js', function (req, res) {
 			doIt(req, res, "groupnotes");
@@ -135,28 +146,45 @@ var wormhole = function (io, express) {
 							args = args.substring(1);
 							args = args.substring(0, args.length-1);
 							func = "(" + func.toString() + "(" + args +"))";
-							fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
-								if (!err) {
-									data = data.toString().replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
-									data = data.toString().replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
-									data = data.toString().replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
-									res.end(data);
-								} else {
-									res.end();
-								}
-							});
+
+							var sendAndCustomizeItBitches = function () {
+								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
+								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
+								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
+								res.end(data);
+							}
+
+							if (!wormholeConnectJs) {
+								fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+									if (!err) {
+										wormholeConnectJs = data.toString();
+										sendAndCustomizeItBitches();
+									} else {
+										res.end();
+									}
+								});
+							} else {
+								sendAndCustomizeItBitches();
+							}
 						}
 					};
 				});
 			} else {
-				fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
-					if (!err) {
-						data = data.toString().replace('REPLACETHISSTRINGOKAY', function () {}.toString());
-						res.end(data);
-					} else {
-						res.end();
-					}
-				});
+				var sendAndCustomizeItBitches = function () {
+					var data = wormholeConnectJs.replace('REPLACETHISSTRINGOKAY', function () {}.toString());
+				}
+				if (!wormholeConnectJs) {
+					fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+						if (!err) {
+							wormholeConnectJs = data.toString();
+							sendAndCustomizeItBitches();
+						} else {
+							res.end();
+						}
+					});
+				} else {
+					sendAndCustomizeItBitches();
+				}
 			}
 		}
 	}
