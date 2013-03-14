@@ -275,7 +275,9 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.subscribeCallback = function (args) {
 		args = JSON.parse(args);
 		console.log("subscribeCallback", args);
-		if ((args.type === "othersRpc" && !transactions[args.transactionId]) || args.type) {
+		if ((args.type === "othersRpc" && args.skipSelf) && !transactions[args.transactionId]) {
+			// self.rpc[args.methodName].apply(null, args.arguments);
+		} else if (args.type === "groupRpc" || args.type === "othersRpc" || args.type === "rpc") {
 			self.rpc[args.methodName].apply(null, args.arguments);
 		}
 		if (transactions[args.transactionId]) {
