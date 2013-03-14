@@ -270,14 +270,17 @@ var traveller = function (socket, io, pubClient, subClient) {
 		var transactionId = __randomString();
 		transactions[transactionId] = true;
 		obj.transactionId = transactionId;
+		console.log("publishTo transactionId", typeof obj, obj.transactionId, transactionId);
 		pubClient.publish(channel, JSON.stringify(obj));
 	};
 	this.subscribeCallback = function (args) {
-		args = JSON.parse(args);
 		console.log("subscribeCallback", args);
-		if ((args.type === "othersRpc" && args.skipSelf) && !transactions[args.transactionId]) {
-			// self.rpc[args.methodName].apply(null, args.arguments);
-		} else if (args.type === "groupRpc" || args.type === "othersRpc" || args.type === "rpc") {
+		console.log("Transactions", args.transactionId, transactions[args.transactionId]);
+		console.log("args.type", args.type);
+		console.log("args.skipSelf", args.skipSelf);
+		if (args.type === "othersRpc" && args.skipSelf == true && !transactions[args.transactionId]) {
+			self.rpc[args.methodName].apply(null, args.arguments);
+		} else if (args.type === "groupRpc" || args.type === "rpc") {
 			self.rpc[args.methodName].apply(null, args.arguments);
 		}
 		if (transactions[args.transactionId]) {
@@ -294,7 +297,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 				skipSelf: skipSelf,
 				type: skipSelf ? "othersRpc" : "groupRpc"
 			};
-			self.publish(JSON.stringify(publishObj));
+			self.publish(publishObj);
 		};
 	};
 	var generateRPCFunction = function (methodName, async) {
