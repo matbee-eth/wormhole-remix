@@ -7,7 +7,7 @@ var util = require('util')
   , jsdom = require('jsdom')
   , async = require('async');
 
-var wormhole = function (io, express) {
+var wormhole = function (io, express, pubClient, subClient) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
 
@@ -15,7 +15,8 @@ var wormhole = function (io, express) {
 	events.EventEmitter.call(this);
 	var self = this;
 	var setupSocket = function (socket, namespace) {
-		var travel = new traveller(socket, io);
+		var travel = new traveller(socket, io, pubClient, subClient);
+		travel.setSubscribeCallback(self.subscribeCallback)
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
 		socket.emit('sync', travel.syncData());
@@ -33,7 +34,12 @@ var wormhole = function (io, express) {
 		io.of(namespace).on('connection', function (socket) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
-			// console.log("connection", namespace, wh.getNamespace(), wh.getChannel(), socket.id);
+			socket.on('disconnect', function () {
+				// Have to unsubscribe :)
+				if (io.of(namespace).clients(wh.getChannel()).length  <= 0) {
+					subClient.unsubscribe(namespace + wh.getChannel());
+				}
+			});
 		});
 	};
 
@@ -105,6 +111,28 @@ var wormhole = function (io, express) {
 			return sockets;
 		}
 	};
+
+	this.subscribeCallback = function (channel, traveller) {
+		if (!subscriptions[channel]) {
+			subscriptions[channel] = [];
+		}
+		subscriptions[channel].push(traveller);
+		subClient.subscribe(channel);
+	};
+
+	var subscriptions = {};
+	subClient.on("message", function (channel, message) {
+		console.log("message:", channel);
+		var outObj = JSON.parse(message);
+		console.log(typeof outObj);
+		if (subscriptions[channel]) {
+			// OK We have someone subscribed to this! :)
+			async.forEach(subscriptions[channel], function (traveller, cb) {
+				traveller.subscribeCallback(outObj);
+			});
+		}
+	});
+
 	if (express) {
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
@@ -195,7 +223,7 @@ wormhole.packageFunction = function (func, args) {
   return ret;
 };
 
-var traveller = function (socket, io) {
+var traveller = function (socket, io, pubClient, subClient) {
 	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
@@ -206,7 +234,6 @@ var traveller = function (socket, io) {
 	this.groupRpc = {};
 	this.othersRpc = {};
 	this.io = io;
-
 	var self = this;
 	socket.on("rpcResponse", function (data) {
 		var uuid = data.uuid;
@@ -233,6 +260,41 @@ var traveller = function (socket, io) {
 			self.addClientRpc(methodName, ff);
 		}
 	});
+	var transactions = {};
+	this.publish = function (obj) {
+		console.log("publish", obj);
+		this.publishTo(obj, this.getNamespace() + this.currentChannel)
+	};
+	this.publishTo = function (obj, channel) {
+		console.log("publishTO", obj, channel);
+		var transactionId = __randomString();
+		transactions[transactionId] = true;
+		obj.transactionId = transactionId;
+		pubClient.publish(channel, JSON.stringify(obj));
+	};
+	this.subscribeCallback = function (args) {
+		args = JSON.parse(args);
+		console.log("subscribeCallback", args);
+		if ((args.type === "othersRpc" && !transactions[args.transactionId]) || args.type) {
+			self.rpc[args.methodName].apply(null, args.arguments);
+		}
+		if (transactions[args.transactionId]) {
+			delete transactions[args.transactionId];
+		}
+	};
+	var generateGroupRpc = function (methodName, skipSelf) {
+		return function () {
+			var args = [].slice.call(arguments);
+			var channel = self.currentChannel;
+			var publishObj = {
+				methodName: methodName,
+				arguments: args,
+				skipSelf: skipSelf,
+				type: skipSelf ? "othersRpc" : "groupRpc"
+			};
+			self.publish(JSON.stringify(publishObj));
+		};
+	};
 	var generateRPCFunction = function (methodName, async) {
 		return function () {
 			var args = [].slice.call(arguments);
@@ -243,19 +305,6 @@ var traveller = function (socket, io) {
 			}
 			self.executeClientRpc(methodName, async, args, callback);
 		};
-	};
-	this.groupExecuteRpc = function (methodName) {
-		var args = [].slice.call(arguments).slice(1);
-		var channel = this.currentChannel;
-		var sockets = io.sockets.clients(channel);
-		var doit = function (err, wormhole) {
-			if (wormhole.rpc[methodName])
-				wormhole.rpc[methodName].apply(null, arguments);
-		};
-		for (var i in sockets) {
-			var socket = sockets[i];
-			socket.get("wormhole" + this.getNamespace(), doit);
-		}
 	};
 	this.isInChannel = function (channel, cb) {
 		if (!cb) {
@@ -270,6 +319,7 @@ var traveller = function (socket, io) {
 		this.socket.set("channel", channel);
 		this.socket.join(channel);
 		this.currentChannel = channel;
+		this.subscribe(this.getNamespace() + channel, this);
 	};
 	this.getChannel = function (cb) {
 		if (cb) {
@@ -286,7 +336,6 @@ var traveller = function (socket, io) {
 		return this.currentNamespace;
 	};
 	this.isInNamespace = function (namespace) {
-		// console.log("this.isInNamespace:", this.currentNamespace, namespace, this.currentNamespace == namespace);
 		return this.currentNamespace == namespace;
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
@@ -309,27 +358,7 @@ var traveller = function (socket, io) {
 		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
 	};
 	this.addRpc = function (methodName, functino) {
-		// console.log(this._methods, methodName, functino);
 		this._methods[methodName] = functino;
-	};
-	var generateGroupRpc = function (methodName, skipSelf) {
-		return function () {
-			var args = [].slice.call(arguments);
-			var channel = self.currentChannel;
-			var sockets = io.of(self.currentNamespace).clients(channel);
-			var doit = function (err, wormhole) {
-				if (!err && wormhole && wormhole.rpc[methodName]) {
-						wormhole.rpc[methodName].apply(null, args);
-				} else {
-					// ERRRRORRRR
-				}
-			};
-			for (var i in sockets) {
-				var socket = sockets[i];
-				if ((skipSelf && socket !== self.socket) || !skipSelf)
-					socket.get("wormhole" + self.getNamespace(), doit);
-			}
-		};
 	};
 	this.addClientRpc = function (methodName, functino) {
 		this._clientMethods[methodName] = functino.toString();
@@ -395,6 +424,10 @@ var traveller = function (socket, io) {
 	};
 	this.syncData = function () {
 		return { serverRPC: Object.keys(self._methods), clientRPC: self._clientMethods };
+	};
+	this.setSubscribeCallback = function (cb) {
+		console.log("setSubscribeCallback");
+		this.subscribe = cb;
 	};
 };
 
