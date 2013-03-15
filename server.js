@@ -19,9 +19,11 @@ var wormhole = function (io, express, pubClient, subClient) {
 		travel.setSubscribeCallback(self.subscribeCallback)
 		socket.on('disconnect', function () {
 			// Have to unsubscribe :)
-			var indexOfTraveller = subscriptions[namespace + travel.getChannel()].indexOf(travel);
-			if (indexOfTraveller > -1) {
-				subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
+			if (subscriptions[namespace + travel.getChannel()]) {
+				var indexOfTraveller = subscriptions[namespace + travel.getChannel()].indexOf(travel);
+				if (indexOfTraveller > -1) {
+					subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
+				}
 			}
 			if (io.of(namespace).clients(travel.getChannel()).length  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
