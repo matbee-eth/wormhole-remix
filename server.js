@@ -19,21 +19,14 @@ var wormhole = function (io, express, pubClient, subClient) {
 		travel.setSubscribeCallback(self.subscribeCallback)
 		socket.on('disconnect', function () {
 			// Have to unsubscribe :)
-			console.log("Subscriptions on channel", subscriptions[namespace + travel.getChannel()].length);
 			var indexOfTraveller = subscriptions[namespace + travel.getChannel()].indexOf(travel);
 			if (indexOfTraveller > -1) {
-				console.log("Socket disconnected: Index of traveller: ", indexOfTraveller);
 				subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
-				console.log("Socket disconnected: Index of traveller: ", subscriptions[namespace + travel.getChannel()].indexOf(travel));
 			}
-			console.log("Subscriptions on channel", subscriptions[namespace + travel.getChannel()].length);
 			if (io.of(namespace).clients(travel.getChannel()).length  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
 			}
-			setTimeout(function () {
-				// console.log("Subscriptions on channel", subscriptions[namespace + travel.getChannel()].length, subscriptions[namespace + travel.getChannel()]);
-			}, 500);
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
