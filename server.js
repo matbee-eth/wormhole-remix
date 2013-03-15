@@ -25,7 +25,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 			}
 			if (io.of(namespace).clients(wh.getChannel()).length  <= 0) {
 				subClient.unsubscribe(namespace + wh.getChannel());
-				// delete subscriptions[namespace + wh.getChannel()];
+				delete subscriptions[namespace + wh.getChannel()];
 			}
 		});
 		self.syncData(travel);
