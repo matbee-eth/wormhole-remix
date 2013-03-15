@@ -17,6 +17,17 @@ var wormhole = function (io, express, pubClient, subClient) {
 	var setupSocket = function (socket, namespace) {
 		var travel = new traveller(socket, io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback)
+		socket.on('disconnect', function () {
+			// Have to unsubscribe :)
+			var indexOfTraveller = subscriptions[namespace + wh.getChannel()].indexOf(travel);
+			if (indexOfTraveller > -1) {
+				subscriptions[namespace + wh.getChannel()].slice(indexOfTraveller, 1)
+			}
+			if (io.of(namespace).clients(wh.getChannel()).length  <= 0) {
+				subClient.unsubscribe(namespace + wh.getChannel());
+				// delete subscriptions[namespace + wh.getChannel()];
+			}
+		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
 		socket.emit('sync', travel.syncData());
@@ -34,12 +45,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		io.of(namespace).on('connection', function (socket) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
-			socket.on('disconnect', function () {
-				// Have to unsubscribe :)
-				if (io.of(namespace).clients(wh.getChannel()).length  <= 0) {
-					subClient.unsubscribe(namespace + wh.getChannel());
-				}
-			});
 		});
 	};
 
@@ -124,7 +129,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 	subClient.on("message", function (channel, message) {
 		console.log("message:", channel);
 		var outObj = JSON.parse(message);
-		console.log(typeof outObj);
 		if (subscriptions[channel]) {
 			// OK We have someone subscribed to this! :)
 			async.forEach(subscriptions[channel], function (traveller, cb) {
