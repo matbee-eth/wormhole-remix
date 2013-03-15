@@ -20,6 +20,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 		socket.on('disconnect', function () {
 			// Have to unsubscribe :)
 			var indexOfTraveller = subscriptions[namespace + wh.getChannel()].indexOf(travel);
+			console.log("Socket disconnected: Index of traveller: ", indexOfTraveller, "Subscriptions on channel", subscriptions[namespace + wh.getChannel()]);
 			if (indexOfTraveller > -1) {
 				subscriptions[namespace + wh.getChannel()].slice(indexOfTraveller, 1)
 			}
