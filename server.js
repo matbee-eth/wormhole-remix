@@ -46,6 +46,12 @@ var wormhole = function (io, express, pubClient, subClient) {
 		return travel;
 	};
 
+	this.destruct = function (wormhole) {
+		wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
+		wormhole=null;
+		socket = null;
+	};
+
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
@@ -252,10 +258,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.io = io;
 	var self = this;
 
-	this.destruct = function () {
-		socket.set('wormhole'+this.getNamespace(), null);
-		this = null;
-	}
 
 	socket.on("rpcResponse", function (data) {
 		var uuid = data.uuid;
