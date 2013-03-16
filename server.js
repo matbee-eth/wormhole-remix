@@ -30,7 +30,10 @@ var wormhole = function (io, express, pubClient, subClient) {
 			var ioClients = io.of(namespace).clients(travel.getChannel());
 			var ioCount = ioClients.length;
 			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
-			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), ioCount);
+
+			setTimeout(function () {
+				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
+			}, 300);
 
 			if (fff.length === 0 && ioCount  <= 1) {
 				if (ioCount === 1 && ioClients[0] === socket) {
@@ -46,7 +49,9 @@ var wormhole = function (io, express, pubClient, subClient) {
 	};
 
 	this.destruct = function (wormhole) {
+		console.log("KILLING WORMHOLE");
 		if (wormhole.getNamespace() && wormhole.getChannel() && subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
+			console.log("KILLING WORMHOLE FROM: subscriptions");
 			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(wormhole);
 			if (indexOfTraveller > -1) {
 				subscriptions[wormhole.getNamespace() + wormhole.getChannel()][indexOfTraveller] = null;
@@ -54,9 +59,11 @@ var wormhole = function (io, express, pubClient, subClient) {
 			}
 		}
 		if (wormhole.socket) {
+			console.log("KILLING WORMHOLE SOCKET");
 			wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
 			wormhole.socket = null;
 		}
+		console.log("WORMHOLE DEAD.");
 		wormhole=null;
 	};
 
