@@ -47,7 +47,15 @@ var wormhole = function (io, express, pubClient, subClient) {
 	};
 
 	this.destruct = function (wormhole) {
+		if (subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
+			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(travel);
+			if (indexOfTraveller > -1) {
+				subscriptions[wormhole.getNamespace() + wormhole.getChannel()][indexOfTraveller] = null;
+				subscriptions[wormhole.getNamespace() + wormhole.getChannel()].splice(indexOfTraveller, 1);
+			}
+		}
 		wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
+		wormhole.socket = null;
 		wormhole=null;
 		socket = null;
 	};
