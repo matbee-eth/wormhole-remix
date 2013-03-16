@@ -31,7 +31,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
 			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), ioCount);
 
-			if (fff.length === 0 && ioCount  <= 0) {
+			if (fff.length === 0 && ioCount  <= 0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
 			} else if (ioCount === 1) {
@@ -56,7 +56,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		}
 		if (wormhole.socket) {
 			wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
-			delete wormhole.socket.namespace.sockets[wormhole.socket.id];
 			wormhole.socket = null;
 		}
 		wormhole=null;
