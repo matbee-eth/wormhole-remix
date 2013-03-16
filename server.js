@@ -55,6 +55,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 			}
 		}
 		wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
+		delete wormhole.socket.namespace.sockets[wormhole.socket.id];
 		wormhole.socket = null;
 		wormhole=null;
 	};
