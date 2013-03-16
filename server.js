@@ -26,14 +26,19 @@ var wormhole = function (io, express, pubClient, subClient) {
 				}
 			}
 			var fff = subscriptions[namespace + travel.getChannel()] || [];
+			var ioClients = io.of(namespace).clients(travel.getChannel());
+			var ioCount = ioClients.length;
 			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
-			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), io.of(namespace).clients(travel.getChannel()).length);
-			if (io.of(namespace).clients(travel.getChannel()).length  <= 0) {
+			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), ioCount);
+
+			if (ioCount  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
+			} else if (ioCount === 1) {
+				console.log(ioClients);
 			}
-			travel = null;
-			socket.set('wormhole'+namespace, null);
+			// travel = null;
+			// socket.set('wormhole'+namespace, null);
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
@@ -246,6 +251,12 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.othersRpc = {};
 	this.io = io;
 	var self = this;
+
+	this.destruct = function () {
+		socket.set('wormhole'+this.getNamespace(), null);
+		this = null;
+	}
+
 	socket.on("rpcResponse", function (data) {
 		var uuid = data.uuid;
 		// The arguments to send to the callback function.
