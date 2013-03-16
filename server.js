@@ -57,7 +57,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
 		wormhole.socket = null;
 		wormhole=null;
-		socket = null;
 	};
 
 	this._methods = {};
