@@ -25,9 +25,14 @@ var wormhole = function (io, express, pubClient, subClient) {
 					subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
 				}
 			}
+			var fff = subscriptions[namespace + travel.getChannel()] || [];
+			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
+			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), io.of(namespace).clients(travel.getChannel()).length);
 			if (io.of(namespace).clients(travel.getChannel()).length  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
+				socket.set('wormhole'+namespace, null);
+				travel = null;
 			}
 		});
 		self.syncData(travel);
