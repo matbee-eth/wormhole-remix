@@ -31,9 +31,9 @@ var wormhole = function (io, express, pubClient, subClient) {
 			if (io.of(namespace).clients(travel.getChannel()).length  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
-				socket.set('wormhole'+namespace, null);
-				travel = null;
 			}
+			travel = null;
+			socket.set('wormhole'+namespace, null);
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
