@@ -425,17 +425,19 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 	this.executeClientRpc = function (functionName, isAsync, args, callback) {
-		var hasCallback = (typeof callback === "function");
-		var out = {
-			"function": functionName,
-			"async": isAsync && hasCallback,
-			"arguments": args
-		};
-		if (hasCallback) {
-			out.uuid = __randomString();
-			self.uuidList[out.uuid] = callback;
+		if (this.socket) {
+			var hasCallback = (typeof callback === "function");
+			var out = {
+				"function": functionName,
+				"async": isAsync && hasCallback,
+				"arguments": args
+			};
+			if (hasCallback) {
+				out.uuid = __randomString();
+				self.uuidList[out.uuid] = callback;
+			}
+			this.socket.emit("rpc", out);
 		}
-		this.socket.emit("rpc", out);
 	};
 	this.destination = function (channel) {
 		this.socket.join(channel);
