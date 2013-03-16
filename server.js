@@ -25,17 +25,18 @@ var wormhole = function (io, express, pubClient, subClient) {
 					subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
 				}
 			}
+			var channel = travel.getChannel();
 			var fff = subscriptions[namespace + travel.getChannel()] || [];
 			var ioClients = io.of(namespace).clients(travel.getChannel());
 			var ioCount = ioClients.length;
 			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
 			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), ioCount);
 
-			if (fff.length === 0 && ioCount  <= 0) {
-				subClient.unsubscribe(namespace + travel.getChannel());
-				delete subscriptions[namespace + travel.getChannel()];
-			} else if (ioCount === 1) {
-				console.log(ioClients);
+			if (fff.length === 0 && ioCount  <= 1) {
+				if (ioCount === 1 && ioClients[0] === socket) {
+					subClient.unsubscribe(namespace + travel.getChannel());
+					delete subscriptions[namespace + travel.getChannel()];
+				}
 			}
 		});
 		self.syncData(travel);
@@ -45,7 +46,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 	};
 
 	this.destruct = function (wormhole) {
-		if (subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
+		if (wormhole.getNamespace() && wormhole.getChannel() && subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
 			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(wormhole);
 			if (indexOfTraveller > -1) {
 				subscriptions[wormhole.getNamespace() + wormhole.getChannel()][indexOfTraveller] = null;
