@@ -31,14 +31,12 @@ var wormhole = function (io, express, pubClient, subClient) {
 			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
 			console.log("Remaining clients in namespace+channel", namespace, travel.getChannel(), ioCount);
 
-			if (fff.length === 0 && ioCount  <= 0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz) {
+			if (fff.length === 0 && ioCount  <= 0) {
 				subClient.unsubscribe(namespace + travel.getChannel());
 				delete subscriptions[namespace + travel.getChannel()];
 			} else if (ioCount === 1) {
 				console.log(ioClients);
 			}
-			// travel = null;
-			// socket.set('wormhole'+namespace, null);
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
