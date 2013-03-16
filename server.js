@@ -48,7 +48,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 	this.destruct = function (wormhole) {
 		if (subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
-			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(travel);
+			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(wormhole);
 			if (indexOfTraveller > -1) {
 				subscriptions[wormhole.getNamespace() + wormhole.getChannel()][indexOfTraveller] = null;
 				subscriptions[wormhole.getNamespace() + wormhole.getChannel()].splice(indexOfTraveller, 1);
