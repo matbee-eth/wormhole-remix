@@ -48,6 +48,10 @@ var wormhole = function (io, express, pubClient, subClient) {
 		return travel;
 	};
 
+	this.destruct = function (wh) {
+
+	};
+
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
