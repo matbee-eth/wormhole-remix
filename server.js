@@ -48,25 +48,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		return travel;
 	};
 
-	this.destruct = function (wormhole) {
-		console.log("KILLING WORMHOLE");
-		if (wormhole.getNamespace() && wormhole.getChannel() && subscriptions[wormhole.getNamespace() + wormhole.getChannel()]) {
-			console.log("KILLING WORMHOLE FROM: subscriptions");
-			var indexOfTraveller = subscriptions[wormhole.getNamespace() + wormhole.getChannel()].indexOf(wormhole);
-			if (indexOfTraveller > -1) {
-				subscriptions[wormhole.getNamespace() + wormhole.getChannel()][indexOfTraveller] = null;
-				subscriptions[wormhole.getNamespace() + wormhole.getChannel()].splice(indexOfTraveller, 1);
-			}
-		}
-		if (wormhole.socket) {
-			console.log("KILLING WORMHOLE SOCKET");
-			wormhole.socket.set('wormhole'+wormhole.getNamespace(), null);
-			wormhole.socket = null;
-		}
-		console.log("WORMHOLE DEAD.");
-		wormhole=null;
-	};
-
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
