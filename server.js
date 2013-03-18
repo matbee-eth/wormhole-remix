@@ -34,12 +34,14 @@ var wormhole = function (io, express, pubClient, subClient) {
 			setTimeout(function () {
 				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
 				console.log("Destroying wormhole");
-				travel.socket.set('wormhole'+travel.getNamespace(), null);
-				console.log("Destroying channel");
-				travel.socket.set('channel', null);
-				console.log("Destroying namespace");
-				travel.socket.set('namespace', null);
-				console.log("Destructing wormhole");
+				if (travel.socket) {
+					travel.socket.set('wormhole'+travel.getNamespace(), null);
+					console.log("Destroying channel");
+					travel.socket.set('channel', null);
+					console.log("Destroying namespace");
+					travel.socket.set('namespace', null);
+					console.log("Destructing wormhole");
+				}
 				travel.destruct();
 				travel = null;
 			}, 10000);
@@ -264,10 +266,12 @@ var traveller = function (socket, io, pubClient, subClient) {
 	var self = this;
 
 	this.destruct = function () {
-		console.log("Removing socket listeners");
-		socket.removeAllListeners();
-		console.log("Destroying socket");
-		socket = null;
+		if (socket) {
+			console.log("Removing socket listeners");
+			socket.removeAllListeners();
+			console.log("Destroying socket");
+			socket = null;
+		}
 		this.cloakEngaged = null;
 		this.uuidList = null;
 		this._methods = null;
