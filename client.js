@@ -138,14 +138,14 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 wormhole.prototype.callbackRpc = function(uuid) {
 	this.socket.emit("rpcResponse", {uuid: uuid, args: [].slice.call(arguments).slice(1)});
 };
-wormhole.prototype.methods = function(methods) {
-	var outMethods = [];
-	for (var k in methods) {
-		this.clientFunctions[k] = methods[k];
-		outMethods.push(k);
-	}
-	this.socket.emit("syncRpcFunctions", outMethods);
-};
+// wormhole.prototype.methods = function(methods) {
+// 	var outMethods = [];
+// 	for (var k in methods) {
+// 		this.clientFunctions[k] = methods[k];
+// 		outMethods.push(k);
+// 	}
+// 	this.socket.emit("syncRpcFunctions", outMethods);
+// };
 wormhole.prototype.execute = function(func) {
 	var args = [].slice.call(arguments).slice(1);
 	var f = eval("("+func+")");

@@ -16,7 +16,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 	var self = this;
 	var setupSocket = function (socket, namespace) {
 		var travel = new traveller(socket, io, pubClient, subClient);
-		travel.setSubscribeCallback(self.subscribeCallback)
+		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
 			// Have to unsubscribe :)
 			if (subscriptions[namespace + travel.getChannel()]) {
@@ -33,7 +33,16 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 			setTimeout(function () {
 				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
-			}, 300);
+				console.log("Destroying wormhole");
+				travel.socket.set('wormhole'+travel.getNamespace(), null);
+				console.log("Destroying channel");
+				travel.socket.set('channel', null);
+				console.log("Destroying namespace");
+				travel.socket.set('namespace', null);
+				console.log("Destructing wormhole");
+				travel.destruct();
+				travel = null;
+			}, 10000);
 
 			if (fff.length === 0 && ioCount  <= 1) {
 				if (ioCount === 1 && ioClients[0] === socket) {
@@ -46,10 +55,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		socket.set('wormhole'+namespace, travel);
 		socket.emit('sync', travel.syncData());
 		return travel;
-	};
-
-	this.destruct = function (wh) {
-
 	};
 
 	this._methods = {};
@@ -258,6 +263,48 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.io = io;
 	var self = this;
 
+	this.destruct = function () {
+		console.log("Removing socket listeners");
+		socket.removeAllListeners();
+		console.log("Destroying socket");
+		socket = null;
+		this.cloakEngaged = null;
+		this.uuidList = null;
+		this._methods = null;
+		this._clientMethods = null;
+		this.rpc = null;
+		this.groupRpc = null;
+		this.othersRpc = null;
+		this.io = null;
+
+		// Time to go overboard.
+		this.publish = null;
+		this.publishTo = null;
+		this.subscribeCallback = null;
+		this.isInChannel = null;
+		this.setChannel = null;
+		this.getChannel = null;
+		this.setNamespace = null;
+		this.getNamespace = null;
+		this.isInNamespace = null;
+		this.executeRpc = null;
+		this.callbackRpc = null;
+		this.addRpc = null;
+		this.addClientRpc = null;
+		this.methods = null;
+		this.clientMethods = null;
+		this.executeClientRpc = null;
+		this.destination = null;
+		this.transmit = null;
+		this.makeItSo = null;
+		this.fire = null;
+		this.engageCloak = null;
+		this.syncData = null;
+		this.setSubscribeCallback = null;
+
+		console.log("Removing wormhole listeners");
+		this.removeAllListeners();
+	};
 
 	socket.on("rpcResponse", function (data) {
 		var uuid = data.uuid;
@@ -489,28 +536,4 @@ __randomString = function() {
 		randomstring += chars.substring(rnum,rnum+1);
 	}
 	return randomstring;
-};
-
-
-
-
-
-
-
-var probe = function (uuid) {
-	this.uuid = uuid;
-	this.used = false;
-};
-
-probe.prototype.return = function() {
-	// this is the one-off RPC response.
-	var args = [].slice.call(arguments);
-	if (!this.used) {
-		this.used = true;
-		// send off RPC : args
-	}
-};
-
-probe.prototype.Execute = function () {
-
 };
