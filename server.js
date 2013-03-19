@@ -157,7 +157,9 @@ var wormhole = function (io, express, pubClient, subClient) {
 		if (subscriptions[channel]) {
 			// OK We have someone subscribed to this! :)
 			async.forEach(subscriptions[channel], function (traveller, cb) {
-				traveller.subscribeCallback(outObj);
+				if (traveller && traveller.subscribeCallback) {
+					traveller.subscribeCallback(outObj);
+				}
 			});
 		}
 	});
@@ -271,6 +273,10 @@ var traveller = function (socket, io, pubClient, subClient) {
 			socket.removeAllListeners();
 			console.log("Destroying socket");
 			socket = null;
+		}
+		if (this.socket) {
+			this.socket.removeAllListeners();
+			this.socket = null;
 		}
 		this.cloakEngaged = null;
 		this.uuidList = null;
