@@ -44,7 +44,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 				}
 				travel.destruct();
 				travel = null;
-			}, 10000);
+			}, 25000);
 
 			if (fff.length === 0 && ioCount  <= 1) {
 				if (ioCount === 1 && ioClients[0] === socket) {
