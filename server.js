@@ -12,7 +12,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 	var wormholeClientJs;
 
 	this.io = io;
-	events.EventEmitter.call(this);
 	var self = this;
 	var setupSocket = function (socket, namespace) {
 		var travel = new traveller(socket, io, pubClient, subClient);
@@ -34,7 +33,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 			setTimeout(function () {
 				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
 				console.log("Destroying wormhole...");
-				if (travel.socket) {
+				if (travel && travel.socket) {
 					var ThingsToRemove = Object.keys(travel.socket.store.data);
 					for (var i = 0; i < ThingsToRemove.length; i++) {
 						var removed = ThingsToRemove[i];
@@ -254,7 +253,6 @@ wormhole.packageFunction = function (func, args) {
 };
 
 var traveller = function (socket, io, pubClient, subClient) {
-	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
 	this.uuidList = {};
