@@ -17,39 +17,33 @@ var wormhole = function (io, express, pubClient, subClient) {
 		var travel = new traveller(socket, io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
-			// Have to unsubscribe :)
-			if (subscriptions[namespace + travel.getChannel()]) {
-				var indexOfTraveller = subscriptions[namespace + travel.getChannel()].indexOf(travel);
+			async.forEach(travel._subscriptions, function (channel, cb) {
+				console.log(travel._subscriptions, channel, subscriptions, subscriptions[channel]);
+				var indexOfTraveller = subscriptions[channel].indexOf(travel);
 				if (indexOfTraveller > -1) {
-					subscriptions[namespace + travel.getChannel()].splice(indexOfTraveller, 1);
+					subscriptions[channel].splice(indexOfTraveller, 1);
 				}
-			}
-			var channel = travel.getChannel();
-			var fff = subscriptions[namespace + travel.getChannel()] || [];
-			var ioClients = io.of(namespace).clients(travel.getChannel());
-			var ioCount = ioClients.length;
-			console.log("Amount of users subscribed to namespace+channel", namespace, travel.getChannel(), fff.length || 0);
 
-			setTimeout(function () {
-				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
-				console.log("Destroying wormhole...");
-				if (travel && travel.socket) {
-					var ThingsToRemove = Object.keys(travel.socket.store.data);
-					for (var i = 0; i < ThingsToRemove.length; i++) {
-						var removed = ThingsToRemove[i];
-						travel.socket.set(removed, null);
+				var remainingSubscriptionsInChannel = subscriptions[channel] || [];
+				if (remainingSubscriptionsInChannel.length === 0) {
+					subClient.unsubscribe(channel);
+					delete subscriptions[channel];
+				}
+				cb();
+			}, function (err) {
+				setTimeout(function () {
+					console.log("Destroying wormhole...");
+					if (travel && travel.socket) {
+						var ThingsToRemove = Object.keys(travel.socket.store.data);
+						for (var i = 0; i < ThingsToRemove.length; i++) {
+							var removed = ThingsToRemove[i];
+							travel.socket.set(removed, null);
+						}
+						travel.destruct();
+						travel = null;
 					}
-					travel.destruct();
-					travel = null;
-				}
-			}, 25000);
-
-			if (fff.length === 0 && ioCount  <= 1) {
-				if (ioCount === 1 && ioClients[0] === socket) {
-					subClient.unsubscribe(namespace + travel.getChannel());
-					delete subscriptions[namespace + travel.getChannel()];
-				}
-			}
+				}, 25000);
+			});
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
@@ -283,6 +277,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.groupRpc = null;
 		this.othersRpc = null;
 		this.io = null;
+		this._subscriptions = null;
 
 		// Time to go overboard.
 		this.publish = null;
@@ -402,7 +397,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.socket.set("channel", channel);
 		this.socket.join(channel);
 		this.currentChannel = channel;
-		this.subscribe(this.getNamespace() + channel, this);
+		this.subscribe(channel);
 	};
 	this.getChannel = function (cb) {
 		if (cb) {
@@ -510,9 +505,14 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.syncData = function () {
 		return { serverRPC: Object.keys(self._methods), clientRPC: self._clientMethods };
 	};
+	this._subscriptions = [];
+	var self = this;
 	this.setSubscribeCallback = function (cb) {
 		console.log("setSubscribeCallback");
-		this.subscribe = cb;
+		this.subscribe = function (channel) {
+			self._subscriptions.push(self.getNamespace() + channel);
+			cb(self.getNamespace() + channel, self);
+		}
 	};
 };
 
