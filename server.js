@@ -39,9 +39,9 @@ var wormhole = function (io, express, pubClient, subClient) {
 						var removed = ThingsToRemove[i];
 						travel.socket.set(removed, null);
 					}
+					travel.destruct();
+					travel = null;
 				}
-				travel.destruct();
-				travel = null;
 			}, 25000);
 
 			if (fff.length === 0 && ioCount  <= 1) {
