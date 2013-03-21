@@ -33,14 +33,13 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 			setTimeout(function () {
 				console.log("Remaining clients in namespace+channel", namespace, channel, io.of(namespace).clients(channel).length);
-				console.log("Destroying wormhole");
+				console.log("Destroying wormhole...");
 				if (travel.socket) {
-					travel.socket.set('wormhole'+travel.getNamespace(), null);
-					console.log("Destroying channel");
-					travel.socket.set('channel', null);
-					console.log("Destroying namespace");
-					travel.socket.set('namespace', null);
-					console.log("Destructing wormhole");
+					var ThingsToRemove = Object.keys(travel.socket.store.data);
+					for (var i = 0; i < ThingsToRemove.length; i++) {
+						var removed = ThingsToRemove[i];
+						travel.socket.set(removed, null);
+					}
 				}
 				travel.destruct();
 				travel = null;
