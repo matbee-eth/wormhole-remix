@@ -524,9 +524,6 @@ traveller.encryptFunction = function (funcString) {
 	return finalCode.toString().substring("var func=".length);
 };
 
-util.inherits(wormhole, events.EventEmitter);
-util.inherits(traveller, events.EventEmitter);
-
 module.exports = wormhole;
 
 function evaluateWithArgs (fn, args) {
