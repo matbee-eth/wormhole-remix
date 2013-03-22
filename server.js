@@ -305,7 +305,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.setSubscribeCallback = null;
 
 		console.log("Removing wormhole listeners");
-		this.removeAllListeners();
 	};
 
 	socket.on("rpcResponse", function (data) {
