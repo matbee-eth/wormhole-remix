@@ -5,7 +5,8 @@ var util = require('util')
   , pro = uglify.uglify
   , fs = require('fs')
   , jsdom = require('jsdom')
-  , async = require('async');
+  , async = require('async')
+  , request = require('request');
 
 var wormhole = function (io, express, pubClient, subClient) {
 	var wormholeConnectJs;
@@ -182,6 +183,20 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 		express.get('/wormhole/extension.connect.js', function (req, res) {
 			doIt(req, res, "extension");
+		});
+
+		var socketioJs;
+		express.get('/wormhole/socket.io.js', function (req, res) {
+			if (socketioJs) {
+				res.jsonp(socketioJs);
+			} else {
+				request(req.protocol + "://" + req.headers.host + '/socket.io/socket.io.js', function (error, response, body) {
+					if (!error && response.statusCode == 200) {
+						socketioJs = body.toString();
+						res.jsonp(socketioJs);
+					}
+				});
+			}
 		});
 
 		var doIt = function (req, res, namespace) {
