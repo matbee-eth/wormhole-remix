@@ -7,7 +7,7 @@ adsasdasasdfadsf(function () {
 		eval("(function(){"+script+"})()");
 		console.log("Socket.io Loaded and namespaced");
 		if (cb) cb();
-    });
+	});
     var cb = function () {
 		var socket;
 		if (io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER']) {

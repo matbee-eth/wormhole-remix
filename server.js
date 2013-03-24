@@ -19,7 +19,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
 			async.forEach(travel._subscriptions, function (channel, cb) {
-				console.log(travel._subscriptions, channel, subscriptions, subscriptions[channel]);
 				var indexOfTraveller = subscriptions[channel].indexOf(travel);
 				if (indexOfTraveller > -1) {
 					subscriptions[channel].splice(indexOfTraveller, 1);
@@ -33,7 +32,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 				cb();
 			}, function (err) {
 				setTimeout(function () {
-					console.log("Destroying wormhole...");
 					if (travel && travel.socket) {
 						var ThingsToRemove = Object.keys(travel.socket.store.data);
 						for (var i = 0; i < ThingsToRemove.length; i++) {
@@ -113,7 +111,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 			rpc: function (rpcFunction) {
 				var args = [].slice.call(arguments);
 				args.splice(0,1);
-				console.log("ARGUMENTS: ", args);
 				var doit = function (err, wormhole) {
 					if (!err && wormhole && wormhole.rpc && wormhole.rpc[rpcFunction]) {
 							wormhole.rpc[rpcFunction].apply(null, args);
@@ -145,7 +142,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 	var subscriptions = {};
 	subClient.on("message", function (channel, message) {
-		console.log("message:", channel);
 		var outObj = JSON.parse(message);
 		if (subscriptions[channel]) {
 			// OK We have someone subscribed to this! :)
@@ -207,7 +203,6 @@ var wormhole = function (io, express, pubClient, subClient) {
 						using: function () {
 							var args = [].slice.call(arguments);
 							self.wormholeConnectCallbackArguments = args;
-							// console.log("SET: self.wormholeConnectCallbackArguments", args);
 							args = JSON.stringify(args);
 							args = args.substring(1);
 							args = args.substring(0, args.length-1);
@@ -275,9 +270,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 
 	this.destruct = function () {
 		if (socket) {
-			console.log("Removing socket listeners");
 			socket.removeAllListeners();
-			console.log("Destroying socket");
 			socket = null;
 		}
 		if (this.socket) {
@@ -318,8 +311,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.engageCloak = null;
 		this.syncData = null;
 		this.setSubscribeCallback = null;
-
-		console.log("Removing wormhole listeners");
 	};
 
 	socket.on("rpcResponse", function (data) {
@@ -349,22 +340,15 @@ var traveller = function (socket, io, pubClient, subClient) {
 	});
 	var transactions = {};
 	this.publish = function (obj) {
-		console.log("publish", obj);
 		this.publishTo(obj, this.getNamespace() + this.currentChannel)
 	};
 	this.publishTo = function (obj, channel) {
-		console.log("publishTO", obj, channel);
 		var transactionId = __randomString();
 		transactions[transactionId] = true;
 		obj.transactionId = transactionId;
-		console.log("publishTo transactionId", typeof obj, obj.transactionId, transactionId);
 		pubClient.publish(channel, JSON.stringify(obj));
 	};
 	this.subscribeCallback = function (args) {
-		console.log("subscribeCallback", args);
-		console.log("Transactions", args.transactionId, transactions[args.transactionId]);
-		console.log("args.type", args.type);
-		console.log("args.skipSelf", args.skipSelf);
 		if (args.type === "othersRpc" && args.skipSelf == true && !transactions[args.transactionId]) {
 			self.rpc[args.methodName].apply(null, args.arguments);
 		} else if (args.type === "groupRpc" || args.type === "rpc") {
@@ -400,7 +384,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 	};
 	this.isInChannel = function (channel, cb) {
 		if (!cb) {
-			// console.log("this.isInChannel:", this.currentChannel, channel, this.currentChannel == channel);
 			return this.currentChannel == channel;
 		} else {
 			var chan = this.currentChannel;
@@ -522,7 +505,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this._subscriptions = [];
 	var self = this;
 	this.setSubscribeCallback = function (cb) {
-		console.log("setSubscribeCallback");
 		this.subscribe = function (channel) {
 			self._subscriptions.push(self.getNamespace() + channel);
 			cb(self.getNamespace() + channel, self);
