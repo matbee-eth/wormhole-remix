@@ -23,7 +23,6 @@ var wormhole = function (options, pubClient, subClient) {
 	} else if (options.sockjs) {
 		this.sockjs = options.sockjs;
 		this.multiplexer = new websocket_multiplex.MultiplexServer(this.sockjs);
-		this.sockjs.installHandlers(this.httpServer, {prefix:'/multiplex'});
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
@@ -118,13 +117,26 @@ var wormhole = function (options, pubClient, subClient) {
 
 		var generalSocketDataHandler = function (data) {
 			if (data) {
+				// console.log(data, typeof data, data.constructor);
 				// Assume JSON.
-				if (data.emission == "rpcResponse") {
-					rpcResponseEventHandler(data.data);
-				} else if (data.emission == "rpc") {
-					rpcEventHandler(data.data);
-				} else if (data.emission == "syncRpcFunctions") {
-					syncRpcFunctionsHandler(data.data);
+				var json;
+				try {
+					json = JSON.parse(data);
+					if (data.emission == "rpcResponse") {
+						rpcResponseEventHandler(data.data);
+					} else if (data.emission == "rpc") {
+						rpcEventHandler(data.data);
+					} else if (data.emission == "syncRpcFunctions") {
+						syncRpcFunctionsHandler(data.data);
+					}
+				} catch (ex) {
+					// Not json ^_^, must be a string!
+					json = data.split(',');
+					if (json[0] === "sub") {
+						var namespace = json[1];
+						console.log(this);
+					}
+					console.log(json);
 				}
 			}
 		}
@@ -165,7 +177,8 @@ var wormhole = function (options, pubClient, subClient) {
 		} else if (self.sockjs) {
 			var sockjsConnection = self.multiplexer.registerChannel(namespace);
 			sockjsConnection.on('connection', setupSocketHandler);
-			self.sockjs.on('connection', setupSocketHandler);
+			sockjsConnection.on('connect', setupSocketHandler);
+			console.log(sockjsConnection);
 		}
 	};
 	this.namespace = function (namespace, cb) {
@@ -244,6 +257,7 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 	});
 	if (this.express) {
+		this.sockjs.installHandlers(this.httpServer, {prefix:'/multiplex'});
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
 			res.end(data);
