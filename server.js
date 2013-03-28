@@ -106,6 +106,13 @@ var wormhole = function (options, pubClient, subClient) {
 		var generalSocketDataHandler = function (data) {
 			if (data) {
 				// Assume JSON.
+				if (data.emission == "rpcResponse") {
+					rpcResponseEventHandler(data.data);
+				} else if (data.emission == "rpc") {
+					rpcEventHandler(data.data);
+				} else if (data.emission == "syncRpcFunctions") {
+					syncRpcFunctionsHandler(data.data);
+				}
 			}
 		}
 
@@ -113,13 +120,16 @@ var wormhole = function (options, pubClient, subClient) {
 		travel.setSubscribeCallback(self.subscribeCallback);
 
 		socket.on('disconnect', disconnectEventHandler);
-		socket.on('close', disconnectEventHandler);
+		socket.on('close', function () {
+			this.emit('disconnect');
+		});
 		socket.on("rpcResponse", rpcResponseEventHandler);
 		socket.on("rpc", rpcEventHandler);
 		socket.on("syncRpcFunctions", syncRpcFunctionsHandler);
 		socket.on("data", generalSocketDataHandler);
-		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
+
+		self.syncData(travel);
 		travel.emit('sync', travel.syncData());
 		return travel;
 	};
