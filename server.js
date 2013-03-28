@@ -186,7 +186,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			if (socketioJs) {
 				res.jsonp(socketioJs);
 			} else {
-				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || "")) + '/socket.io/socket.io.js', function (error, response, body) {
+				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || "") + '/socket.io/socket.io.js', function (error, response, body) {
 					if (!error && response.statusCode == 200) {
 						socketioJs = body.toString();
 						res.jsonp(socketioJs);
@@ -211,7 +211,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							var sendAndCustomizeItBitches = function () {
 								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
-								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || "")));
+								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || ""));
 								res.end(data);
 							}
 
