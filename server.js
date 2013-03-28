@@ -15,6 +15,28 @@ var wormhole = function (io, express, pubClient, subClient) {
 	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
+		if (!socket.set) {
+			socket.__proto__.set = function (key, data) {
+				this.dataList[key] = data;
+			};
+		}
+		if (!socket.get) {
+			socket.__proto__.get = function (key, cb) {
+				if (this.dataList[key]) {
+					cb(null, this.dataList[key]);
+				} else {
+					cb("Could not find key");
+				}
+			}
+		}
+		if (!socket.dataList) {
+			socket.__proto__.dataList = {};
+		}
+		if (!socket.emit) {
+			socket.__proto__.emit = function (emission, data) {
+				this.write({emission: emission, data: data});
+			}
+		}
 		var travel = new traveller(socket, io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
@@ -74,7 +96,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
-		socket.emit('sync', travel.syncData());
+		travel.emit('sync', travel.syncData());
 		return travel;
 	};
 
