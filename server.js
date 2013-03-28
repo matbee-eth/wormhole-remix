@@ -37,9 +37,8 @@ var wormhole = function (io, express, pubClient, subClient) {
 				this.write({emission: emission, data: data});
 			}
 		}
-		var travel = new traveller(socket, io, pubClient, subClient);
-		travel.setSubscribeCallback(self.subscribeCallback);
-		socket.on('disconnect', function () {
+
+		var disconnectEventHandler = function () {
 			async.forEach(travel._subscriptions, function (channel, cb) {
 				var indexOfTraveller = subscriptions[channel].indexOf(travel);
 				if (indexOfTraveller > -1) {
@@ -65,8 +64,9 @@ var wormhole = function (io, express, pubClient, subClient) {
 					}
 				}, 25000);
 			});
-		});
-		socket.on("rpcResponse", function (data) {
+		};
+
+		var rpcResponseEventHandler = function (data) {
 			var uuid = data.uuid;
 			// The arguments to send to the callback function.
 			var params = [].slice.call(data.args);
@@ -78,21 +78,30 @@ var wormhole = function (io, express, pubClient, subClient) {
 				// Execute function with arguments! Blama llama lamb! Blam alam alam
 				func.apply(travel, params);
 			}
-		});
+		};
 
-		socket.on("rpc", function (data) {
+		var rpcEventHandler = function (data) {
 			if (data && data.function) {
 				travel.executeRpc(data.function, data.async, data.arguments, data.uuid);
 			}
-		});
+		};
 
-		socket.on("syncRpcFunctions", function (functinos) {
+		var syncRpcFunctionsHandler = function (functinos) {
 			var ff = function (){};
 			for (var i = 0; i < functinos.length; i++) {
 				var methodName = functinos[i];
 				travel.addClientRpc(methodName, ff);
 			}
-		});
+		};
+
+		var travel = new traveller(socket, io, pubClient, subClient);
+		travel.setSubscribeCallback(self.subscribeCallback);
+
+		socket.on('disconnect', disconnectEventHandler);
+		socket.on('close', disconnectEventHandler);
+		socket.on("rpcResponse", rpcResponseEventHandler);
+		socket.on("rpc", rpcEventHandler);
+		socket.on("syncRpcFunctions", syncRpcFunctionsHandler);
 
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
