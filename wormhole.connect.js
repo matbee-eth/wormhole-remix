@@ -39,27 +39,32 @@ adsasdasasdfadsf(function () {
 			var wh = new wormhole(socket);
 			wh.ready(theFunctionToDo);
 			window.wh = wh;
+			wh.setNamespace('THISISTHENAMESPACEFORSOCKETIO');
 		} else {
 			window.wh.setSocket(socket);
 			window.wh.setupSocket(socket);
 			window.wh.ready(theFunctionToDo);
+			wh.setNamespace('THISISTHENAMESPACEFORSOCKETIO');
 		}
     }
     var cbSock = function () {
+    	var socket;
 		console.log("SockJS Loaded and namespaced");
 		var sockjs_url = 'THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/multiplex';
         var sockjs = new SockJS(sockjs_url);
 		_multiplexer = new multiplexer(sockjs);
-        socket  = _multiplexer.channel('THISISTHENAMESPACEFORSOCKETIO');
+        socket = _multiplexer.channel('THISISTHENAMESPACEFORSOCKETIO');
 
 		if (!window.wh) {
 			var wh = new wormhole(socket);
 			wh.ready(theFunctionToDo);
+			wh.setNamespace('THISISTHENAMESPACEFORSOCKETIO');
 			window.wh = wh;
 		} else {
 			window.wh.setSocket(socket);
 			window.wh.setupSocket(socket);
 			window.wh.ready(theFunctionToDo);
+			wh.setNamespace('THISISTHENAMESPACEFORSOCKETIO');
 		}
     }
 });

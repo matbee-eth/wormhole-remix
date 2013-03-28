@@ -8,6 +8,12 @@ var wormhole = function (socket) {
 	var self = this;
 	this.setupSocket(socket);
 };
+wormhole.prototype.setNamespace = function (namespace) {
+	this.namespace = namespace;
+	if (this.namespace.substring(0,1) !== "/") {
+		this.namespace = "/"+this.namespace;
+	}
+};
 wormhole.prototype.getSocket = function () {
 	return this.socket;
 };
@@ -46,10 +52,10 @@ wormhole.prototype.setupSocket = function(socket) {
 	}
 	socket.onmessage = function (data) {
 		data = JSON.parse(data.data);
-		console.log("socket.onmessage", data.emission);
-		if(__callbackHandlers[data.emission]) {
+		console.log("socket.onmessage", data.emission, data.namespace, self.namespace);
+		if (__callbackHandlers[data.emission]) {
 			for (var i = 0; i < __callbackHandlers[data.emission].length; i++) {
-				__callbackHandlers[data.emission][i](data.data);
+				__callbackHandlers[data.emission][i](data.data, data.namespace);
 			}
 		}
 	};
@@ -72,8 +78,11 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.sync(data);
 		self.ready();
 	});
-	socket.lolo("rpc", function (data) {
-		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+	socket.lolo("rpc", function (data, namespace) {
+		console.log("RPCRPCRPC", data);
+		if (!namespace || self.namespace == namespace) {
+			self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+		}
 	});
 	socket.lolo("rpcResponse", function (data) {
 		var uuid = data.uuid;
@@ -103,6 +112,7 @@ wormhole.prototype.setupSocket = function(socket) {
 			self._connectionFailed();
 		}
 	});
+	console.log("SOCKSOCKSOCK", socket, wormhole);
 };
 wormhole.prototype.onConnectFailed = function (callback) {
 	this._connectionFailed = callback;
@@ -111,7 +121,8 @@ wormhole.prototype.setSocket = function(socket) {
 	this.socket = socket;
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
-	console.log("ExecuteRPC", arguments);
+	console.log("ExecuteRPC", this.namespace, arguments);
+
 	var self = this;
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
 		if (isAsync && uuid) {
