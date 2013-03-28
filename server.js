@@ -27,6 +27,7 @@ var wormhole = function (options, pubClient, subClient) {
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
+		console.log("SetupSocket", socket, namespace);
 		if (!socket.set) {
 			socket.constructor.prototype.set = function (key, data) {
 				this.store.data[key] = data;
@@ -45,10 +46,14 @@ var wormhole = function (options, pubClient, subClient) {
 			socket.constructor.prototype.store = {};
 			socket.constructor.prototype.store.data = {};
 		}
-		if (!socket.emit) {
-			socket.constructor.prototype.emit = function (emission, data) {
+		if (!socket.sendData) {
+			console.log("Socket sendData doesnt exist");
+			socket.constructor.prototype.sendData = function (emission, data) {
+				console.log("Writing:",emission, data);
 				this.write({emission: emission, data: data});
 			}
+		} else {
+			console.log("Socket sendData exists");
 		}
 
 		var disconnectEventHandler = function () {
@@ -120,12 +125,12 @@ var wormhole = function (options, pubClient, subClient) {
 			}
 		}
 
-		var travel = new traveller(socket, io, pubClient, subClient);
+		var travel = new traveller(socket, self.io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback);
 
 		socket.on('disconnect', disconnectEventHandler);
 		socket.on('close', function () {
-			this.emit('disconnect');
+			this.sendData('disconnect');
 		});
 		socket.on("rpcResponse", rpcResponseEventHandler);
 		socket.on("rpc", rpcEventHandler);
@@ -134,7 +139,7 @@ var wormhole = function (options, pubClient, subClient) {
 		socket.set('wormhole'+namespace, travel);
 
 		self.syncData(travel);
-		travel.emit('sync', travel.syncData());
+		socket.sendData('sync', travel.syncData());
 		return travel;
 	};
 
@@ -146,32 +151,22 @@ var wormhole = function (options, pubClient, subClient) {
 	this.wormholeConnectCallbackNamespace = {};
 
 	var setupSocketIOForNamespace = function (namespace) {
-		if (this.io) {
-			io.of(namespace).on('connection', setupSocketHandler);
-		} else if (this.sockjs) {
-			var sockjsConnection = this.multiplexer.registerChannel(namespace);
-			sockjsConnection.on('connection', setupSocketHandler);
-		}
 		var setupSocketHandler = function (socket) {
+			console.log("setupSocketHandler");
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 		};
+		if (self.io) {
+			self.io.of(namespace).on('connection', setupSocketHandler);
+		} else if (self.sockjs) {
+			var sockjsConnection = self.multiplexer.registerChannel(namespace);
+			sockjsConnection.on('connection', setupSocketHandler);
+			self.sockjs.on('connection', setupSocketHandler);
+		}
 	};
-
-	// this.namespaces = function (namespaceArray) {
-	// 	for (var i = 0; i < namespaceArray.length; i++) {
-	// 		var namespace = namespaceArray[i];
-	// 		this._namespaces.push(namespace);
-	// 		setupSocketIOForNamespace(namespace);
-	// 	}
-	// };
 	this.namespace = function (namespace, cb) {
 		this._namespaces[namespace] = cb;
 		setupSocketIOForNamespace(namespace);
-	};
-
-	this.sync = function() {
-		io.sockets.emit('sync', self.syncData());
 	};
 	this.syncData = function (traveller) {
 		for (var k in self._clientMethods) {
@@ -180,12 +175,6 @@ var wormhole = function (options, pubClient, subClient) {
 		for (var j in self._methods) {
 			traveller.addRpc(j, self._methods[j]);
 		}
-	};
-	this.transmitAllFrequencies = function (message) {
-		this.io.sockets.emit(message);
-	};
-	this.transmit = function (channel, message) {
-		this.io.sockets.in(channel).emit(message);
 	};
 	this.engage = function (namespace, cb) {
 		// this.wormholeConnectCallback = cb;
@@ -531,7 +520,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 	this.callbackRpc = function(uuid, args) {
-		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
+		this.socket.sendData("rpcResponse", {uuid: uuid, args: args});
 	};
 	this.addRpc = function (methodName, functino) {
 		this._methods[methodName] = functino;
@@ -568,7 +557,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 				out.uuid = __randomString();
 				self.uuidList[out.uuid] = callback;
 			}
-			this.socket.emit("rpc", out);
+			this.socket.sendData("rpc", out);
 		}
 	};
 	this.engageCloak = function (engaged) {
