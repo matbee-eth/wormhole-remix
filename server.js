@@ -6,12 +6,21 @@ var util = require('util')
   , fs = require('fs')
   , jsdom = require('jsdom')
   , async = require('async')
-  , request = require('request');
+  , request = require('request')
+  , websocket_multiplex = require('websocket-multiplex');
 
-var wormhole = function (io, express, pubClient, subClient) {
+var wormhole = function (options, io, express, pubClient, subClient) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
-
+	if (options.express) {
+		this.express = options.express;
+	}
+	if (options.io) {
+		this.io = options.io;
+	} else if (options.sockjs) {
+		this.sockjs = options.sockjs;
+		this.multiplexer = new websocket_multiplex.MultiplexServer(service);
+	}
 	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
@@ -124,18 +133,28 @@ var wormhole = function (io, express, pubClient, subClient) {
 	this.wormholeConnectCallbackNamespace = {};
 
 	var setupSocketIOForNamespace = function (namespace) {
-		io.of(namespace).on('connection', function (socket) {
+		if (this.io) {
+			io.of(namespace).on('connection', setupSocketHandler);
+		} else if (this.sockjs) {
+			var sockjsConnection = this.multiplexer.registerChannel(namespace);
+			sockjsConnection.on('connection', setupSocketHandler);
+		}
+		var setupSocketHandler = function (socket) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
-		});
+		};
 	};
 
-	this.namespaces = function (namespaceArray) {
-		for (var i = 0; i < namespaceArray.length; i++) {
-			var namespace = namespaceArray[i];
-			this._namespaces.push(namespace);
-			setupSocketIOForNamespace(namespace);
-		}
+	// this.namespaces = function (namespaceArray) {
+	// 	for (var i = 0; i < namespaceArray.length; i++) {
+	// 		var namespace = namespaceArray[i];
+	// 		this._namespaces.push(namespace);
+	// 		setupSocketIOForNamespace(namespace);
+	// 	}
+	// };
+	this.namespace = function (namespace, cb) {
+		this._namespaces[namespace] = cb;
+		setupSocketIOForNamespace(namespace);
 	};
 
 	this.sync = function() {
