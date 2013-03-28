@@ -15,21 +15,38 @@ wormhole.prototype.setupSocket = function(socket) {
 	var self = this;
 	var disconnectTimer;
 	var __callbackHandlers = {};
-	if (!socket.on) {
-		socket.constructor.prototype.on = function (event, cb) {
-			if (!__callbackHandlers[event]) {
-				__callbackHandlers[event] = [];
+	if (!socket.lolo) {
+		socket.constructor.prototype.lolo = function (event, cb) {
+			if (socket.send) {
+				if (!__callbackHandlers[event]) {
+					__callbackHandlers[event] = [];
+				}
+				__callbackHandlers[event].push(cb);
+			} else {
+				socket.on(event,cb);
 			}
-			__callbackHandlers[event].push(cb);
 		}
+	} else {
+		console.log("wut?");
 	}
-	if (!socket.emit) {
-		socket.constructor.prototype.emit = function (event, data) {
-			socket.send({"emission": event, data: data});
+
+	if (!socket.sendData) {
+		console.log("socket.sendData doesn't exist");
+		socket.constructor.prototype.sendData = function (event, data) {
+			if (socket.send) {
+				console.log("socket.send", event, data);
+				socket.send(JSON.stringify({"emission": event, data: data}));
+			} else {
+				console.log("socket.emit", event, data);
+				socket.emit(event, data);
+			}
 		}
+	} else {
+		console.log("Socket.sendData exists");
 	}
 	socket.onmessage = function (data) {
-		console.log(data);
+		data = JSON.parse(data.data);
+		console.log("socket.onmessage", data.emission);
 		if(__callbackHandlers[data.emission]) {
 			for (var i = 0; i < __callbackHandlers[data.emission].length; i++) {
 				__callbackHandlers[data.emission][i](data.data);
@@ -37,7 +54,6 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	};
 	socket.onopen = function () {
-		console.log("connect");
 		if(__callbackHandlers["connect"]) {
 			for (var i = 0; i < __callbackHandlers["connect"].length; i++) {
 				__callbackHandlers["connect"][i]();
@@ -52,14 +68,14 @@ wormhole.prototype.setupSocket = function(socket) {
 			}
 		}
 	};
-	socket.on("sync", function (data) {
+	socket.lolo("sync", function (data) {
 		self.sync(data);
 		self.ready();
 	});
-	socket.on("rpc", function (data) {
+	socket.lolo("rpc", function (data) {
 		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
 	});
-	socket.on("rpcResponse", function (data) {
+	socket.lolo("rpcResponse", function (data) {
 		var uuid = data.uuid;
 		// The arguments to send to the callback function.
 		var params = [].slice.call(data.args);
@@ -73,15 +89,15 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	var socketTimeout;
-	socket.on('connect', function () {
+	socket.lolo('connect', function () {
 		console.log("Connected to server before retrying new server.");
 		if (socketTimeout)
 			clearTimeout(socketTimeout);
 	});
-	socket.on('disconnect', function () {
+	socket.lolo('disconnect', function () {
 		console.log("Disconnected. Waiting to retry new server.");
 	});
-	socket.on('reconnect_failed', function () {
+	socket.lolo('reconnect_failed', function () {
 		console.log("client failed to connect, retrying new server.");
 		if (self._connectionFailed) {
 			self._connectionFailed();
@@ -95,6 +111,7 @@ wormhole.prototype.setSocket = function(socket) {
 	this.socket = socket;
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
+	console.log("ExecuteRPC", arguments);
 	var self = this;
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
 		if (isAsync && uuid) {
@@ -127,6 +144,7 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 wormhole.prototype.syncClientRpc = function (data) {
 	var self = this;
 	for (var k in data) {
+		// console.log("syncClientRpc", k);
 		this.clientFunctions[k] = eval("(function () { return " + data[k] + " }())");
 		this.clientFunctions[k].bindTo = (function (k) {
 			return function (func) {
@@ -137,6 +155,7 @@ wormhole.prototype.syncClientRpc = function (data) {
 };
 wormhole.prototype.syncRpc = function (data) {
 	for (var j in data) {
+		// console.log("syncRpc", data[j]);
 		this.rpc[data[j]] = generateRPCFunction(this, data[j], true);
 	}
 };
@@ -160,6 +179,7 @@ var generateRPCFunction = function (self, methodName, async) {
 		self.executeServerFunction(methodName, async, args, callback);
 	};
 };
+
 wormhole.prototype.executeServerFunction = function (functionName, isAsync, args, callback) {
 	var hasCallback = (typeof callback === "function");
 	var out = {
@@ -171,10 +191,10 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 		out.uuid = __randomString();
 		this.uuidList[out.uuid] = callback;
 	}
-	this.socket.emit("rpc", out);
+	this.socket.sendData("rpc", out);
 };
 wormhole.prototype.callbackRpc = function(uuid) {
-	this.socket.emit("rpcResponse", {uuid: uuid, args: [].slice.call(arguments).slice(1)});
+	this.socket.sendData("rpcResponse", {uuid: uuid, args: [].slice.call(arguments).slice(1)});
 };
 // wormhole.prototype.methods = function(methods) {
 // 	var outMethods = [];

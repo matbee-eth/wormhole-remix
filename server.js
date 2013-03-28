@@ -26,7 +26,10 @@ var wormhole = function (options, pubClient, subClient) {
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
-		console.log("SetupSocket", socket, namespace);
+		if (!socket.store) {
+			socket.constructor.prototype.store = {};
+			socket.constructor.prototype.store.data = {};
+		}
 		if (!socket.set) {
 			socket.constructor.prototype.set = function (key, data) {
 				this.store.data[key] = data;
@@ -34,10 +37,11 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 		if (!socket.get) {
 			socket.constructor.prototype.get = function (key, cb) {
+				console.log(key, !!this.store.data[key]);
 				if (this.store.data[key]) {
-					cb(null, this.dataList[key]);
+					cb(null, this.store.data[key]);
 				} else {
-					cb("Could not find key");
+					cb();
 				}
 			}
 		}
@@ -51,12 +55,9 @@ var wormhole = function (options, pubClient, subClient) {
 				if (self.io) {
 					self.emit(emission, data);
 				} else {
-					console.log("Writing:",emission, data);
-					this.write({emission: emission, data: data});
+					this.write(JSON.stringify({emission: emission, data: data}));
 				}
 			}
-		} else {
-			console.log("Socket sendData exists");
 		}
 
 		var disconnectEventHandler = function () {
@@ -119,9 +120,9 @@ var wormhole = function (options, pubClient, subClient) {
 			if (data) {
 				// console.log(data, typeof data, data.constructor);
 				// Assume JSON.
-				var json;
 				try {
-					json = JSON.parse(data);
+					data = JSON.parse(data);
+					console.log("generalSocketDataHandler", data.emission);
 					if (data.emission == "rpcResponse") {
 						rpcResponseEventHandler(data.data);
 					} else if (data.emission == "rpc") {
@@ -131,12 +132,12 @@ var wormhole = function (options, pubClient, subClient) {
 					}
 				} catch (ex) {
 					// Not json ^_^, must be a string!
-					json = data.split(',');
-					if (json[0] === "sub") {
-						var namespace = json[1];
+					data = data.split(',');
+					if (data[0] === "sub") {
+						var namespace = data[1];
 						console.log(this);
 					}
-					console.log(json);
+					console.log(data);
 				}
 			}
 		}
@@ -152,8 +153,7 @@ var wormhole = function (options, pubClient, subClient) {
 		socket.on("rpc", rpcEventHandler);
 		socket.on("syncRpcFunctions", syncRpcFunctionsHandler);
 		socket.on("data", generalSocketDataHandler);
-		socket.set('wormhole'+namespace, travel);
-
+		socket.set('wormhole' + ((self.sockjs) ? "/"+namespace : namespace), travel);
 		self.syncData(travel);
 		socket.sendData('sync', travel.syncData());
 		return travel;
@@ -168,20 +168,20 @@ var wormhole = function (options, pubClient, subClient) {
 
 	var setupSocketIOForNamespace = function (namespace) {
 		var setupSocketHandler = function (socket) {
-			console.log("setupSocketHandler");
+			console.log("Connection");
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
+			self._namespaces[namespace](socket, wh);
 		};
 		if (self.io) {
 			self.io.of(namespace).on('connection', setupSocketHandler);
 		} else if (self.sockjs) {
 			var sockjsConnection = self.multiplexer.registerChannel(namespace);
 			sockjsConnection.on('connection', setupSocketHandler);
-			sockjsConnection.on('connect', setupSocketHandler);
-			console.log(sockjsConnection);
 		}
 	};
 	this.namespace = function (namespace, cb) {
+		console.log("namespace", namespace);
 		this._namespaces[namespace] = cb;
 		setupSocketIOForNamespace(namespace);
 	};
@@ -257,7 +257,8 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 	});
 	if (this.express) {
-		this.sockjs.installHandlers(this.httpServer, {prefix:'/multiplex'});
+		self.sockjs.installHandlers(self.httpServer, {prefix:'/multiplex'});
+
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
 			res.end(data);
@@ -500,7 +501,8 @@ var traveller = function (socket, io, pubClient, subClient) {
 	};
 	this.setChannel = function (channel) {
 		this.socket.set("channel", channel);
-		this.socket.join(channel);
+		if (this.socket.join)
+			this.socket.join(channel);
 		this.currentChannel = channel;
 		this.subscribe(channel);
 	};
