@@ -7,11 +7,12 @@ adsasdasasdfadsf(function () {
 	var multiplexer;
 	var _multiplexer;
 	var define = function (scriptName, blah, func) {
+		if (func)
 		sockjs = func();
 	};
 	define.amd = "lol";
 	adsasdasasdfadsf.getJSON("THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/wormhole/socket.io.js" + "?callback=?", null, function(script) {
-		eval("(function(){"+script+";multiplexer = WebSocketMultiplex})()");
+		eval("(function(){"+script+"})()");
 		if (multiplexer) {
 			cbSock();
 		} else {

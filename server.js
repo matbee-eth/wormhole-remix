@@ -231,8 +231,11 @@ var wormhole = function (options, pubClient, subClient) {
 			});
 		}
 	});
-	if (this.express) {
+	if (self.sockjs) {
 		self.sockjs.installHandlers(self.httpServer, {prefix:'/multiplex'});
+	}
+	if (this.express) {
+
 
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
@@ -287,6 +290,7 @@ var wormhole = function (options, pubClient, subClient) {
 							request("http://cdn.sockjs.org/websocket-multiplex-0.1.js", function (err, response, body) {
 								if (!err && response.statusCode == 200) {
 									sockjsJs = sockjsJs + body.toString();
+									sockjsJs = sockjsJs + ";if (WebSocketMultiplex) multiplexer = WebSocketMultiplex;";
 									res.jsonp(sockjsJs);
 								} else {
 									res.jsonp("fuck2");

@@ -23,13 +23,13 @@ wormhole.prototype.setupSocket = function(socket) {
 	var __callbackHandlers = {};
 	if (!socket.lolo) {
 		socket.constructor.prototype.lolo = function (event, cb) {
-			if (socket.send) {
+			if (socket.constructor.name == "SocketNamespace") {
+				socket.on(event,cb);
+			} else {
 				if (!__callbackHandlers[event]) {
 					__callbackHandlers[event] = [];
 				}
 				__callbackHandlers[event].push(cb);
-			} else {
-				socket.on(event,cb);
 			}
 		}
 	} else {
@@ -39,12 +39,12 @@ wormhole.prototype.setupSocket = function(socket) {
 	if (!socket.sendData) {
 		console.log("socket.sendData doesn't exist");
 		socket.constructor.prototype.sendData = function (event, data) {
-			if (socket.send) {
-				console.log("socket.send", event, data);
-				socket.send(JSON.stringify({"emission": event, data: data}));
-			} else {
+			if (socket.constructor.name == "SocketNamespace") {
 				console.log("socket.emit", event, data);
 				socket.emit(event, data);
+			} else {
+				console.log("socket.send", event, data);
+				socket.send(JSON.stringify({"emission": event, data: data}));
 			}
 		}
 	} else {
