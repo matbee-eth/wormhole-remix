@@ -49,8 +49,12 @@ var wormhole = function (options, pubClient, subClient) {
 		if (!socket.sendData) {
 			console.log("Socket sendData doesnt exist");
 			socket.constructor.prototype.sendData = function (emission, data) {
-				console.log("Writing:",emission, data);
-				this.write({emission: emission, data: data});
+				if (self.io) {
+					self.emit(emission, data);
+				} else {
+					console.log("Writing:",emission, data);
+					this.write({emission: emission, data: data});
+				}
 			}
 		} else {
 			console.log("Socket sendData exists");
