@@ -20,6 +20,7 @@ var wormhole = function (options, pubClient, subClient) {
 	} else if (options.sockjs) {
 		this.sockjs = options.sockjs;
 		this.multiplexer = new websocket_multiplex.MultiplexServer(service);
+		service.installHandlers(options.express, {prefix:'/multiplex'});
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
@@ -247,12 +248,12 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 	});
 
-	if (express) {
+	if (this.express) {
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
 			res.end(data);
 		}
-		express.get('/wormhole/client.js', function (req, res) {
+		this.express.get('/wormhole/client.js', function (req, res) {
 			res.setHeader("Content-Type", "application/javascript");
 			if (!wormholeClientJs) {
 				fs.readFile(__dirname + '/client.js', function (err, data) {
@@ -267,16 +268,16 @@ var wormhole = function (options, pubClient, subClient) {
 				sendTheClientJs(req, res);
 			}
 		});
-		express.get('/wormhole/wormhole.connect.js', function (req, res) {
+		this.express.get('/wormhole/wormhole.connect.js', function (req, res) {
 			doIt(req, res, "groupnotes");
 		});
 
-		express.get('/wormhole/extension.connect.js', function (req, res) {
+		this.express.get('/wormhole/extension.connect.js', function (req, res) {
 			doIt(req, res, "extension");
 		});
 
 		var socketioJs;
-		express.get('/wormhole/socket.io.js', function (req, res) {
+		this.express.get('/wormhole/socket.io.js', function (req, res) {
 			if (socketioJs) {
 				res.jsonp(socketioJs);
 			} else {
