@@ -9,7 +9,7 @@ var util = require('util')
   , request = require('request')
   , websocket_multiplex = require('websocket-multiplex');
 
-var wormhole = function (options, io, express, pubClient, subClient) {
+var wormhole = function (options, pubClient, subClient) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
 	if (options.express) {
@@ -21,7 +21,6 @@ var wormhole = function (options, io, express, pubClient, subClient) {
 		this.sockjs = options.sockjs;
 		this.multiplexer = new websocket_multiplex.MultiplexServer(service);
 	}
-	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
 		if (!socket.set) {
@@ -531,29 +530,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 			}
 			this.socket.emit("rpc", out);
 		}
-	};
-	this.destination = function (channel) {
-		this.socket.join(channel);
-	};
-	this.transmit = function (message) {
-		this.socket.emit(message);
-	};
-	this.makeItSo = function (func) {
-		var args = [].slice.call(arguments);
-		if (args.length > 1) {
-			args = args.slice(1);
-		} else {
-			args = [];
-		}
-
-		if (this.cloakEngaged) {
-			this.transmit("function", {func: traveller.encryptFunction(wormhole.packageFunction(func, args)) });
-		} else {
-			this.transmit("function", {func: wormhole.packageFunction(func, args)});
-		}
-	};
-	this.fire = function (func) {
-		this.transmit({rpc: func, args: [].slice.call(arguments).slice(1)});
 	};
 	this.engageCloak = function (engaged) {
 		this.cloakEngaged = engaged;
