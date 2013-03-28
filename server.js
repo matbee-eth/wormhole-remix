@@ -8,7 +8,7 @@ var util = require('util')
   , async = require('async')
   , request = require('request');
 
-var wormhole = function (io, express, pubClient, subClient) {
+var wormhole = function (io, express, pubClient, subClient, options) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
 
@@ -155,7 +155,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 
 	if (express) {
 		var sendTheClientJs = function (req, res) {
-			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
+			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+options.hostname || req.headers.host);
 			res.end(data);
 		}
 		express.get('/wormhole/client.js', function (req, res) {
@@ -186,7 +186,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 			if (socketioJs) {
 				res.jsonp(socketioJs);
 			} else {
-				request(req.protocol + "://" + req.headers.host + '/socket.io/socket.io.js', function (error, response, body) {
+				request(options.protocol || req.protocol + "://" + options.hostname || req.headers.host + '/socket.io/socket.io.js', function (error, response, body) {
 					if (!error && response.statusCode == 200) {
 						socketioJs = body.toString();
 						res.jsonp(socketioJs);
@@ -211,7 +211,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 							var sendAndCustomizeItBitches = function () {
 								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
-								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, req.protocol + "://" + req.headers.host);
+								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, options.protocol || req.protocol + "://" + options.hostname || req.headers.host);
 								res.end(data);
 							}
 
