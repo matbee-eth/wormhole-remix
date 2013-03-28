@@ -15,22 +15,25 @@ var wormhole = function (options, pubClient, subClient) {
 	if (options.express) {
 		this.express = options.express;
 	}
+	if (options.server) {
+		this.httpServer = options.server;
+	}
 	if (options.io) {
 		this.io = options.io;
 	} else if (options.sockjs) {
 		this.sockjs = options.sockjs;
 		this.multiplexer = new websocket_multiplex.MultiplexServer(this.sockjs);
-		this.sockjs.installHandlers(options.express, {prefix:'/multiplex'});
+		this.sockjs.installHandlers(this.httpServer, {prefix:'/multiplex'});
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
 		if (!socket.set) {
-			socket.__proto__.set = function (key, data) {
+			socket.constructor.prototype.set = function (key, data) {
 				this.store.data[key] = data;
 			};
 		}
 		if (!socket.get) {
-			socket.__proto__.get = function (key, cb) {
+			socket.constructor.prototype.get = function (key, cb) {
 				if (this.store.data[key]) {
 					cb(null, this.dataList[key]);
 				} else {
@@ -39,11 +42,11 @@ var wormhole = function (options, pubClient, subClient) {
 			}
 		}
 		if (!socket.store || !socket.store.data) {
-			socket.__proto__.store = {};
-			socket.__proto__.store.data = {};
+			socket.constructor.prototype.store = {};
+			socket.constructor.prototype.store.data = {};
 		}
 		if (!socket.emit) {
-			socket.__proto__.emit = function (emission, data) {
+			socket.constructor.prototype.emit = function (emission, data) {
 				this.write({emission: emission, data: data});
 			}
 		}
@@ -275,14 +278,11 @@ var wormhole = function (options, pubClient, subClient) {
 			doIt(req, res, "extension");
 		});
 
-		this.express.get('/multiplex/info', function (r, re) {
-			re.end();
-		});
-
 		var socketioJs;
 		var sockjsJs;
 
 		this.express.get('/wormhole/socket.io.js', function (req, res) {
+			res.setHeader('Access-Control-Allow-Origin', '*');
 			if (self.io) {
 				if (socketioJs) {
 					res.jsonp(socketioJs);

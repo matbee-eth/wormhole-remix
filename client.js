@@ -14,6 +14,29 @@ wormhole.prototype.getSocket = function () {
 wormhole.prototype.setupSocket = function(socket) {
 	var self = this;
 	var disconnectTimer;
+	var __callbackHandlers = {};
+	if (!socket.on) {
+		socket.constructor.prototype.on = function (event, cb) {
+			if (!__callbackHandlers[event]) {
+				__callbackHandlers[event] = [];
+			}
+			__callbackHandlers[event].push(cb);
+		}
+	}
+	if (!socket.emit) {
+		socket.constructor.prototype.emit = function (event, data) {
+			socket.send({"emission": event, data: data});
+		}
+	}
+	if (socket.onmessage) {
+		//
+	}
+	if (socket.onopen) {
+		//
+	}
+	if (socket.onclose) {
+		//
+	}
 	socket.on("sync", function (data) {
 		self.sync(data);
 		self.ready();

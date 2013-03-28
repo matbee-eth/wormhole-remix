@@ -5,6 +5,7 @@ adsasdasasdfadsf(function () {
 	var io = wormholeIO = module.exports = {};
 	var sockjs;
 	var multiplexer;
+	var _multiplexer;
 	var define = function (scriptName, blah, func) {
 		sockjs = func();
 	};
@@ -48,16 +49,17 @@ adsasdasasdfadsf(function () {
 		console.log("SockJS Loaded and namespaced");
 		var sockjs_url = 'THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/multiplex';
         var sockjs = new SockJS(sockjs_url);
-        socket  = multiplexer.channel('THISISTHENAMESPACEFORSOCKETIO');
+		_multiplexer = new multiplexer(sockjs);
+        socket  = _multiplexer.channel('THISISTHENAMESPACEFORSOCKETIO');
 
-		// if (!window.wh) {
-		// 	var wh = new wormhole(socket);
-		// 	wh.ready(theFunctionToDo);
-		// 	window.wh = wh;
-		// } else {
-		// 	window.wh.setSocket(socket);
-		// 	window.wh.setupSocket(socket);
-		// 	window.wh.ready(theFunctionToDo);
-		// }
+		if (!window.wh) {
+			var wh = new wormhole(socket);
+			wh.ready(theFunctionToDo);
+			window.wh = wh;
+		} else {
+			window.wh.setSocket(socket);
+			window.wh.setupSocket(socket);
+			window.wh.ready(theFunctionToDo);
+		}
     }
 });
