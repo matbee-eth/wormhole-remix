@@ -19,8 +19,8 @@ var wormhole = function (options, pubClient, subClient) {
 		this.io = options.io;
 	} else if (options.sockjs) {
 		this.sockjs = options.sockjs;
-		this.multiplexer = new websocket_multiplex.MultiplexServer(service);
-		service.installHandlers(options.express, {prefix:'/multiplex'});
+		this.multiplexer = new websocket_multiplex.MultiplexServer(this.sockjs);
+		this.sockjs.installHandlers(options.express, {prefix:'/multiplex'});
 	}
 	var self = this;
 	var setupSocket = function (socket, namespace) {
@@ -247,7 +247,6 @@ var wormhole = function (options, pubClient, subClient) {
 			});
 		}
 	});
-
 	if (this.express) {
 		var sendTheClientJs = function (req, res) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+req.headers.host);
@@ -276,17 +275,47 @@ var wormhole = function (options, pubClient, subClient) {
 			doIt(req, res, "extension");
 		});
 
+		this.express.get('/multiplex/info', function (r, re) {
+			re.end();
+		});
+
 		var socketioJs;
+		var sockjsJs;
+
 		this.express.get('/wormhole/socket.io.js', function (req, res) {
-			if (socketioJs) {
-				res.jsonp(socketioJs);
+			if (self.io) {
+				if (socketioJs) {
+					res.jsonp(socketioJs);
+				} else {
+					request(req.protocol + "://" + req.headers.host + '/socket.io/socket.io.js', function (error, response, body) {
+						if (!error && response.statusCode == 200) {
+							socketioJs = body.toString();
+							res.jsonp(socketioJs);
+						}
+					});
+				}
+			} else if (self.sockjs) {
+				if (sockjsJs) {
+					res.jsonp(sockjsJs);
+				} else {
+					request("http://cdn.sockjs.org/sockjs-0.3.min.js", function (error, response, body) {
+						if (!error && response.statusCode == 200) {
+							sockjsJs = body.toString();
+							request("http://cdn.sockjs.org/websocket-multiplex-0.1.js", function (err, response, body) {
+								if (!err && response.statusCode == 200) {
+									sockjsJs = sockjsJs + body.toString();
+									res.jsonp(sockjsJs);
+								} else {
+									res.jsonp("fuck2");
+								}
+							});
+						} else {
+							res.jsonp("fuck1");
+						}
+					});
+				}
 			} else {
-				request(req.protocol + "://" + req.headers.host + '/socket.io/socket.io.js', function (error, response, body) {
-					if (!error && response.statusCode == 200) {
-						socketioJs = body.toString();
-						res.jsonp(socketioJs);
-					}
-				});
+				res.end();
 			}
 		});
 
