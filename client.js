@@ -29,13 +29,31 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	}
 	if (socket.onmessage) {
-		//
+		socket.onmessage = function (data) {
+			if(__callbackHandlers[data.emission]) {
+				for (var i = 0; i < __callbackHandlers[data.emission].length; i++) {
+					__callbackHandlers[data.emission][i](data.data);
+				}
+			}
+		};
 	}
 	if (socket.onopen) {
-		//
+		socket.onopen = function () {
+			if(__callbackHandlers["connect"]) {
+				for (var i = 0; i < __callbackHandlers["connect"].length; i++) {
+					__callbackHandlers["connect"][i]();
+				}
+			}
+		}
 	}
 	if (socket.onclose) {
-		//
+		socket.onclose = function () {
+			if(__callbackHandlers["disconnect"]) {
+				for (var i = 0; i < __callbackHandlers["disconnect"].length; i++) {
+					__callbackHandlers["disconnect"][i]();
+				}
+			}
+		}
 	}
 	socket.on("sync", function (data) {
 		self.sync(data);
