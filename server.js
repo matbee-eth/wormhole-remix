@@ -44,6 +44,34 @@ var wormhole = function (io, express, pubClient, subClient) {
 				}, 25000);
 			});
 		});
+		socket.on("rpcResponse", function (data) {
+			var uuid = data.uuid;
+			// The arguments to send to the callback function.
+			var params = [].slice.call(data.args);
+			// Get function to call from uuidList.
+			var func = travel.uuidList[uuid];
+			if (func && typeof func === "function") {
+				// Remove function from uuidList.
+				delete travel.uuidList[uuid];
+				// Execute function with arguments! Blama llama lamb! Blam alam alam
+				func.apply(travel, params);
+			}
+		});
+
+		socket.on("rpc", function (data) {
+			if (data && data.function) {
+				travel.executeRpc(data.function, data.async, data.arguments, data.uuid);
+			}
+		});
+
+		socket.on("syncRpcFunctions", function (functinos) {
+			var ff = function (){};
+			for (var i = 0; i < functinos.length; i++) {
+				var methodName = functinos[i];
+				travel.addClientRpc(methodName, ff);
+			}
+		});
+
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
 		socket.emit('sync', travel.syncData());
@@ -313,31 +341,8 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.setSubscribeCallback = null;
 	};
 
-	socket.on("rpcResponse", function (data) {
-		var uuid = data.uuid;
-		// The arguments to send to the callback function.
-		var params = [].slice.call(data.args);
-		// Get function to call from uuidList.
-		var func = self.uuidList[uuid];
-		if (func && typeof func === "function") {
-			// Remove function from uuidList.
-			delete self.uuidList[uuid];
-			// Execute function with arguments! Blama llama lamb! Blam alam alam
-			func.apply(self, params);
-		}
-	});
-	socket.on("rpc", function (data) {
-		if (data && data.function) {
-			self.executeRpc(data.function, data.async, data.arguments, data.uuid);
-		}
-	});
-	socket.on("syncRpcFunctions", function (functinos) {
-		var ff = function (){};
-		for (var i = 0; i < functinos.length; i++) {
-			var methodName = functinos[i];
-			self.addClientRpc(methodName, ff);
-		}
-	});
+
+
 	var transactions = {};
 	this.publish = function (obj) {
 		this.publishTo(obj, this.getNamespace() + this.currentChannel)
