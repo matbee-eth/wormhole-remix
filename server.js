@@ -53,7 +53,7 @@ var wormhole = function (options, pubClient, subClient) {
 			console.log("Socket sendData doesnt exist");
 			socket.constructor.prototype.sendData = function (emission, data, namespace) {
 				if (self.io) {
-					self.emit(emission, data);
+					this.emit(emission, data);
 				} else {
 					this.write(JSON.stringify({emission: emission, data: data, namespace: namespace}));
 				}
@@ -168,12 +168,13 @@ var wormhole = function (options, pubClient, subClient) {
 
 	var setupSocketIOForNamespace = function (namespace) {
 		var setupSocketHandler = function (socket) {
-			console.log("Connection");
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 			self._namespaces[namespace](socket, wh);
+			console.log("Connection", namespace, self._namespaces);
 		};
 		if (self.io) {
+			console.log("namespace", namespace);
 			self.io.of(namespace).on('connection', setupSocketHandler);
 		} else if (self.sockjs) {
 			var sockjsConnection = self.multiplexer.registerChannel(namespace);
@@ -182,6 +183,11 @@ var wormhole = function (options, pubClient, subClient) {
 	};
 	this.namespace = function (namespace, cb) {
 		console.log("namespace", namespace);
+		if (self.io) {
+			if (namespace.substring(0,1) !== "/") {
+				namespace = "/" + namespace;
+			}
+		}
 		this._namespaces[namespace] = cb;
 		setupSocketIOForNamespace(namespace);
 	};

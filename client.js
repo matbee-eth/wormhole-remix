@@ -24,7 +24,7 @@ wormhole.prototype.setupSocket = function(socket) {
 	if (!socket.lolo) {
 		socket.constructor.prototype.lolo = function (event, cb) {
 			if (socket.constructor.name == "SocketNamespace") {
-				socket.on(event,cb);
+				this.on(event,cb);
 			} else {
 				if (!__callbackHandlers[event]) {
 					__callbackHandlers[event] = [];
@@ -41,7 +41,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		socket.constructor.prototype.sendData = function (event, data) {
 			if (socket.constructor.name == "SocketNamespace") {
 				console.log("socket.emit", event, data);
-				socket.emit(event, data);
+				this.emit(event, data);
 			} else {
 				console.log("socket.send", event, data);
 				socket.send(JSON.stringify({"emission": event, data: data}));
@@ -75,6 +75,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	};
 	socket.lolo("sync", function (data) {
+		console.log("sync");
 		self.sync(data);
 		self.ready();
 	});
@@ -85,6 +86,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	socket.lolo("rpcResponse", function (data) {
+		console.log("rpcResponse");
 		var uuid = data.uuid;
 		// The arguments to send to the callback function.
 		var params = [].slice.call(data.args);
@@ -102,9 +104,6 @@ wormhole.prototype.setupSocket = function(socket) {
 		console.log("Connected to server before retrying new server.");
 		if (socketTimeout)
 			clearTimeout(socketTimeout);
-	});
-	socket.on("connect", function () {
-		console.log("connected");
 	});
 	socket.lolo('disconnect', function () {
 		console.log("Disconnected. Waiting to retry new server.");
