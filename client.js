@@ -103,6 +103,9 @@ wormhole.prototype.setupSocket = function(socket) {
 		if (socketTimeout)
 			clearTimeout(socketTimeout);
 	});
+	socket.on("connect", function () {
+		console.log("connected");
+	});
 	socket.lolo('disconnect', function () {
 		console.log("Disconnected. Waiting to retry new server.");
 	});
@@ -112,7 +115,6 @@ wormhole.prototype.setupSocket = function(socket) {
 			self._connectionFailed();
 		}
 	});
-	console.log("SOCKSOCKSOCK", socket, wormhole);
 };
 wormhole.prototype.onConnectFailed = function (callback) {
 	this._connectionFailed = callback;
