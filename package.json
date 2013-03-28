@@ -11,6 +11,7 @@
     "jsdom": "~0.3.4",
     "async": "~0.2.6",
     "request": "~2.16.6",
-    "sockjs": "~0.3.5"
+    "sockjs": "~0.3.5",
+    "websocket-multiplex": "~0.1.0"
   }
 }

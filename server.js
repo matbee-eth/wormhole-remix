@@ -17,20 +17,21 @@ var wormhole = function (io, express, pubClient, subClient) {
 	var setupSocket = function (socket, namespace) {
 		if (!socket.set) {
 			socket.__proto__.set = function (key, data) {
-				this.dataList[key] = data;
+				this.store.data[key] = data;
 			};
 		}
 		if (!socket.get) {
 			socket.__proto__.get = function (key, cb) {
-				if (this.dataList[key]) {
+				if (this.store.data[key]) {
 					cb(null, this.dataList[key]);
 				} else {
 					cb("Could not find key");
 				}
 			}
 		}
-		if (!socket.dataList) {
-			socket.__proto__.dataList = {};
+		if (!socket.store || !socket.store.data) {
+			socket.__proto__.store = {};
+			socket.__proto__.store.data = {};
 		}
 		if (!socket.emit) {
 			socket.__proto__.emit = function (emission, data) {
@@ -94,6 +95,12 @@ var wormhole = function (io, express, pubClient, subClient) {
 			}
 		};
 
+		var generalSocketDataHandler = function (data) {
+			if (data) {
+				// Assume JSON.
+			}
+		}
+
 		var travel = new traveller(socket, io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback);
 
@@ -102,7 +109,7 @@ var wormhole = function (io, express, pubClient, subClient) {
 		socket.on("rpcResponse", rpcResponseEventHandler);
 		socket.on("rpc", rpcEventHandler);
 		socket.on("syncRpcFunctions", syncRpcFunctionsHandler);
-
+		socket.on("data", generalSocketDataHandler);
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
 		travel.emit('sync', travel.syncData());
