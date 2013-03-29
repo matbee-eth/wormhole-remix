@@ -11,10 +11,43 @@ var util = require('util')
 var wormhole = function (io, express, pubClient, subClient, options) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
-
+	options = options || {};
+	this.sockjs = options.sockjs;
 	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
+		if (!socket.store) {
+			socket.constructor.prototype.store = {};
+			socket.constructor.prototype.store.data = {};
+		}
+		if (!socket.set) {
+			socket.constructor.prototype.set = function (key, data) {
+				this.store.data[key] = data;
+			};
+		}
+		if (!socket.get) {
+			socket.constructor.prototype.get = function (key, cb) {
+				if (this.store.data[key]) {
+					cb(null, this.store.data[key]);
+				} else {
+					cb();
+				}
+			}
+		}
+		if (!socket.store || !socket.store.data) {
+			socket.constructor.prototype.store = {};
+			socket.constructor.prototype.store.data = {};
+		}
+		if (!socket.sendData) {
+			socket.constructor.prototype.sendData = function (emission, data, namespace) {
+				if (self.io) {
+					this.emit(emission, data);
+				} else {
+					this.write(JSON.stringify({emission: emission, data: data, namespace: namespace}));
+				}
+			}
+		}
+
 		var travel = new traveller(socket, io, pubClient, subClient);
 		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
@@ -155,7 +188,11 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 
 	if (express) {
 		var sendTheClientJs = function (req, res) {
-			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+(options.hostname || req.headers.host) + ((":"+options.port) || ""));
+			var port = "";
+			if (options.port) {
+				port = ":"+options.port;
+			}
+			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+(options.hostname || req.headers.host) + port);
 			res.end(data);
 		}
 		express.get('/wormhole/client.js', function (req, res) {
@@ -183,10 +220,14 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 
 		var socketioJs;
 		express.get('/wormhole/socket.io.js', function (req, res) {
+			var port= "";
+			if (options.port) {
+				port = ":"+options.port;
+			}
 			if (socketioJs) {
 				res.jsonp(socketioJs);
 			} else {
-				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || "") + '/socket.io/socket.io.js', function (error, response, body) {
+				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
 					if (!error && response.statusCode == 200) {
 						socketioJs = body.toString();
 						res.jsonp(socketioJs);
@@ -209,9 +250,13 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							func = "(" + func.toString() + "(" + args +"))";
 
 							var sendAndCustomizeItBitches = function () {
+								var port= "";
+								if (options.port) {
+									port = ":"+options.port;
+								}
 								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
-								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + ((":"+options.port) || ""));
+								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								res.end(data);
 							}
 
