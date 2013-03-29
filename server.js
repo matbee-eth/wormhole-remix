@@ -59,6 +59,7 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 
 		var disconnectEventHandler = function () {
+			if (travel)
 			async.forEach(travel._subscriptions, function (channel, cb) {
 				if (subscriptions[channel]) {
 					var indexOfTraveller = subscriptions[channel].indexOf(travel);
@@ -163,10 +164,12 @@ var wormhole = function (options, pubClient, subClient) {
 					}
 				} catch (ex) {
 					// Not json ^_^, must be a string!
-					data = data.split(',');
-					if (data[0] === "sub") {
-						var namespace = data[1];
-					}
+					// if (data.split) {
+					// 	data = data.split(',');
+					// 	if (data[0] === "sub") {
+					// 		var namespace = data[1];
+					// 	}
+					// }
 				}
 			}
 		}
