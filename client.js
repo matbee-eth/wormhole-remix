@@ -20,16 +20,16 @@ wormhole.prototype.getSocket = function () {
 wormhole.prototype.setupSocket = function(socket) {
 	var self = this;
 	var disconnectTimer;
-	var __callbackHandlers = {};
 	if (!socket.lolo) {
+		socket.constructor.prototype. __callbackHandlers = {};
 		socket.constructor.prototype.lolo = function (event, cb) {
 			if (socket.constructor.name == "SocketNamespace") {
 				this.on(event,cb);
 			} else {
-				if (!__callbackHandlers[event]) {
-					__callbackHandlers[event] = [];
+				if (!this.__callbackHandlers[event]) {
+					this.__callbackHandlers[event] = [];
 				}
-				__callbackHandlers[event].push(cb);
+				this.__callbackHandlers[event].push(cb);
 			}
 		}
 	} else {
@@ -53,24 +53,24 @@ wormhole.prototype.setupSocket = function(socket) {
 	socket.onmessage = function (data) {
 		data = JSON.parse(data.data);
 		console.log("socket.onmessage", data.emission, data.namespace, self.namespace);
-		if (__callbackHandlers[data.emission]) {
-			for (var i = 0; i < __callbackHandlers[data.emission].length; i++) {
-				__callbackHandlers[data.emission][i](data.data, data.namespace);
+		if (socket.__callbackHandlers[data.emission]) {
+			for (var i = 0; i < socket.__callbackHandlers[data.emission].length; i++) {
+				socket.__callbackHandlers[data.emission][i](data.data, data.namespace);
 			}
 		}
 	};
 	socket.onopen = function () {
-		if(__callbackHandlers["connect"]) {
-			for (var i = 0; i < __callbackHandlers["connect"].length; i++) {
-				__callbackHandlers["connect"][i]();
+		if(socket.__callbackHandlers["connect"]) {
+			for (var i = 0; i < socket.__callbackHandlers["connect"].length; i++) {
+				socket.__callbackHandlers["connect"][i]();
 			}
 		}
 	};
 	socket.onclose = function () {
 		console.log("closed");
-		if(__callbackHandlers["disconnect"]) {
-			for (var i = 0; i < __callbackHandlers["disconnect"].length; i++) {
-				__callbackHandlers["disconnect"][i]();
+		if(socket.__callbackHandlers["disconnect"]) {
+			for (var i = 0; i < socket.__callbackHandlers["disconnect"].length; i++) {
+				socket.__callbackHandlers["disconnect"][i]();
 			}
 		}
 	};
