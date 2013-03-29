@@ -603,6 +603,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 	var self = this;
 	this.setSubscribeCallback = function (cb) {
 		this.subscribe = function (channel) {
+			console.log("self.getNamespace() + channel", self.getNamespace() + channel);
 			self._subscriptions.push(self.getNamespace() + channel);
 			cb(self.getNamespace() + channel, self);
 		}
