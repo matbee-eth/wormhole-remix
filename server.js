@@ -60,15 +60,17 @@ var wormhole = function (options, pubClient, subClient) {
 
 		var disconnectEventHandler = function () {
 			async.forEach(travel._subscriptions, function (channel, cb) {
-				var indexOfTraveller = subscriptions[channel].indexOf(travel);
-				if (indexOfTraveller > -1) {
-					subscriptions[channel].splice(indexOfTraveller, 1);
-				}
+				if (subscriptions[channel]) {
+					var indexOfTraveller = subscriptions[channel].indexOf(travel);
+					if (indexOfTraveller > -1) {
+						subscriptions[channel].splice(indexOfTraveller, 1);
+					}
 
-				var remainingSubscriptionsInChannel = subscriptions[channel] || [];
-				if (remainingSubscriptionsInChannel.length === 0) {
-					subClient.unsubscribe(channel);
-					delete subscriptions[channel];
+					var remainingSubscriptionsInChannel = subscriptions[channel] || [];
+					if (remainingSubscriptionsInChannel.length === 0) {
+						subClient.unsubscribe(channel);
+						delete subscriptions[channel];
+					}
 				}
 				cb();
 			}, function (err) {
@@ -140,10 +142,7 @@ var wormhole = function (options, pubClient, subClient) {
 		travel.setSubscribeCallback(self.subscribeCallback);
 
 		socket.on('disconnect', disconnectEventHandler);
-		socket.on('close', function () {
-			this.sendData('disconnect');
-			disconnectEventHandler();
-		});
+		socket.on('close', disconnectEventHandler);
 		socket.on("rpcResponse", rpcResponseEventHandler);
 		socket.on("rpc", rpcEventHandler);
 		socket.on("syncRpcFunctions", syncRpcFunctionsHandler);
