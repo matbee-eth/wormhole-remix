@@ -11,7 +11,7 @@ var util = require('util')
 var wormhole = function (io, express, pubClient, subClient, options) {
 	var wormholeConnectJs;
 	var wormholeClientJs;
-
+	var options = options || {};
 	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
