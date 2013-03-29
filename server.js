@@ -142,6 +142,7 @@ var wormhole = function (options, pubClient, subClient) {
 		socket.on('disconnect', disconnectEventHandler);
 		socket.on('close', function () {
 			this.sendData('disconnect');
+			disconnectEventHandler();
 		});
 		socket.on("rpcResponse", rpcResponseEventHandler);
 		socket.on("rpc", rpcEventHandler);
