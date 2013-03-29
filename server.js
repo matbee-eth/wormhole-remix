@@ -37,7 +37,6 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 		if (!socket.get) {
 			socket.constructor.prototype.get = function (key, cb) {
-				console.log(key, !!this.store.data[key]);
 				if (this.store.data[key]) {
 					cb(null, this.store.data[key]);
 				} else {
@@ -50,7 +49,6 @@ var wormhole = function (options, pubClient, subClient) {
 			socket.constructor.prototype.store.data = {};
 		}
 		if (!socket.sendData) {
-			console.log("Socket sendData doesnt exist");
 			socket.constructor.prototype.sendData = function (emission, data, namespace) {
 				if (self.io) {
 					this.emit(emission, data);
@@ -118,11 +116,9 @@ var wormhole = function (options, pubClient, subClient) {
 
 		var generalSocketDataHandler = function (data) {
 			if (data) {
-				// console.log(data, typeof data, data.constructor);
 				// Assume JSON.
 				try {
 					data = JSON.parse(data);
-					console.log("generalSocketDataHandler", data.emission);
 					if (data.emission == "rpcResponse") {
 						rpcResponseEventHandler(data.data);
 					} else if (data.emission == "rpc") {
@@ -135,9 +131,7 @@ var wormhole = function (options, pubClient, subClient) {
 					data = data.split(',');
 					if (data[0] === "sub") {
 						var namespace = data[1];
-						console.log(this);
 					}
-					console.log(data);
 				}
 			}
 		}
@@ -171,10 +165,8 @@ var wormhole = function (options, pubClient, subClient) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 			self._namespaces[namespace](socket, wh);
-			console.log("Connection", namespace, self._namespaces);
 		};
 		if (self.io) {
-			console.log("namespace", namespace);
 			self.io.of(namespace).on('connection', setupSocketHandler);
 		} else if (self.sockjs) {
 			var sockjsConnection = self.multiplexer.registerChannel(namespace);
@@ -182,7 +174,6 @@ var wormhole = function (options, pubClient, subClient) {
 		}
 	};
 	this.namespace = function (namespace, cb) {
-		console.log("namespace", namespace);
 		if (self.io) {
 			if (namespace.substring(0,1) !== "/") {
 				namespace = "/" + namespace;
@@ -216,7 +207,6 @@ var wormhole = function (options, pubClient, subClient) {
 	};
 
 	this.subscribeCallback = function (channel, traveller) {
-		console.log("subscribeCallback", traveller.currentNamespace, traveller.currentChannel);
 		if (!subscriptions[channel]) {
 			subscriptions[channel] = [];
 		}
@@ -230,7 +220,6 @@ var wormhole = function (options, pubClient, subClient) {
 		if (subscriptions[channel]) {
 			// OK We have someone subscribed to this! :)
 			async.forEach(subscriptions[channel], function (traveller, cb) {
-				console.log(traveller.currentNamespace, traveller.currentChannel, outObj);
 				if (traveller && traveller.subscribeCallback) {
 					traveller.subscribeCallback(outObj);
 				}
@@ -451,7 +440,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 	};
 	var generateGroupRpc = function (methodName, skipSelf) {
 		return function () {
-			console.log("GroupRpc", self.currentChannel, self.currentNamespace, methodName);
 			var args = [].slice.call(arguments);
 			var channel = self.currentChannel;
 			var publishObj = {
