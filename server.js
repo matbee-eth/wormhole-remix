@@ -16,41 +16,43 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	this.io = io;
 	var self = this;
 	var setupSocket = function (socket, namespace) {
-		if (!socket.store) {
-			socket.constructor.prototype.store = {};
-			socket.constructor.prototype.store.data = {};
-		}
-		if (!socket.set) {
-			socket.constructor.prototype.set = function (key, data) {
-				this.store.data[key] = data;
-			};
-		}
-		if (!socket.get) {
-			socket.constructor.prototype.get = function (key, cb) {
-				if (this.store.data[key]) {
-					cb(null, this.store.data[key]);
-				} else {
-					cb();
+		if (socket.constructor.name !== "Socket") {
+			if (!socket.store) {
+				socket.constructor.prototype.store = {};
+				socket.constructor.prototype.store.data = {};
+			}
+			if (!socket.set) {
+				socket.constructor.prototype.set = function (key, data) {
+					this.store.data[key] = data;
+				};
+			}
+			if (!socket.get) {
+				socket.constructor.prototype.get = function (key, cb) {
+					if (this.store.data[key]) {
+						cb(null, this.store.data[key]);
+					} else {
+						cb();
+					}
 				}
 			}
+			if (!socket.store || !socket.store.data) {
+				socket.constructor.prototype.store = {};
+				socket.constructor.prototype.store.data = {};
+			}
 		}
-		if (!socket.store || !socket.store.data) {
-			socket.constructor.prototype.store = {};
-			socket.constructor.prototype.store.data = {};
-		}
+
 		if (!socket.sendData) {
-			socket.constructor.prototype.sendData = function (emission, data, namespace) {
-				if (self.io) {
+			if (self.io) {
+				socket.constructor.prototype.sendData = function (emission, data, namespace) {
 					this.emit(emission, data);
-				} else {
+				}
+			} else {
+				socket.constructor.prototype.sendData = function (emission, data, namespace) {
 					this.write(JSON.stringify({emission: emission, data: data, namespace: namespace}));
 				}
 			}
 		}
-
-		var travel = new traveller(socket, io, pubClient, subClient);
-		travel.setSubscribeCallback(self.subscribeCallback);
-		socket.on('disconnect', function () {
+		var disconnectionHandler = function () {
 			async.forEach(travel._subscriptions, function (channel, cb) {
 				var indexOfTraveller = subscriptions[channel].indexOf(travel);
 				if (indexOfTraveller > -1) {
@@ -76,10 +78,13 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 					}
 				}, 25000);
 			});
-		});
+		};
+		var travel = new traveller(socket, io, pubClient, subClient);
+		travel.setSubscribeCallback(self.subscribeCallback);
+		socket.on('disconnect', disconnectionHandler);
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
-		socket.emit('sync', travel.syncData());
+		socket.sendData('sync', travel.syncData());
 		return travel;
 	};
 
@@ -475,7 +480,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 	this.callbackRpc = function(uuid, args) {
-		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
+		this.socket.sendData("rpcResponse", {uuid: uuid, args: args});
 	};
 	this.addRpc = function (methodName, functino) {
 		this._methods[methodName] = functino;
@@ -512,14 +517,14 @@ var traveller = function (socket, io, pubClient, subClient) {
 				out.uuid = __randomString();
 				self.uuidList[out.uuid] = callback;
 			}
-			this.socket.emit("rpc", out);
+			this.socket.sendData("rpc", out);
 		}
 	};
 	this.destination = function (channel) {
 		this.socket.join(channel);
 	};
 	this.transmit = function (message) {
-		this.socket.emit(message);
+		this.socket.sendData(message);
 	};
 	this.makeItSo = function (func) {
 		var args = [].slice.call(arguments);

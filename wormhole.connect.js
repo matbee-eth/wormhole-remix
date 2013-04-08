@@ -2,6 +2,12 @@ var adsasdasasdfadsf = $ || LOLO;
 adsasdasasdfadsf(function () {
 	var wormholeIO;
 	var module = {};
+	var require = function () {
+
+	};
+	var define = function () {
+
+	};
 	var io = wormholeIO = module.exports = {};
 	adsasdasasdfadsf.getJSON("THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/wormhole/socket.io.js" + "?callback=?", null, function(script) {
 		eval("(function(){"+script+"})()");
