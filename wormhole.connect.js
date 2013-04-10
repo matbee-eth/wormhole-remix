@@ -1,6 +1,8 @@
 var adsasdasasdfadsf;
 if ($) {
-	adsasdasasdfadsf = $ || LOLO;
+	adsasdasasdfadsf = $;
+} else if (LOLO) {
+	adsasdasasdfadsf = LOLO;
 }
 var wormholeIO;
 var module = {};
