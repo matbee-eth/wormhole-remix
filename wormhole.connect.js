@@ -1,5 +1,5 @@
 var adsasdasasdfadsf = $ || LOLO;
-adsasdasasdfadsf(function () {
+// adsasdasasdfadsf(function () {
 	var wormholeIO;
 	var module = {};
 	var io = wormholeIO = module.exports = {};
@@ -35,4 +35,4 @@ adsasdasasdfadsf(function () {
 			window.wh.ready(theFunctionToDo);
 		}
     }
-});
+// });
