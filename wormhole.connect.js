@@ -5,7 +5,7 @@ if ($) {
 var wormholeIO;
 var module = {};
 var io = wormholeIO = module.exports = {};
-LOLO.getJSON("THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/wormhole/socket.io.js" + "?callback=?", null, function(script) {
+adsasdasasdfadsf.getJSON("THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/wormhole/socket.io.js" + "?callback=?", null, function(script) {
 	eval("(function(){"+script+"})()");
 	console.log("Socket.io Loaded and namespaced");
 	if (cb) cb();
