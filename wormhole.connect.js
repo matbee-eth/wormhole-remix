@@ -40,4 +40,4 @@ if ($) {
 			window.wh.ready(theFunctionToDo);
 		}
 	}
-});
+})();
