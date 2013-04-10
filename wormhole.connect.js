@@ -1,8 +1,8 @@
 var adsasdasasdfadsf;
-if ($) {
-	adsasdasasdfadsf = $;
-} else if (LOLO) {
+if (LOLO) {
 	adsasdasasdfadsf = LOLO;
+} else if (jQuery) {
+	adsasdasasdfadsf = jQuery;
 }
 (function () {
 	var wormholeIO;
