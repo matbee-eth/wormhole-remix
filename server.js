@@ -240,7 +240,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				});
 			}
 		});
-
+		var cachedNamespace = {};
 		var doIt = function (req, res, namespace) {
 			res.setHeader("Content-Type", "application/javascript");
 			if (self.wormholeConnectCallbackNamespace[namespace]) {
@@ -259,20 +259,20 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 								if (options.port) {
 									port = ":"+options.port;
 								}
-								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
+								var data = cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								res.send(data);
 							}
 
-							if (!wormholeConnectJs) {
+							if (!cachedNamespace[namespace]) {
 								fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 									if (!err) {
-										wormholeConnectJs = data.toString();
+										cachedNamespace[namespace] = data.toString();
 										fs.readFile(__dirname + '/client.js', function (err, data) {
 											if (!err && data) {
-												wormholeConnectJs = data.toString() + ";\n" + wormholeConnectJs;
-												wormholeConnectJs = self._namespaceStrings["/"+namespace] + wormholeConnectJs;
+												cachedNamespace[namespace] = data.toString() + ";\n" + cachedNamespace[namespace];
+												cachedNamespace[namespace] = self._namespaceStrings["/"+namespace] + cachedNamespace[namespace];
 												sendAndCustomizeItBitches();
 											} else {
 												res.end()
@@ -290,12 +290,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				});
 			} else {
 				var sendAndCustomizeItBitches = function () {
-					var data = wormholeConnectJs.replace('REPLACETHISSTRINGOKAY', function () {}.toString());
+					var data = cachedNamespace[namespace].replace('REPLACETHISSTRINGOKAY', function () {}.toString());
 				}
-				if (!wormholeConnectJs) {
+				if (!cachedNamespace[namespace]) {
 					fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 						if (!err) {
-							wormholeConnectJs = data.toString();
+							cachedNamespace[namespace] = data.toString();
 							sendAndCustomizeItBitches();
 						} else {
 							res.end();
