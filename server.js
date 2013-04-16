@@ -88,6 +88,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	this.rpc = {};
 	this.groupRpc = {};
 	this._namespaces = [];
+	this._namespaceStrings = {};
 	this.wormholeConnectCallbackNamespace = {};
 
 	var setupSocketIOForNamespace = function (namespace) {
@@ -98,10 +99,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	};
 
 	this.namespaces = function (namespaceArray) {
-		for (var i = 0; i < namespaceArray.length; i++) {
-			var namespace = namespaceArray[i];
-			this._namespaces.push(namespace);
-			setupSocketIOForNamespace(namespace);
+		this._namespaceStrings = namespaceArray;
+		for (var i in namespaceArray) {
+			if (namespaceArray.hasOwnProperty(i)) {
+				this._namespaces.push(i);
+				setupSocketIOForNamespace(i);
+			}
 		}
 	};
 
@@ -195,6 +198,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			var data = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+(options.hostname || req.headers.host) + port);
 			res.end(data);
 		}
+
 		express.get('/wormhole/client.js', function (req, res) {
 			res.setHeader("Content-Type", "application/javascript");
 			if (!wormholeClientJs) {
@@ -210,6 +214,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				sendTheClientJs(req, res);
 			}
 		});
+
 		express.get('/wormhole/wormhole.connect.js', function (req, res) {
 			doIt(req, res, "groupnotes");
 		});
@@ -257,14 +262,22 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 								var data = wormholeConnectJs.replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
-								res.end(data);
+								res.send(data);
 							}
 
 							if (!wormholeConnectJs) {
 								fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 									if (!err) {
 										wormholeConnectJs = data.toString();
-										sendAndCustomizeItBitches();
+										fs.readFile(__dirname + '/client.js', function (err, data) {
+											if (!err && data) {
+												wormholeConnectJs = data.toString() + ";\n" + wormholeConnectJs;
+												wormholeConnectJs = self._namespaceStrings["/"+namespace] + wormholeConnectJs;
+												sendAndCustomizeItBitches();
+											} else {
+												res.end()
+											}
+										});
 									} else {
 										res.end();
 									}

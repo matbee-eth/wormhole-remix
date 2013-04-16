@@ -1,13 +1,13 @@
-var adsasdasasdfadsf;
-if (LOLO) {
-	adsasdasasdfadsf = LOLO;
-} else if (jQuery) {
-	adsasdasasdfadsf = jQuery;
-}
 (function () {
+	var adsasdasasdfadsf;
+	if (window.LOLO) {
+		adsasdasasdfadsf = LOLO;
+	} else if (jQuery) {
+		adsasdasasdfadsf = jQuery;
+	}
 	var wormholeIO;
 	var module = {};
-	var io = wormholeIO = module.exports = {};
+	var io = wormholeIO = module.exports = window.gnio = {};
 	adsasdasasdfadsf.getJSON("THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/wormhole/socket.io.js" + "?callback=?", null, function(script) {
 		eval("(function(){"+script+"})()");
 		console.log("Socket.io Loaded and namespaced");
