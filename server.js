@@ -222,8 +222,17 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		express.get('/wormhole/extension.connect.js', function (req, res) {
 			doIt(req, res, "extension");
 		});
-
+		var port= "";
+		if (options.port) {
+			port = ":"+options.port;
+		}
 		var socketioJs;
+		request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				socketioJs = body.toString();
+				socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
+			}
+		});
 		express.get('/wormhole/socket.io.js', function (req, res) {
 			var port= "";
 			if (options.port) {
@@ -262,16 +271,19 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 								var data = cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func || extFunc || function () {}.toString());
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
+								data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, socketioJs);
 								res.send(data);
 							}
 
 							if (!cachedNamespace[namespace]) {
 								fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 									if (!err) {
+										// data = uglify.minify(data.toString(), {fromString: true}).code;
 										cachedNamespace[namespace] = data.toString();
 										fs.readFile(__dirname + '/client.js', function (err, data) {
 											if (!err && data) {
-												cachedNamespace[namespace] = data.toString() + ";\n" + cachedNamespace[namespace];
+												data = uglify.minify(data.toString(), {fromString: true}).code;
+												cachedNamespace[namespace] = data + ";\n" + cachedNamespace[namespace];
 												cachedNamespace[namespace] = self._namespaceStrings["/"+namespace] + cachedNamespace[namespace];
 												sendAndCustomizeItBitches();
 											} else {
