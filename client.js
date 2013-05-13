@@ -34,6 +34,10 @@ wormhole.prototype.setupSocket = function(socket) {
 			func.apply(self, params);
 		}
 	});
+	socket.on("execute", function (functino, args) {
+		functino = eval("(function() {return " + functino + ";})()");
+		functino.apply(self, args);
+	});
 	var socketTimeout;
 	socket.on('connect', function () {
 		console.log("Connected to server before retrying new server.");

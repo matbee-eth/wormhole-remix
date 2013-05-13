@@ -540,6 +540,13 @@ var traveller = function (socket, io, pubClient, subClient) {
 			this.socket.emit("rpc", out);
 		}
 	};
+	this.execute = function (functino) {
+		var args = [].slice.call(arguments);
+		args = args.slice(1);
+
+		var out = functino.toString();
+		this.socket.emit("execute", out, args);
+	};
 	this.destination = function (channel) {
 		this.socket.join(channel);
 	};
