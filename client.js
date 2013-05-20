@@ -142,7 +142,7 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 	};
 	if (hasCallback) {
 		out.uuid = __randomString();
-		this.uuidList[out.uuid] = callback;
+		this.uuidList[out.uuid] = _callback;
 	}
 	this.socket.emit("rpc", out);
 };
