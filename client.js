@@ -93,7 +93,7 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 wormhole.prototype.syncClientRpc = function (data) {
 	var self = this;
 	for (var k in data) {
-		this.clientFunctions[k] = eval("(function () { try { return " + data[k] + " } catch (ex) {console.log('wormholeExceptions:', ex, data[k]); return function(){};} }())");
+		this.clientFunctions[k] = eval("(function () { try { return " + data[k] + " } catch (ex) {console.log('wormholeExceptions:', ex, ex.stack, data[k]); return function(){};} }())");
 		this.clientFunctions[k].bindTo = (function (k) {
 			return function (func) {
 				self.clientFunctions[k].bound = func;
@@ -131,7 +131,7 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 		try {
 			callback.apply(null, [].slice.call(arguments));
 		} catch (ex) {
-			console.log("RPC Response crash:", ex, args, callback);
+			console.log("RPC Response crash:", ex, ex.stack, args, callback);
 		}
 	}
 	var hasCallback = (typeof callback === "function");
