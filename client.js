@@ -127,6 +127,13 @@ var generateRPCFunction = function (self, methodName, async) {
 	};
 };
 wormhole.prototype.executeServerFunction = function (functionName, isAsync, args, callback) {
+	var _callback = function () {
+		try {
+			callback.call(null, arguments);
+		} catch (ex) {
+			console.log("RPC Response crash:", ex, args, callback);
+		}
+	}
 	var hasCallback = (typeof callback === "function");
 	var out = {
 		"function": functionName,
