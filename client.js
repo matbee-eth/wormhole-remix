@@ -13,7 +13,19 @@ wormhole.prototype.getSocket = function () {
 };
 wormhole.prototype.setupSocket = function(socket) {
 	var self = this;
-	var disconnectTimer;
+	this.forcingDisconnect = false;
+	var maxReconnectionAttempts = 10;
+	var reconnectionAttempts = 0;
+	var reconnectionDelay = 500;
+	socket.wormhole = this;
+	socket.on("forcingDisconnect", function () {
+		try {
+			self.forcingDisconnect = true;
+			socket.disconnect();
+		} catch (ex) {
+
+		}
+	});
 	socket.on("sync", function (data) {
 		self.sync(data);
 		self.ready();
@@ -40,19 +52,42 @@ wormhole.prototype.setupSocket = function(socket) {
 	});
 	var socketTimeout;
 	socket.on('connect', function () {
-		console.log("Connected to server before retrying new server.");
 		if (socketTimeout)
 			clearTimeout(socketTimeout);
 	});
 	socket.on('disconnect', function () {
-		console.log("Disconnected. Waiting to retry new server.");
-	});
-	socket.on('reconnect_failed', function () {
-		console.log("client failed to connect, retrying new server.");
-		if (self._connectionFailed) {
-			self._connectionFailed();
+		if (self.forcingDisconnect) {
+			for (var sock in socket.socket.namespaces) {
+				if (sock) {
+					socket.socket.namespaces[sock].wormhole.forcingDisconnect = true;
+					socket.socket.namespaces[sock].socket.transport.websocket.close();
+				}
+			}
+		} else {
+			// attempt reconnect?
+			if (reconnectionAttempts < maxReconnectionAttempts) {
+				// Reconnect
+				setTimeout(function () {
+					socket.socket.reconnect();
+					reconnectionAttempts++;
+					reconnectionDelay = reconnectionDelay * 2;
+				}, reconnectionDelay);
+			} else {
+				self.forcingDisconnect = true;
+				// Connection failed;
+				socket.disconnect();
+				if (self._connectionFailed) {
+					self._connectionFailed();
+				}
+			}
 		}
 	});
+	// socket.on('reconnect_failed', function () {
+	// 	console.log("client failed to connect, retrying new server.");
+	// 	if (self._connectionFailed) {
+	// 		self._connectionFailed();
+	// 	}
+	// });
 };
 wormhole.prototype.onConnectFailed = function (callback) {
 	this._connectionFailed = callback;

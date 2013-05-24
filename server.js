@@ -52,15 +52,17 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		travel.setSubscribeCallback(self.subscribeCallback);
 		socket.on('disconnect', function () {
 			async.forEach(travel._subscriptions, function (channel, cb) {
-				var indexOfTraveller = subscriptions[channel].indexOf(travel);
-				if (indexOfTraveller > -1) {
-					subscriptions[channel].splice(indexOfTraveller, 1);
-				}
+				if (subscriptions[channel]) {
+					var indexOfTraveller = subscriptions[channel].indexOf(travel);
+					if (indexOfTraveller > -1) {
+						subscriptions[channel].splice(indexOfTraveller, 1);
+					}
 
-				var remainingSubscriptionsInChannel = subscriptions[channel] || [];
-				if (remainingSubscriptionsInChannel.length === 0) {
-					subClient.unsubscribe(channel);
-					delete subscriptions[channel];
+					var remainingSubscriptionsInChannel = subscriptions[channel] || [];
+					if (remainingSubscriptionsInChannel.length === 0) {
+						subClient.unsubscribe(channel);
+						delete subscriptions[channel];
+					}
 				}
 				cb();
 			}, function (err) {
@@ -383,17 +385,37 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.setSubscribeCallback = null;
 	};
 
+	this.disconnect = function () {
+		console.log("Disconnecting user.");
+		if (socket && socket.emit && socket.disconnect) {
+			socket.emit("forcingDisconnect");
+			// socket.disconnect();
+			socket.manager.onClientDisconnect(socket.id);
+		}
+	}
+
+	socket.on("forceDisconnect", function () {
+		console.log("Requested Disconnecting user.");
+		socket.emit("forcingDisconnect");
+		socket.manager.onClientDisconnect(socket.id);
+		// socket.disconnect();
+	});
+
 	socket.on("rpcResponse", function (data) {
-		var uuid = data.uuid;
-		// The arguments to send to the callback function.
-		var params = [].slice.call(data.args);
-		// Get function to call from uuidList.
-		var func = self.uuidList[uuid];
-		if (func && typeof func === "function") {
-			// Remove function from uuidList.
-			delete self.uuidList[uuid];
-			// Execute function with arguments! Blama llama lamb! Blam alam alam
-			func.apply(self, params);
+		if (data) {
+			var uuid = data.uuid;
+			// The arguments to send to the callback function.
+			var params = [].slice.call(data.args);
+			// Get function to call from uuidList.
+			var func = self.uuidList[uuid];
+			if (func && typeof func === "function") {
+				// Remove function from uuidList.
+				delete self.uuidList[uuid];
+				// Execute function with arguments! Blama llama lamb! Blam alam alam
+				func.apply(self, params);
+			}
+		} else {
+			// someone's fuckin' with us.
 		}
 	});
 	socket.on("rpc", function (data) {

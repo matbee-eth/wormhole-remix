@@ -9,9 +9,7 @@
 		socket.connect();
 	} else {
 		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', {
-			'reconnect': true,
-			'reconnection delay': 500,
-			'max reconnection attempts': 4,
+			reconnect: false,
 			'try multiple transports': true
 		});
 	}
