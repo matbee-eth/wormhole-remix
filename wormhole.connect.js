@@ -3,7 +3,6 @@
 	(function () {
 		THISSTRINGISTHESOCKETIOSCRIPTLOL;
 	})();
-	console.log("Socket.io Loaded and namespaced");
 	if (io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER']) {
 		socket = io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER'];
 		socket.connect();
