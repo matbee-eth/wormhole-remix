@@ -506,11 +506,14 @@ var traveller = function (socket, io, pubClient, subClient) {
 		return this.currentNamespace == namespace;
 	};
 	this.executeRpc = function (methodName, isAsync, args, uuid) {
+		var self = this;
 		if (this._methods[methodName]) {
 			if (isAsync && uuid) {
 				var argsWithCallback = args.slice(0);
 				argsWithCallback.push(function () {
-					self.callbackRpc(uuid, [].slice.call(arguments));
+					if (self.callbackRpc != null && self.callbackRpc instanceof Function) {
+						self.callbackRpc(uuid, [].slice.call(arguments));
+					}
 				});
 				this._methods[methodName].apply(self, argsWithCallback);
 			} else if (uuid) {
