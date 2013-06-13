@@ -8,6 +8,13 @@ var wormhole = function (socket) {
 	var self = this;
 	this.setupSocket(socket);
 };
+wormhole.prototype.charcodeArrayToString = function (arr) {
+	var string = "";
+	for (var i = 0; i < arr.length; i++) {
+		string += String.fromCharCode(arr[i]);
+	}
+	return string;
+};
 wormhole.prototype.getSocket = function () {
 	return this.socket;
 };
