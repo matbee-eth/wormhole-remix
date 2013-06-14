@@ -81,7 +81,14 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		});
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
-		socket.emit('sync', travel.syncData());
+		var out = travel.syncData();
+		if (encryptAsBinary) {
+			out = JSON.stringify(out);
+			out = new Buffer(out).toJSON();
+			socket.emit('syncB', out);
+		} else {
+			socket.emit('sync', out);
+		}
 		return travel;
 	};
 
@@ -111,7 +118,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	};
 
 	this.sync = function() {
-		io.sockets.emit('sync', self.syncData());
+		var out = self.syncData();
+		if (encryptAsBinary) {
+			out = JSON.stringify(out);
+			out = new Buffer(out).toJSON();
+		}
+		io.sockets.emit('sync', out);
 	};
 	this.syncData = function (traveller) {
 		for (var k in self._clientMethods) {
@@ -419,6 +431,12 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	});
 	socket.on("rpc", function (data) {
+		console.log(data != null, data);
+		if (encryptAsBinary) {
+			data = self.charcodeArrayToString(data);
+			console.log(data);
+			data = JSON.parse(data);
+		}
 		if (data && data.function) {
 			self.executeRpc(data.function, data.async, data.arguments, data.uuid);
 		}
@@ -431,6 +449,16 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	});
 	var transactions = {};
+
+	this.charcodeArrayToString = function (arr) {
+		var outString = "";
+		for (var i = 0; i < arr.length; i++) {
+			outString += String.fromCharCode(arr[i]);
+			console.log(String.fromCharCode(arr[i]));
+		}
+		console.log("charcodeArrayToString", outString);
+		return outString;
+	};
 	this.publish = function (obj) {
 		this.publishTo(obj, this.getNamespace() + this.currentChannel)
 	};
@@ -525,7 +553,12 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 	this.callbackRpc = function(uuid, args) {
-		this.socket.emit("rpcResponse", {uuid: uuid, args: args});
+		var out = {uuid: uuid, args: args};
+		if (encryptAsBinary) {
+			out = JSON.stringify(out);
+			out = new Buffer(out).toJSON();
+		}
+		this.socket.emit("rpcResponse", out);
 	};
 	this.addRpc = function (methodName, functino) {
 		this._methods[methodName] = functino;
@@ -562,6 +595,10 @@ var traveller = function (socket, io, pubClient, subClient) {
 				out.uuid = __randomString();
 				self.uuidList[out.uuid] = callback;
 			}
+			if (encryptAsBinary) {
+				out = JSON.stringify(out);
+				out = new Buffer(out).toJSON();
+			}
 			this.socket.emit("rpc", out);
 		}
 	};
@@ -570,6 +607,14 @@ var traveller = function (socket, io, pubClient, subClient) {
 		args = args.slice(1);
 
 		var out = functino.toString();
+
+		if (encryptAsBinary) {
+			out = JSON.stringify(out);
+			out = new Buffer(out).toJSON();
+
+			args = JSON.stringify(args);
+			args = new Buffer(args).toJSON();
+		}
 		this.socket.emit("execute", out, args);
 	};
 	this.destination = function (channel) {

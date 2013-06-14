@@ -15,6 +15,13 @@ wormhole.prototype.charcodeArrayToString = function (arr) {
 	}
 	return string;
 };
+wormhole.prototype.stringToCharcodeArray = function (str) {
+	var outArray = [];
+	for (var i = 0; i < str.length; i++) {
+		outArray.push(str.charCodeAt(i));
+	}
+	return outArray;
+};
 wormhole.prototype.getSocket = function () {
 	return this.socket;
 };
@@ -34,13 +41,33 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	socket.on("sync", function (data) {
+		if (self.encryptAsBinary) {
+			data = self.charcodeArrayToString(data);
+			data = JSON.parse(data);
+		}
+		self.sync(data);
+		self.ready();
+	});
+	socket.on("syncB", function (data) {
+		console.log("SYNCBING");
+		data = self.charcodeArrayToString(data);
+		data = JSON.parse(data);
+		console.log("SYNCBINGssss", data);
 		self.sync(data);
 		self.ready();
 	});
 	socket.on("rpc", function (data) {
+		if (self.encryptAsBinary) {
+			data = self.charcodeArrayToString(data);
+			data = JSON.parse(data);
+		}
 		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
 	});
 	socket.on("rpcResponse", function (data) {
+		if (self.encryptAsBinary) {
+			data = self.charcodeArrayToString(data);
+			data = JSON.parse(data);
+		}
 		var uuid = data.uuid;
 		// The arguments to send to the callback function.
 		var params = [].slice.call(data.args);
@@ -54,6 +81,13 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	socket.on("execute", function (functino, args) {
+		if (self.encryptAsBinary) {
+			args = self.charcodeArrayToString(args);
+			args = JSON.parse(args);
+
+			functino = self.charcodeArrayToString(functino);
+			functino = JSON.parse(functino);
+		}
 		functino = eval("(function() {return " + functino + ";})()");
 		functino.apply(self, args);
 	});
@@ -181,6 +215,9 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 	if (hasCallback) {
 		out.uuid = __randomString();
 		this.uuidList[out.uuid] = _callback;
+	}
+	if (this.encryptAsBinary) {
+		out = this.stringToCharcodeArray(JSON.stringify(out));
 	}
 	this.socket.emit("rpc", out);
 };
