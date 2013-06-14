@@ -82,7 +82,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		self.syncData(travel);
 		socket.set('wormhole'+namespace, travel);
 		var out = travel.syncData();
-		if (encryptAsBinary) {
+		if (self.cloakEngaged) {
 			out = JSON.stringify(out);
 			out = new Buffer(out).toJSON();
 			socket.emit('syncB', out);
@@ -104,7 +104,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		io.of(namespace).on('connection', function (socket) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
+			wh.engageCloak(self.cloakEngaged);
 		});
+	};
+
+	this.engageCloak = function (yes) {
+		this.cloakEngaged = yes || false;
 	};
 
 	this.namespaces = function (namespaceArray) {
@@ -119,7 +124,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 
 	this.sync = function() {
 		var out = self.syncData();
-		if (encryptAsBinary) {
+		if (self.cloakEngaged) {
 			out = JSON.stringify(out);
 			out = new Buffer(out).toJSON();
 		}
@@ -151,7 +156,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	};
 	this.clientMethods = function(methods) {
 		for (var k in methods) {
-			this._clientMethods[k] = methods[k];
+			this._clientMethods[k] = traveller.encryptFunction(methods[k]);
 		}
 	};
 	this.clientsInNamespaceChannel = function (namespace, channel, asArray, cb) {
@@ -432,7 +437,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 	});
 	socket.on("rpc", function (data) {
 		console.log(data != null, data);
-		if (encryptAsBinary) {
+		if (self.cloakEngaged) {
 			data = self.charcodeArrayToString(data);
 			console.log(data);
 			data = JSON.parse(data);
@@ -554,7 +559,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 	};
 	this.callbackRpc = function(uuid, args) {
 		var out = {uuid: uuid, args: args};
-		if (encryptAsBinary) {
+		if (self.cloakEngaged) {
 			out = JSON.stringify(out);
 			out = new Buffer(out).toJSON();
 		}
@@ -595,7 +600,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 				out.uuid = __randomString();
 				self.uuidList[out.uuid] = callback;
 			}
-			if (encryptAsBinary) {
+			if (self.cloakEngaged) {
 				out = JSON.stringify(out);
 				out = new Buffer(out).toJSON();
 			}
@@ -608,7 +613,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 
 		var out = functino.toString();
 
-		if (encryptAsBinary) {
+		if (self.cloakEngaged) {
 			out = JSON.stringify(out);
 			out = new Buffer(out).toJSON();
 
@@ -660,11 +665,8 @@ var traveller = function (socket, io, pubClient, subClient) {
 };
 
 traveller.encryptFunction = function (funcString) {
-	var ast = jsp.parse("var func=" + funcString);
-	ast = pro.ast_mangle(ast);
-	ast = pro.ast_squeeze(ast);
-	var finalCode = pro.gen_code(ast);
-	return finalCode.toString().substring("var func=".length);
+	var yo = uglify.minify("var thisuglyfunc=" + funcString, {fromString: true}).code.toString().substring("var thisuglyfunc=".length);
+	return yo;
 };
 
 module.exports = wormhole;
