@@ -203,7 +203,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	var subscriptions = {};
 	subClient.on("message", function (channel, message) {
 		var outObj = JSON.parse(message);
-		if (subscriptions[channel]) {
+		if (subscriptions[channel] && subscriptions[channel].length > 0) {
 			// OK We have someone subscribed to this! :)
 			async.forEach(subscriptions[channel], function (traveller, cb) {
 				if (traveller && traveller.subscribeCallback) {
