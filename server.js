@@ -209,7 +209,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				if (traveller && traveller.subscribeCallback) {
 					traveller.subscribeCallback(outObj);
 				} else {
-					if (subscriptions[channel][subscriptions[channel] && subscriptions[channel][subscriptions[channel].indexOf(traveller) > -1) {
+					if (subscriptions[channel] && subscriptions[channel][subscriptions[channel].indexOf(traveller)] && subscriptions[channel][subscriptions[channel].indexOf(traveller)].length > -1) {
 						subscriptions[channel][subscriptions[channel].indexOf(traveller)] = null;
 						traveller = null;
 					}
