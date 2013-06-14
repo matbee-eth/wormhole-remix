@@ -650,7 +650,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.transmit({rpc: func, args: [].slice.call(arguments).slice(1)});
 	};
 	this.engageCloak = function (engaged) {
-		this.cloakEngaged = engaged;
+		this.cloakEngaged = engaged || false;
 	};
 	this.test = function () {
 
