@@ -208,6 +208,11 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			async.forEach(subscriptions[channel], function (traveller, cb) {
 				if (traveller && traveller.subscribeCallback) {
 					traveller.subscribeCallback(outObj);
+				} else {
+					if (subscriptions[channel][subscriptions[channel] && subscriptions[channel][subscriptions[channel].indexOf(traveller) > -1) {
+						subscriptions[channel][subscriptions[channel].indexOf(traveller)] = null;
+						traveller = null;
+					}
 				}
 			});
 		} else {
