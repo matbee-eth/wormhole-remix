@@ -156,7 +156,11 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	};
 	this.clientMethods = function(methods) {
 		for (var k in methods) {
-			this._clientMethods[k] = traveller.encryptFunction(methods[k]);
+			if (self.cloakEngaged) {
+				this._clientMethods[k] = traveller.encryptFunction(methods[k]);
+			} else {
+				this._clientMethods[k] = methods[k];
+			}
 		}
 	};
 	this.clientsInNamespaceChannel = function (namespace, channel, asArray, cb) {
