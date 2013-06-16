@@ -478,7 +478,13 @@ var traveller = function (socket, io, pubClient, subClient) {
 		return outString;
 	};
 	this.publish = function (obj, channel) {
-		this.publishTo(obj, channel || (this.getNamespace() + this.currentChannel));
+		var publishingTo;
+		if (channel) {
+			publishingTo = this.getNamespace() + channel;
+		} else {
+			publishingTo = this.getNamespace() + this.currentChannel;
+		}
+		this.publishTo(obj, publishingTo);
 	};
 	this.publishTo = function (obj, channel) {
 		var transactionId = __randomString();
