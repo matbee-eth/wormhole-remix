@@ -503,28 +503,37 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 	this.generateCustomRpc = function (methodName, skipSelf) {
-		return function (channel) {
+		return function (inner, outer) {
 			var args = [].slice.call(arguments);
+			args.splice(0,2); // Removing inner and outer :D
 			var publishObj = {
 				methodName: methodName,
 				arguments: args,
 				skipSelf: skipSelf,
 				type: skipSelf ? "othersRpc" : "groupRpc"
 			};
-			self.publish(publishObj, channel);
+			self.publish(publishObj, (inner + outer) || channel);
 		};
 	};
 	var generateGroupRpc = function (methodName, skipSelf) {
-		return function () {
+		return function (url, arr) {
 			var args = [].slice.call(arguments);
-			var channel = self.currentChannel;
 			var publishObj = {
 				methodName: methodName,
 				arguments: args,
 				skipSelf: skipSelf,
 				type: skipSelf ? "othersRpc" : "groupRpc"
 			};
-			self.publish(publishObj);
+			if (url && arr) {
+				async.each(arr, function (item, cb) {
+					self.publish(publishObj, url + item);
+					cb();
+				}, function (err) {
+					// done.
+				});
+			} else {
+				self.publish(publishObj, channel);
+			}
 		};
 	};
 	var generateRPCFunction = function (methodName, async) {
