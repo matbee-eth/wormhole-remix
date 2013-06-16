@@ -412,6 +412,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.engageCloak = null;
 		this.syncData = null;
 		this.setSubscribeCallback = null;
+		transactions = null;
 	};
 
 	this.disconnect = function () {
@@ -476,8 +477,8 @@ var traveller = function (socket, io, pubClient, subClient) {
 		console.log("charcodeArrayToString", outString);
 		return outString;
 	};
-	this.publish = function (obj) {
-		this.publishTo(obj, this.getNamespace() + this.currentChannel)
+	this.publish = function (obj, channel) {
+		this.publishTo(obj, channel || (this.getNamespace() + this.currentChannel));
 	};
 	this.publishTo = function (obj, channel) {
 		var transactionId = __randomString();
@@ -494,6 +495,18 @@ var traveller = function (socket, io, pubClient, subClient) {
 		if (transactions[args.transactionId]) {
 			delete transactions[args.transactionId];
 		}
+	};
+	this.generateCustomRpc = function (methodName, skipSelf) {
+		return function (channel) {
+			var args = [].slice.call(arguments);
+			var publishObj = {
+				methodName: methodName,
+				arguments: args,
+				skipSelf: skipSelf,
+				type: skipSelf ? "othersRpc" : "groupRpc"
+			};
+			self.publish(publishObj, channel);
+		};
 	};
 	var generateGroupRpc = function (methodName, skipSelf) {
 		return function () {
@@ -586,6 +599,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.rpc[methodName].sync = generateRPCFunction(methodName, false);
 		this.groupRpc[methodName] = generateGroupRpc(methodName, false);
 		this.othersRpc[methodName] = generateGroupRpc(methodName, true);
+		this.customRpc[methodName] = generateCustomRpc(methodName, true);
 	};
 	this.methods = function (methods) {
 		var self = this;
