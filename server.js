@@ -366,6 +366,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 	this.rpc = {};
 	this.groupRpc = {};
 	this.othersRpc = {};
+	this.customRpc = {};
 	this.io = io;
 	var self = this;
 
@@ -484,6 +485,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		} else {
 			publishingTo = this.getNamespace() + this.currentChannel;
 		}
+		console.log("Publishing to", publishingTo);
 		this.publishTo(obj, publishingTo);
 	};
 	this.publishTo = function (obj, channel) {
@@ -502,7 +504,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 			delete transactions[args.transactionId];
 		}
 	};
-	this.generateCustomRpc = function (methodName, skipSelf) {
+	var generateCustomRpc = function (methodName, skipSelf) {
 		return function (inner, outer) {
 			var args = [].slice.call(arguments);
 			args.splice(0,2); // Removing inner and outer :D
@@ -512,11 +514,12 @@ var traveller = function (socket, io, pubClient, subClient) {
 				skipSelf: skipSelf,
 				type: skipSelf ? "othersRpc" : "groupRpc"
 			};
-			self.publish(publishObj, (inner + outer) || channel);
+			self.publish(publishObj, inner + outer);
 		};
 	};
 	var generateGroupRpc = function (methodName, skipSelf) {
 		return function (url, arr) {
+			var channel = null;
 			var args = [].slice.call(arguments);
 			var publishObj = {
 				methodName: methodName,
