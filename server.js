@@ -6,7 +6,8 @@ var util = require('util')
   , fs = require('fs')
   , jsdom = require('jsdom')
   , async = require('async')
-  , request = require('request');
+  , request = require('request')
+  , events = require('events');
 
 var wormhole = function (io, express, pubClient, subClient, options) {
 	var wormholeConnectJs;
@@ -358,6 +359,7 @@ wormhole.packageFunction = function (func, args) {
 };
 
 var traveller = function (socket, io, pubClient, subClient) {
+	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
 	this.uuidList = {};
@@ -710,6 +712,8 @@ var traveller = function (socket, io, pubClient, subClient) {
 		}
 	};
 };
+
+traveller.prototype.__proto__ = events.EventEmitter.prototype;
 
 traveller.encryptFunction = function (funcString) {
 	var yo = uglify.minify("var thisuglyfunc=" + funcString, {fromString: true}).code.toString().substring("var thisuglyfunc=".length);
