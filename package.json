@@ -1,6 +1,7 @@
 {
   "name": "wormhole-remix",
   "version": "0.0.2",
+  "main": "server.js",
   "private": true,
   "scripts": {
     "start": "node app"
