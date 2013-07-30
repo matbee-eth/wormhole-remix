@@ -111,15 +111,26 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			};
 			socket.getSessionKey = function (key, cb) {
 				socket.getSession(function (err, session) {
+					console.log("getSession", err, session);
 					cb(err, session[key]);
 				});
 			};
 			socket.setSession = function (session, cb) {
-				options.sessionStore.set(socket.handshake.sessionId, session, cb);
+				options.sessionStore.set(socket.handshake.sessionId, session, function (err) {
+					console.log("setSession, err?", arguments);
+					cb(err);
+				});
 			};
 			socket.setSessionKey = function (key, value, cb) {
+				console.log("setSessionKey", key, value, cb);
 				socket.getSession(function (err, session) {
-					session.key = value;
+					session[key] = value;
+					socket.setSession(session, cb);
+				});
+			};
+			socket.removeSessionKey = function (key, cb) {
+				socket.getSession(function (err, session) {
+					delete session[key];
 					socket.setSession(session, cb);
 				});
 			};
