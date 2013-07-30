@@ -106,6 +106,18 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 			wh.engageCloak(self.cloakEngaged);
+			socket.getSession = function (cb) {
+				options.sessionStore.get(socket.handshake.sessionId, cb);
+			};
+			socket.setSession = function (session, cb) {
+				options.sessionStore.set(socket.handshake.sessionId, session, cb);
+			};
+			socket.setSessionKey = function (key, value, cb) {
+				socket.getSession(function (err, session) {
+					session.key = value;
+					socket.setSession(session, cb);
+				});
+			};
 		});
 	};
 
@@ -221,6 +233,19 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 	});
 
 	if (express) {
+		if (options.cookieParser && options.sessionStore && options.sessionKey) {
+			io.set('authorization', function(handshake, callback) {
+			  options.cookieParser(handshake, {}, function (err) {
+			    // Fancy, huh?
+			    err && callback(err, false);
+			    // So fancy!
+			    !err && options.sessionStore.get(handshake.signedCookies[options.sessionKey], function (err, session) {
+			    	handshake.sessionId = handshake.signedCookies[options.sessionKey];
+			  		callback(err, true);
+			    });
+			  });
+			});
+		}
 		var sendTheClientJs = function (req, res) {
 			var port = "";
 			if (options.port) {
@@ -248,6 +273,10 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 
 		express.get('/wormhole/wormhole.connect.js', function (req, res) {
 			doIt(req, res, "groupnotes");
+		});
+
+		express.get('/wormhole/:namespace/connect.js', function (req, res) {
+			doIt(req, res, req.params.namespace);
 		});
 
 		express.get('/wormhole/extension.connect.js', function (req, res) {
