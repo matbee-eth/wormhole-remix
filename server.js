@@ -111,7 +111,6 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 
 	this.engageCloak = function (yes) {
 		this.cloakEngaged = yes || false;
-		superlog("ENGAGECLOAKLOLO?", [yes, this.cloakEngaged], 50)
 	};
 
 	this.namespaces = function (namespaceArray) {
@@ -647,7 +646,6 @@ var traveller = function (socket, io, pubClient, subClient) {
 				self.uuidList[out.uuid] = callback;
 			}
 			if (self.cloakEngaged) {
-				superlog("CLOAK IS ENGAGED?", self.cloakEngaged, 50);
 				out = JSON.stringify(out);
 				out = new Buffer(out).toJSON();
 			}
