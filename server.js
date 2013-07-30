@@ -109,6 +109,11 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			socket.getSession = function (cb) {
 				options.sessionStore.get(socket.handshake.sessionId, cb);
 			};
+			socket.getSessionKey = function (key, cb) {
+				socket.getSession(function (err, session) {
+					cb(err, session[key]);
+				});
+			};
 			socket.setSession = function (session, cb) {
 				options.sessionStore.set(socket.handshake.sessionId, session, cb);
 			};
