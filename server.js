@@ -124,8 +124,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			socket.setSessionKey = function (key, value, cb) {
 				console.log("setSessionKey", key, value, cb);
 				socket.getSession(function (err, session) {
-					session[key] = value;
-					socket.setSession(session, cb);
+					if (!err && session) {
+						session[key] = value;
+						socket.setSession(session, cb);
+					} else {
+						cb && cb(err);
+					}
 				});
 			};
 			socket.removeSessionKey = function (key, cb) {
@@ -303,7 +307,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			port = ":"+options.port;
 		}
 		var socketioJs;
-		request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
+		request(options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				socketioJs = body.toString();
 				socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
@@ -318,6 +322,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				res.jsonp(socketioJs);
 			} else {
 				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
+					console.log("Downloading SocketIO Script.");
 					if (!error && response.statusCode == 200) {
 						socketioJs = body.toString();
 						res.jsonp(socketioJs);
@@ -338,7 +343,6 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							args = args.substring(1);
 							args = args.substring(0, args.length-1);
 							func = "(" + func.toString() + "(" + args +"))";
-
 							var sendAndCustomizeItBitches = function () {
 								var port= "";
 								if (options.port) {
