@@ -109,6 +109,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			socket.getSession = function (cb) {
 				options.sessionStore.get(socket.handshake.sessionId, cb);
 			};
+			socket.subscribeToSession = function(cb) {
+				options.sessionStore.subscribe(socket.handshake.sessionId, cb);
+			};
+			socket.unsubscribeFromSession = function(cb) {
+				options.sessionStore.unsubscribe(socket.handshake.sessionId, cb);
+			};
 			socket.getSessionKey = function (key, cb) {
 				socket.getSession(function (err, session) {
 					console.log("getSession", err, session);
@@ -248,7 +254,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				}
 			});
 		} else {
-			subClient.unsubscribe(channel);
+			//subClient.unsubscribe(channel);
 		}
 	});
 
