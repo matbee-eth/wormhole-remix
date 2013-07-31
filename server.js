@@ -325,6 +325,8 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			if (!error && response.statusCode == 200) {
 				socketioJs = body.toString();
 				socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
+			} else {
+				console.log("There has been an error with downloading Local Socket.IO", error, response, options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js');
 			}
 		});
 		express.get('/wormhole/socket.io.js', function (req, res) {
