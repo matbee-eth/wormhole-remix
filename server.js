@@ -106,7 +106,15 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 			wh.engageCloak(self.cloakEngaged);
+			socket.sessionSubscriptions = [];
+			socket.on("disconnect", function () {
+				for (var i in socket.sessionSubscriptions) {
+					socket.unsubscribeFromSession(socket.sessionSubscriptions[i]);
+				}
+				socket.sessionSubscriptions = null;
+			});
 			socket.getSession = function (cb) {
+				socket.sessionSubscriptions.push(cb);
 				options.sessionStore.get(socket.handshake.sessionId, cb);
 			};
 			socket.subscribeToSession = function(cb) {
