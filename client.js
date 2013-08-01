@@ -144,12 +144,12 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
-			this.clientFunctions[methodName].bound.apply(null, argsWithCallback);
+			this.clientFunctions[methodName].bound.apply(self, argsWithCallback);
 		} else if (uuid) {
-			var returnValue = this.clientFunctions[methodName].bound.apply(null, args);
+			var returnValue = this.clientFunctions[methodName].bound.apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
-			this.clientFunctions[methodName].bound.apply(null, args);
+			this.clientFunctions[methodName].bound.apply(self, args);
 		}
 	} else if (this.clientFunctions[methodName]) {
 		if (isAsync && uuid) {
@@ -157,12 +157,12 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
-			this.clientFunctions[methodName].apply(null, argsWithCallback);
+			this.clientFunctions[methodName].apply(self, argsWithCallback);
 		} else if (uuid) {
-			var returnValue = this.clientFunctions[methodName].apply(null, args);
+			var returnValue = this.clientFunctions[methodName].apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
-			this.clientFunctions[methodName].apply(null, args);
+			this.clientFunctions[methodName].apply(self, args);
 		}
 	}
 };

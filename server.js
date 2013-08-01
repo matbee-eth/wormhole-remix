@@ -114,10 +114,10 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				socket.sessionSubscriptions = null;
 			});
 			socket.getSession = function (cb) {
-				socket.sessionSubscriptions.push(cb);
 				options.sessionStore.get(socket.handshake.sessionId, cb);
 			};
 			socket.subscribeToSession = function(cb) {
+				socket.sessionSubscriptions.push(cb);
 				options.sessionStore.subscribe(socket.handshake.sessionId, cb);
 			};
 			socket.unsubscribeFromSession = function(cb) {
