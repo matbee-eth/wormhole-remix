@@ -1,8 +1,5 @@
-(function (scope) {
-	if (!scope) {
-		scope = window;
-	}
-	var module = {}, socket, io = module.exports = scope.gnio = {};
+(function () {
+	var module = {}, socket, io = module.exports = window.gnio = {};
 	(function () {
 		THISSTRINGISTHESOCKETIOSCRIPTLOL;
 	})();
@@ -18,13 +15,13 @@
 	var theFunctionToDo = function () {
 		REPLACETHISSTRINGOKAY
 	};
-	if (!scope.wh) {
+	if (!window.wh) {
 		var wh = new wormhole(socket);
 		wh.ready(theFunctionToDo);
-		scope.wh = wh;
+		window.wh = wh;
 	} else {
-		scope.wh.setSocket(socket);
-		scope.wh.setupSocket(socket);
-		scope.wh.ready(theFunctionToDo);
+		window.wh.setSocket(socket);
+		window.wh.setupSocket(socket);
+		window.wh.ready(theFunctionToDo);
 	}
 }());
