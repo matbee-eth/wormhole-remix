@@ -98,7 +98,7 @@ wormhole.prototype.setupSocket = function(socket) {
 				func.apply(self, args);
 			} else {
 				// invalid.
-				func(self, err);
+				func.apply(self, [err]);
 			}
 			// Remove function from uuidList.
 			if (uuid && self.uuidList[uuid]) {
