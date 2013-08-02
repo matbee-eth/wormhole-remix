@@ -101,6 +101,22 @@ wormhole.prototype.start = function(options) {
 		}
 	});
 };
+wormhole.prototype.clientMethods = function(methods, cb) {
+	var self = this;
+	var methodKeys = Object.keys(methods);
+	async.forEach(methodKeys, function (method, next) {
+		self._clientMethods[method] = methods[method];
+		next();
+	}, cb);
+};
+wormhole.prototype.serverMethods = function(methods, cb) {
+	var self = this;
+	var methodKeys = Object.keys(methods);
+	async.forEach(methodKeys, function (method, next) {
+		self._clientMethods[method] = methods[method];
+		next();
+	}, cb);
+};
 wormhole.prototype.setupExpressRoutes = function (cb) {
 	var self = this;
 	this._express.get('/wormhole/client.js', function (req, res) {
