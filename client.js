@@ -48,6 +48,10 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.sync(data);
 		self.ready();
 	});
+	socket.on("syncClientFunctions", function (data) {
+		// console.log("syncClientFunctions", data);
+		self.syncClientRpc(data);
+	});
 	socket.on("syncB", function (data) {
 		console.log("SYNCBING");
 		data = self.charcodeArrayToString(data);

@@ -275,7 +275,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					self.uuidList[out.uuid] = callback;
 				}
 
-				traveller.send(out);
+				traveller.sendClientRPC(out);
 			});
 			done();
 		},
@@ -364,8 +364,9 @@ wormholeTraveller.prototype.syncClientMethods = function(methods) {
 	}, cb);
 };
 wormholeTraveller.prototype.addClientMethod = function(method, func) {
+	var self = this;
 	this.rpc[method] = function () {
-		this.executeClientRPC.apply(this, [].slice.call(arguments));
+		self.executeClientRPC.apply(self, [method].concat([].slice.call(arguments)));
 	};
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
