@@ -89,7 +89,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	socket.on("callback", function (err, uuid) {
-		var args = [].slice.call(arguments).slice(2);
+		var args = [err].concat([].slice.call(arguments).slice(2));
 		var func = self.uuidList[uuid];
 		if (func && typeof func === "function") {
 			if (!err && uuid) {
