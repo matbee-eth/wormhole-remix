@@ -138,7 +138,8 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 	cb();
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
-	//
+	res.setHeader("Content-Type", "application/javascript");
+	res.end(self._cachedNamespace[namespace]);
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
