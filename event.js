@@ -59,7 +59,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				}
 				var out = {
 					"function": func,
-					"uuid": hasCallback ? 1111 : null,
 					"arguments": args
 				};
 				if (hasCallback) {
@@ -179,6 +178,10 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 			self.executeServerRPC.apply(self, [data.func, data.uuid].concat(data.arguments));
 		}
 	});
+	this.socket.on("callback", function (data) { // ClientRPC response.
+		var uuid = data.uuid;
+		var args = data.args;
+	});
 	this.socket.on("disconnect", function () {
 		self.emit("disconnect");
 	});
@@ -187,4 +190,15 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 wormholeTraveller.prototype.callback = function (err, uuid) {
 	var self = this;
 	//
+};
+
+__randomString = function() {
+	var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+	var string_length = 64;
+	var randomstring = '';
+	for (var i=0; i<string_length; i++) {
+		var rnum = Math.floor(Math.random() * chars.length);
+		randomstring += chars.substring(rnum,rnum+1);
+	}
+	return randomstring;
 };
