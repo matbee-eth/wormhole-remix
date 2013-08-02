@@ -126,6 +126,7 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 	this._express.get('/wormhole/:namespace/connect.js', function (req, res) {
 		doIt(req, res, req.params.namespace);
 	});
+	cb();
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -160,19 +161,37 @@ wormhole.prototype.getScripts = function (cb) {
 wormhole.prototype.setupIOEvents = function (cb) {
 	// body...
 	var self = this;
-	async.forEach(this._namespaces, function (namespace, next) {
-		this._io.of(namespace).on("connection", function (socket) {
-			self.createTraveller(socket, function (err, traveller) {
-				// done!! HEHEHE!
-				self.setupClientEvents(setupClientEvents, function (err) {
-					// LOLOLO
-					traveller.sendRPCFunctions(function (err) {
-						self.emit("connection", traveller);
+	async.parallel([
+		function (done) {
+			if (self._cookieParser && self._sessionStore && self._sessionKey) {
+				io.set('authorization', function(handshake, callback) {
+				  self._cookieParser(handshake, {}, function (err) {
+				    // Fancy, huh?
+				    err && callback(err, false);
+				    // So fancy!
+				    !err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
+				    	handshake.sessionId = handshake.signedCookies[self._sessionKey];
+				  		callback(err, true);
+				    });
+				  });
+				});
+			}
+			done();
+		}, function (done) {
+			async.forEach(self._namespaces, function (namespace, next) {
+				self._io.of(namespace).on("connection", function (socket) {
+					self.createTraveller(socket, function (err, traveller) {
+						// done!! HEHEHE!
+						self.setupClientEvents(setupClientEvents, function (err) {
+							// LOLOLO
+							traveller.sendRPCFunctions(function (err) {
+								self.emit("connection", traveller);
+							});
+						});
 					});
 				});
-			});
-		});
-	}, cb);
+			}, done);
+	}], cb);
 };
 wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.
