@@ -239,6 +239,50 @@ wormhole.prototype.setupIOEvents = function (cb) {
 			}, done);
 	}], cb);
 };
+wormhole.prototype.extendSocket = function(socket, cb) {
+	var self = this;
+	socket.sessionSubscriptions = [];
+	socket.getSession = function (cb) {
+		self._sessionStore.get(socket.handshake.sessionId, cb);
+	};
+	socket.subscribeToSession = function(cb) {
+		socket.sessionSubscriptions.push(cb);
+		self._sessionStore.subscribe(socket.handshake.sessionId, cb);
+	};
+	socket.unsubscribeFromSession = function(cb) {
+		self._sessionStore.unsubscribe(socket.handshake.sessionId, cb);
+	};
+	socket.getSessionKey = function (key, cb) {
+		socket.getSession(function (err, session) {
+			console.log("getSession", err, session);
+			cb(err, session[key]);
+		});
+	};
+	socket.setSession = function (session, cb) {
+		self._sessionStore.set(socket.handshake.sessionId, session, function (err) {
+			console.log("setSession, err?", arguments);
+			cb(err);
+		});
+	};
+	socket.setSessionKey = function (key, value, cb) {
+		console.log("setSessionKey", key, value, cb);
+		socket.getSession(function (err, session) {
+			if (!err && session) {
+				session[key] = value;
+				socket.setSession(session, cb);
+			} else {
+				cb && cb(err);
+			}
+		});
+	};
+	socket.removeSessionKey = function (key, cb) {
+		socket.getSession(function (err, session) {
+			delete session[key];
+			socket.setSession(session, cb);
+		});
+	};
+	cb();
+};
 wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.
 	var self = this;
@@ -282,7 +326,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			// Executing Server RPC.
 			traveller.on("executeServerRPC", function (func, UUID) {
-				var args = [].slice.call(args);
+				var args = [].slice.call(arguments);
 			 	var func = args.shift();
 			 	var UUID = args.shift();
 			 	// Execute RPC function w/ that name.
@@ -315,8 +359,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 wormhole.prototype.createTraveller = function(socket, cb) {
 	// body...
 	var traveller = new wormholeTraveller(socket);
-	traveller.setupClientEvents(function (err) {
-		cb(err, traveller);
+	this.extendSocket(socket, function (err) {
+		traveller.setupClientEvents(function (err) {
+			cb(err, traveller);
+		});
 	});
 };
 wormhole.prototype.addNamespace = function (namespace, func) {
@@ -336,7 +382,7 @@ wormhole.prototype.executeServerRPC = function (traveller, func) {
 	var args = [].slice.call(arguments);
 	traveller = args.shift();
 	func = args.shift();
- 	self._serverMethods[func].apply(traveller, args);
+ 	this._serverMethods[func].apply(traveller, args);
 };
 
 var wormholeTraveller = function (socket) {
@@ -395,8 +441,9 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
 	this.socket.on("rpc", function (data) {
 		/* data.func, data.async, data.arguments, data.uuid */
-		if (data && data.func) {
-			self.executeServerRPC.apply(self, [data.func, data.uuid].concat(data.arguments));
+		console.log("Executing Server RPC")
+		if (data && data.function) {
+			self.executeServerRPC.apply(self, [data.function, data.uuid].concat(data.arguments));
 		}
 	});
 	this.socket.on("callback", function (data) { // ClientRPC response.
