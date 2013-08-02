@@ -19,6 +19,10 @@ var wormhole = function (options) {
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
 	this._redisSubClient = options.redisSubClient;
+	this._port = options.port;
+	this._hostname = options.hostname;
+	this._protocol = options.protocol;
+
 	this._namespaces = [];
 	this._namespaceClientFunctions = {};
 	this._uuidList = {};
@@ -28,13 +32,29 @@ var wormhole = function (options) {
 	this.__socketIOJs;
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
-wormhole.prototype.start = function(io, express, options) {
+wormhole.prototype.start = function(options) {
 	// io, express and redis pub/sub are all mandatory.
-	if (io) {
-		this._io = io;
+	var callback;
+	if (options && typeof options === "function") {
+		// It's a callback, not an options object!
+		callback = options;
+		options = {};
 	}
-	if (express) {
-		this._express = express;
+	options = options || {};
+	if (options.port) {
+		this._port = options.port;
+	}
+	if (options.hostname) {
+		this._hostname = options.hostname;
+	}
+	if (options.protocol) {
+		this._protocol = options.protocol;
+	}
+	if (options.io) {
+		this._io = options.io;
+	}
+	if (options.express) {
+		this._express = options.express;
 	}
 	if (options) {
 		if (options.redisPubClient) {
@@ -60,6 +80,7 @@ wormhole.prototype.start = function(io, express, options) {
 			// Ready, Freddy!
 			this.setupExpressRoutes(function (err) {
 				console.log("Wormhole Express routes setup.");
+				callback(err);
 			});
 		}
 	});
@@ -82,8 +103,8 @@ wormhole.prototype.getScripts = function (cb) {
 				if (!err) {
 					var wormholeClientJs = data.toString();
 					var port = "";
-					if (options.port) {
-						port = ":"+options.port;
+					if (self._port) {
+						port = ":"+self._port;
 					}
 					wormholeClientJs = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+self._hostname + self._port);
 					self.__wormholeClientJs = wormholeClientJs;
@@ -92,12 +113,12 @@ wormhole.prototype.getScripts = function (cb) {
 			});
 		},
 		function (done) {
-			request(self._protocol + "://" + self._hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
+			request(self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js', function (error, response, body) {
 				if (!error && response.statusCode == 200) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
 				} else {
-					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + port + '/socket.io/socket.io.js');
+					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js');
 				}
 				done(error);
 			});
@@ -289,3 +310,6 @@ __randomString = function() {
 	}
 	return randomstring;
 };
+
+// var wh = new wormhole({io: {}, express: {}, redisPubClient: {}, redisSubClient: {}, port: 5555, hostname: "hp.groupnotes.ca", protocol: "http"});
+// wh.start();
