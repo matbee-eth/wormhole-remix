@@ -55,12 +55,19 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			async.forEach(travel._subscriptions, function (channel, cb) {
 				if (subscriptions[channel]) {
 					var indexOfTraveller = subscriptions[channel].indexOf(travel);
+					if (subscriptions[channel].indexOf(travel)) {
+						console.log("Is traveller in subscriptions?", subscriptions[channel].indexOf(travel));
+						setTimeout(function () {
+							// Is traveller still in subscriptions?
+							superlog('MIC CHECK ONE TWO?', ["Is traveller in subscriptions?", subscriptions[channel].indexOf(travel), "What is travel, anyway?", travel], 25);
+						}, 5000);
+					}
 					if (indexOfTraveller > -1) {
 						subscriptions[channel].splice(indexOfTraveller, 1);
 					}
 
 					var remainingSubscriptionsInChannel = subscriptions[channel] || [];
-					if (remainingSubscriptionsInChannel.length === 0) {
+			21		if (remainingSubscriptionsInChannel.length === 0) {
 						subClient.unsubscribe(channel);
 						delete subscriptions[channel];
 					}
@@ -75,9 +82,10 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							travel.socket.set(removed, null);
 						}
 						travel.destruct();
+						console.log("Destroying object");
 						travel = null;
 					}
-				}, 25000);
+				}, 3000);
 			});
 		});
 		self.syncData(travel);
@@ -452,6 +460,15 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.rpc = null;
 		this.groupRpc = null;
 		this.othersRpc = null;
+		this.customRpc = null;
+		this.currentNamespace = null;
+		this.currentChannel = null;
+		this.test = null;
+		this.subscribe = null;
+		this.execute = null;
+		this.disconnect = null;
+		this.destruct = null;
+		this.charcodeArrayToString = null;
 		this.io = null;
 		this._subscriptions = null;
 
@@ -480,6 +497,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.syncData = null;
 		this.setSubscribeCallback = null;
 		transactions = null;
+		self = null;
 	};
 
 	this.disconnect = function () {
