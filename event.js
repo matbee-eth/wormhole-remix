@@ -190,12 +190,10 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	});
 	cb && cb();
 };
-wormholeTraveller.prototype.callback = function (err, uuid) {
+wormholeTraveller.prototype.callback = function () {
 	var self = this;
 	var args = [].slice.call(arguments);
-	args.shift();
-	args.shift();
-	this.socket.emit("callback", out);
+	this.socket.emit.apply(this.socket, "callback", args);
 };
 wormholeTraveller.prototype.sendClientRPC = function(out) {
 	this.socket.emit("rpc", out);
