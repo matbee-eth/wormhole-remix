@@ -140,7 +140,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 				});
 			});
 		});
-	}, cb)
+	}, cb);
 };
 wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.

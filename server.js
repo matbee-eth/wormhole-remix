@@ -67,7 +67,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 					}
 
 					var remainingSubscriptionsInChannel = subscriptions[channel] || [];
-			21		if (remainingSubscriptionsInChannel.length === 0) {
+					if (remainingSubscriptionsInChannel.length === 0) {
 						subClient.unsubscribe(channel);
 						delete subscriptions[channel];
 					}
