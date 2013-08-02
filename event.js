@@ -28,6 +28,30 @@ var wormhole = function (options) {
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
 wormhole.prototype.start = function(io, express, options) {
+	// io, express and redis pub/sub are all mandatory.
+	if (io) {
+		this._io = io;
+	}
+	if (express) {
+		this._express = express;
+	}
+	if (options) {
+		if (options.redisPubClient) {
+			this._redisPubClient = options.redisPubClient;
+		}
+		if (options.redisSubClient) {
+			this._redisSubClient = options._redisSubClient;
+		}
+	}
+	if (!this._io) {
+		throw new Error("No Socket.IO");
+	}
+	if (!this._express) {
+		throw new Error("No Express");
+	}
+	if (!this._redisPubClient || !this._redisPubClient) {
+		throw new Error("No PubSub clients");
+	}
 	console.log("Initializing Wormhole.");
 	this.getScripts(function (err, response) {
 		if (!err && this.__wormholeClientJs && this.__socketIOJs) {
