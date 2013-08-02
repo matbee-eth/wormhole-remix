@@ -28,6 +28,7 @@ var wormhole = function (options) {
 	this._protocol = options.protocol;
 
 	this._namespaces = [];
+	this._cachedNamespace = {};
 	this._namespaceClientFunctions = {};
 	this._uuidList = {};
 
@@ -37,6 +38,7 @@ var wormhole = function (options) {
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
 wormhole.prototype.start = function(options) {
+	var self = this;
 	// io, express and redis pub/sub are all mandatory.
 	var callback;
 	if (options && typeof options === "function") {
@@ -91,13 +93,16 @@ wormhole.prototype.start = function(options) {
 	}
 	console.log("Initializing Wormhole.");
 	this.getScripts(function (err, response) {
-		if (!err && this.__wormholeClientJs && this.__socketIOJs) {
+		if (!err && self.__wormholeClientJs && self.__socketIOJs) {
 			console.log("Wormhole scripts ready.");
 			// Ready, Freddy!
-			this.setupExpressRoutes(function (err) {
+			self.setupExpressRoutes(function (err) {
 				console.log("Wormhole Express routes setup.");
-				callback(err);
+				callback && callback(err);
 			});
+		} else {
+			console.log("ERROR!", err);
+			callback && callback(err);
 		}
 	});
 };
@@ -124,9 +129,16 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 		res.end(self.__wormholeClientJs);
 	});
 	this._express.get('/wormhole/:namespace/connect.js', function (req, res) {
-		doIt(req, res, req.params.namespace);
+		if (self._namespaces.indexOf("/" + req.params.namespace) > -1) {
+			self.sendConnectScript(req.params.namespace, req, res);
+		} else {
+			res.end();
+		}
 	});
 	cb();
+};
+wormhole.prototype.sendConnectScript = function(namespace, req, res) {
+	//
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -154,6 +166,25 @@ wormhole.prototype.getScripts = function (cb) {
 					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js');
 				}
 				done(error);
+			});
+		},
+		function (done) {
+			fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+				if (!err) {
+					async.forEach(self._namespaces, function (namespace, next) {
+						// data = uglify.minify(data.toString(), {fromString: true}).code;
+						self._cachedNamespace[namespace] = data.toString();
+						fs.readFile(__dirname + '/client.js', function (err, data) {
+							if (!err && data) {
+								data = uglify.minify(data.toString(), {fromString: true}).code;
+								self._cachedNamespace[namespace] = data + ";\n" + self._cachedNamespace[namespace];
+								self._cachedNamespace[namespace] = self._namespaceStrings["/"+namespace] + self._cachedNamespace[namespace];
+							}
+						});
+					}, done);
+				} else {
+					done(err);
+				}
 			});
 		}
 	], cb);
