@@ -28,9 +28,14 @@ var wormhole = function (options) {
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
 wormhole.prototype.start = function(io, express, options) {
+	console.log("Initializing Wormhole.");
 	this.getScripts(function (err, response) {
 		if (!err && this.__wormholeClientJs && this.__socketIOJs) {
+			console.log("Wormhole scripts ready.");
 			// Ready, Freddy!
+			this.setupExpressRoutes(function (err) {
+				console.log("Wormhole Express routes setup.");
+			});
 		}
 	});
 };
@@ -38,10 +43,7 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 	var self = this;
 	this._express.get('/wormhole/client.js', function (req, res) {
 		res.setHeader("Content-Type", "application/javascript");
-		if (!wormholeClientJs) {
-		} else {
-			sendTheClientJs(req, res);
-		}
+		res.end(self.__wormholeClientJs);
 	});
 	this._express.get('/wormhole/:namespace/connect.js', function (req, res) {
 		doIt(req, res, req.params.namespace);
