@@ -98,7 +98,9 @@ wormhole.prototype.start = function(options) {
 			// Ready, Freddy!
 			self.setupExpressRoutes(function (err) {
 				console.log("Wormhole Express routes setup.");
-				callback && callback(err);
+				self.setupIOEvents(function (err) {
+					callback && callback(err);
+				})
 			});
 		} else {
 			console.log("ERROR!", err);
@@ -216,13 +218,19 @@ wormhole.prototype.setupIOEvents = function (cb) {
 			}
 			done();
 		}, function (done) {
+			console.log("Setting up namespaces", self._namespaces);
 			async.forEach(self._namespaces, function (namespace, next) {
+				console.log("NAMESPACE:", namespace);
 				self._io.of(namespace).on("connection", function (socket) {
+					console.log("Welcome the traveller!");
 					self.createTraveller(socket, function (err, traveller) {
+						console.log("Traveller, welcome to the Wormhole.", traveller);
 						// done!! HEHEHE!
-						self.setupClientEvents(setupClientEvents, function (err) {
+						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
-							traveller.sendRPCFunctions(function (err) {
+							console.log("Traveller events set up.");
+							traveller.sendRPCFunctions(self._clientMethods, function (err) {
+								console.log("Sent RPC functions to traveller.");
 								self.emit("connection", traveller);
 							});
 						});
@@ -282,7 +290,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			});
 			done();
 		},
-		function () {
+		function (done) {
 			traveller.on("disconnect", function () {
 				// wut?
 			});
@@ -330,7 +338,8 @@ var wormholeTraveller = function (socket) {
 	this.customRpc = {};
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
-wormholeTraveller.prototype.sendRPCFunctions = function(cb) {
+wormholeTraveller.prototype.sendRPCFunctions = function(methods, cb) {
+	this.socket.emit("syncClientFunctions", methods);
 	cb();
 };
 wormholeTraveller.prototype.syncClientMethods = function(methods) {
