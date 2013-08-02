@@ -424,7 +424,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		}
 	}
 };
-
+wormhole.eventWormhole = require('./event');
 wormhole.packageFunction = function (func, args) {
   var ret = "function() { return (" + fn.toString() + ").apply(this, " + JSON.stringify(args) + ");}";
   return ret;

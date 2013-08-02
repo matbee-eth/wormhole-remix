@@ -19,6 +19,10 @@ var wormhole = function (options) {
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
 	this._redisSubClient = options.redisSubClient;
+	this._sessionStore = options.sessionStore;
+	this._cookieParser = options.cookieParser;
+	this._sessionKey = options.sessionKey;
+
 	this._port = options.port;
 	this._hostname = options.hostname;
 	this._protocol = options.protocol;
@@ -64,6 +68,15 @@ wormhole.prototype.start = function(options) {
 			this._redisSubClient = options._redisSubClient;
 		}
 	}
+	if (options.sessionStore) {
+		this._sessionStore = options.sessionStore;
+	}
+	if (options.cookieParser) {
+		this._cookieParser = options.cookieParser;
+	}
+	if (options.sessionKey) {
+		this._sessionKey = options.sessionKey;
+	}
 	if (!this._io) {
 		throw new Error("No Socket.IO");
 	}
@@ -72,6 +85,9 @@ wormhole.prototype.start = function(options) {
 	}
 	if (!this._redisPubClient || !this._redisPubClient) {
 		throw new Error("No PubSub clients");
+	}
+	if (this._namespaces.length == 0) {
+		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
 	}
 	console.log("Initializing Wormhole.");
 	this.getScripts(function (err, response) {
@@ -312,5 +328,6 @@ __randomString = function() {
 	return randomstring;
 };
 
+module.exports = wormhole;
 // var wh = new wormhole({io: {}, express: {}, redisPubClient: {}, redisSubClient: {}, port: 5555, hostname: "hp.groupnotes.ca", protocol: "http"});
 // wh.start();
