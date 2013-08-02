@@ -128,18 +128,19 @@ wormhole.prototype.getScripts = function (cb) {
 wormhole.prototype.setupIOEvents = function (cb) {
 	// body...
 	var self = this;
-	this._io.on("connection", function (socket) {
-		self.createTraveller(socket, function (err, traveller) {
-			// done!! HEHEHE!
-			self.setupClientEvents(setupClientEvents, function (err) {
-				// LOLOLO
-				traveller.sendRPCFunctions(function (err) {
-					self.emit("connection", traveller);
+	async.forEach(this._namespaces, function (namespace, next) {
+		this._io.of(namespace).on("connection", function (socket) {
+			self.createTraveller(socket, function (err, traveller) {
+				// done!! HEHEHE!
+				self.setupClientEvents(setupClientEvents, function (err) {
+					// LOLOLO
+					traveller.sendRPCFunctions(function (err) {
+						self.emit("connection", traveller);
+					});
 				});
 			});
 		});
-	});
-	cb && cb();
+	}, cb)
 };
 wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.
