@@ -65,9 +65,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				 	if (isAsync && UUID) {
 				 		rpcCallback = function () {
 				 			// UUID
-				 			traveller.callback.apply(traveller, [UUID].concat([].slice.call(arguments)));
+				 			traveller.callback.apply(traveller, [null, UUID].concat([].slice.call(arguments)));
 				 		}
+				 		args.push(rpcCallback);
 				 	}
+				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
+			 	} else {
+			 		traveller.callback("No such method.");
 			 	}
 			});
 			done();
@@ -98,7 +102,10 @@ wormhole.prototype.executeClientRPC = function (traveller, func) {
 	//
 };
 wormhole.prototype.executeServerRPC = function (traveller, func) {
-	//
+	var args = [].slice.call(arguments);
+	traveller = args.shift();
+	func = args.shift();
+ 	self._serverMethods[func].apply(traveller, args);
 };
 
 var wormholeTraveller = function (socket) {
@@ -161,6 +168,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	});
 	cb && cb();
 };
-wormholeTraveller.prototype.callback = function (uuid) {
+wormholeTraveller.prototype.callback = function (err, uuid) {
 	var self = this;
+	//
 };
