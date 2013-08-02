@@ -139,7 +139,7 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
-	res.end(this._cachedNamespace["/"+namespace]);
+	res.send(this._cachedNamespace["/"+namespace]);
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -164,33 +164,37 @@ wormhole.prototype.getScripts = function (cb) {
 				}
 				done(error);
 			});
-		},
-		function (done) {
+		}
+	], function (err) {
+		if (!err) {
 			fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 				if (!err) {
 					async.forEach(self._namespaces, function (namespace, next) {
 						// data = uglify.minify(data.toString(), {fromString: true}).code;
-						fs.readFile(__dirname + '/client.js', function (err, data) {
-							if (!err && data) {
-								data = uglify.minify(data.toString(), {fromString: true}).code;
-								self._cachedNamespace[namespace] = data + ";\n" + self._cachedNamespace[namespace];
+						fs.readFile(__dirname + '/client.js', function (err, clientJSData) {
+							if (!err && clientJSData) {
+								clientJSData = uglify.minify(clientJSData.toString(), {fromString: true}).code;
+								self._cachedNamespace[namespace] = clientJSData + ";\n" + self._cachedNamespace[namespace];
+								self._cachedNamespace[namespace] = self._cachedNamespace[namespace] + data;
 							}
-							self._cachedNamespace[namespace] = data.toString();
 							var func = self._namespaceClientFunctions[namespace];
 							data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func || function () {}.toString());
-							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
-							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, this._protocol + "://" + this._hostname + ":" + this._port);
+							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace ? namespace.replace("/", "") : "");
+							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, self._protocol + "://" + self._hostname + ":" + self._port);
 							data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, self.__socketIOJs);
 							self._cachedNamespace[namespace] = data.toString();
 							next(err);
 						});
-					}, done);
+					}, cb);
 				} else {
-					done(err);
+					cb(err);
 				}
 			});
+		} else {
+			console.log(err);
+			cb(err);
 		}
-	], cb);
+	});
 };
 wormhole.prototype.setupIOEvents = function (cb) {
 	// body...
