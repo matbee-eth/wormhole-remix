@@ -203,7 +203,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 	async.parallel([
 		function (done) {
 			if (self._cookieParser && self._sessionStore && self._sessionKey) {
-				io.set('authorization', function(handshake, callback) {
+				self._io.set('authorization', function(handshake, callback) {
 				  self._cookieParser(handshake, {}, function (err) {
 				    // Fancy, huh?
 				    err && callback(err, false);
@@ -255,7 +255,7 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 	socket.getSessionKey = function (key, cb) {
 		socket.getSession(function (err, session) {
 			console.log("getSession", err, session);
-			cb(err, session[key]);
+			cb(err, session ? session[key] : null);
 		});
 	};
 	socket.setSession = function (session, cb) {
@@ -336,6 +336,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				 	if (UUID) {
 				 		rpcCallback = function () {
 				 			// UUID
+				 			console.log("RPC CALLBACK: ", [null, UUID].concat([].slice.call(arguments)));
 				 			traveller.callback.apply(traveller, [null, UUID].concat([].slice.call(arguments)));
 				 		}
 				 		args.push(rpcCallback);
@@ -456,10 +457,11 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	});
 	cb && cb();
 };
-wormholeTraveller.prototype.callback = function () {
+wormholeTraveller.prototype.callback = function (err, uuid) {
 	var self = this;
 	var args = [].slice.call(arguments);
-	this.socket.emit.apply(this.socket, "callback", args);
+	console.log("CALLBACK");
+	this.socket.emit.apply(this.socket, ["callback"].concat(args));
 };
 wormholeTraveller.prototype.sendClientRPC = function(out) {
 	this.socket.emit("rpc", out);

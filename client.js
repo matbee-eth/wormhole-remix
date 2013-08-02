@@ -88,6 +88,24 @@ wormhole.prototype.setupSocket = function(socket) {
 			func.apply(self, params);
 		}
 	});
+	socket.on("callback", function (err, uuid) {
+		var args = [].slice.call(arguments).slice(2);
+		var func = self.uuidList[uuid];
+		if (func && typeof func === "function") {
+			if (!err && uuid) {
+				// valid.
+				// Execute function with arguments! Blama llama lamb! Blam alam alam
+				func.apply(self, args);
+			} else {
+				// invalid.
+				func(self, err);
+			}
+			// Remove function from uuidList.
+			if (uuid && self.uuidList[uuid]) {
+				delete self.uuidList[uuid];
+			}
+		}
+	});
 	socket.on("execute", function (functino, args) {
 		if (self.encryptAsBinary) {
 			args = self.charcodeArrayToString(args);
