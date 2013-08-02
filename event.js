@@ -10,6 +10,7 @@ var util = require('util')
   , events = require('events');
 
 var wormhole = function (options) {
+	options = options || {};
 	events.EventEmitter.call(this);
 	// Stores the actual reference to the functions.
 	this._serverMethods = {};
@@ -282,3 +283,5 @@ __randomString = function() {
 	}
 	return randomstring;
 };
+var wh = new wormhole();
+wh.start({}, {});
