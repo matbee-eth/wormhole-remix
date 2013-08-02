@@ -75,6 +75,7 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 	});
 };
 wormhole.prototype.getScripts = function (cb) {
+	var self = this;
 	async.parallel([
 		function (done) {
 			fs.readFile(__dirname + '/client.js', function (err, data) {
@@ -91,7 +92,7 @@ wormhole.prototype.getScripts = function (cb) {
 			});
 		},
 		function (done) {
-			request(this._protocol + "://" + this._hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
+			request(self._protocol + "://" + self._hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
 				if (!error && response.statusCode == 200) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
@@ -111,7 +112,9 @@ wormhole.prototype.setupIOEvents = function (cb) {
 			// done!! HEHEHE!
 			self.setupClientEvents(setupClientEvents, function (err) {
 				// LOLOLO
-				self.emit("connection", traveller);
+				traveller.sendRPCFunctions(function (err) {
+					self.emit("connection", traveller);
+				});
 			});
 		});
 	});
@@ -212,6 +215,9 @@ var wormholeTraveller = function (socket) {
 	this.customRpc = {};
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeTraveller.prototype.sendRPCFunctions = function(cb) {
+	cb();
+};
 wormholeTraveller.prototype.syncClientMethods = function(methods) {
 	var keys = Object.keys(methods);
 	async.forEach(keys, function (method, next) {
@@ -283,5 +289,3 @@ __randomString = function() {
 	}
 	return randomstring;
 };
-var wh = new wormhole();
-wh.start({}, {});
