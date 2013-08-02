@@ -145,7 +145,7 @@ wormhole.prototype.getScripts = function (cb) {
 			});
 		},
 		function (done) {
-			request(self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js', function (error, response, body) {
+			request(self._protocol + "://" + self._hostname + ":" + self._port + '/socket.io/socket.io.js', function (error, response, body) {
 				if (!error && response.statusCode == 200) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
