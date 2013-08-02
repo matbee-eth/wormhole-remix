@@ -69,7 +69,7 @@ wormhole.prototype.setupSocket = function(socket) {
 			data = self.charcodeArrayToString(data);
 			data = JSON.parse(data);
 		}
-		self.executeRpc(data.function, data.async, data.arguments, data.uuid);
+		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid);
 	});
 	socket.on("rpcResponse", function (data) {
 		if (self.encryptAsBinary) {
@@ -164,6 +164,7 @@ wormhole.prototype.setSocket = function(socket) {
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	var self = this;
+	console.log("Executing Client RPC", methodName, isAsync, args, uuid);
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
 		if (isAsync && uuid) {
 			var argsWithCallback = args.slice(0);

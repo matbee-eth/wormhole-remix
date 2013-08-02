@@ -223,7 +223,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 				self._io.of(namespace).on("connection", function (socket) {
 					console.log("Welcome the traveller!");
 					self.createTraveller(socket, function (err, traveller) {
-						console.log("Traveller, welcome to the Wormhole.", traveller);
+						console.log("Traveller, welcome to the Wormhole.");
 						// done!! HEHEHE!
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
@@ -316,7 +316,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				};
 				if (hasCallback) {
 					out.uuid = __randomString();
-					self.uuidList[out.uuid] = callback;
+					self._uuidList[out.uuid] = callback;
 				}
 
 				traveller.sendClientRPC(out);
@@ -345,6 +345,16 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			 	} else {
 			 		traveller.callback("No such method.");
 			 	}
+			});
+			done();
+		},
+		function (done) {
+			traveller.on("callback", function (uuid) {
+				console.log("RPC CALLBACK", uuid);
+				if (uuid && self._uuidList[uuid]) {
+					self._uuidList[uuid].apply(traveller, [].slice.call(arguments).slice(1)[0][0]);
+					delete self._uuidList[uuid];
+				}
 			});
 			done();
 		},
@@ -450,7 +460,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	this.socket.on("rpcResponse", function (data) { // ClientRPC response.
 		var uuid = data.uuid;
 		var args = data.args;
-		self.emit("callback", data);
+		self.emit("callback", data.uuid, data.args);
 	});
 	this.socket.on("disconnect", function () {
 		self.emit("disconnect");
