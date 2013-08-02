@@ -173,8 +173,8 @@ wormhole.prototype.getScripts = function (cb) {
 						// data = uglify.minify(data.toString(), {fromString: true}).code;
 						fs.readFile(__dirname + '/client.js', function (err, clientJSData) {
 							if (!err && clientJSData) {
-								clientJSData = uglify.minify(clientJSData.toString(), {fromString: true}).code;
-								self._cachedNamespace[namespace] = clientJSData + ";\n" + self._cachedNamespace[namespace];
+								// clientJSData = uglify.minify(clientJSData.toString(), {fromString: true}).code;
+								self._cachedNamespace[namespace] = clientJSData + ";\n";
 								self._cachedNamespace[namespace] = self._cachedNamespace[namespace] + data;
 							}
 							var func = self._namespaceClientFunctions[namespace];
@@ -298,9 +298,13 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 		cb(err, traveller);
 	});
 };
-wormhole.prototype.addNamespace = function (namespace, options) {
-	if (options && options.engagingFunction) {
-		this._namespaceClientFunctions[namespace] = options.engagingFunction;
+wormhole.prototype.addNamespace = function (namespace, func) {
+	if (func && typeof func === "function") {
+		var args = [].slice.call(arguments);
+		args.shift();
+		args.shift();
+		func = "(" + func.toString() + "('" + args.join("','") + "'))";
+		this._namespaceClientFunctions[namespace] = func;
 	}
 	this._namespaces.push(namespace);
 };
