@@ -447,7 +447,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 			self.executeServerRPC.apply(self, [data.function, data.uuid].concat(data.arguments));
 		}
 	});
-	this.socket.on("callback", function (data) { // ClientRPC response.
+	this.socket.on("rpcResponse", function (data) { // ClientRPC response.
 		var uuid = data.uuid;
 		var args = data.args;
 		self.emit("callback", data);
