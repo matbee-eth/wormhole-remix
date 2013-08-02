@@ -37,10 +37,9 @@ var wormhole = function (options) {
 	this.__socketIOJs;
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
-wormhole.prototype.start = function(options) {
+wormhole.prototype.start = function(options, callback) {
 	var self = this;
 	// io, express and redis pub/sub are all mandatory.
-	var callback;
 	if (options && typeof options === "function") {
 		// It's a callback, not an options object!
 		callback = options;
@@ -112,7 +111,7 @@ wormhole.prototype.clientMethods = function(methods, cb) {
 	var self = this;
 	var methodKeys = Object.keys(methods);
 	async.forEach(methodKeys, function (method, next) {
-		self._clientMethods[method] = methods[method];
+		self._clientMethods[method] = methods[method].toString();
 		next();
 	}, cb);
 };
@@ -120,7 +119,7 @@ wormhole.prototype.serverMethods = function(methods, cb) {
 	var self = this;
 	var methodKeys = Object.keys(methods);
 	async.forEach(methodKeys, function (method, next) {
-		self._clientMethods[method] = methods[method];
+		self._serverMethods[method] = methods[method];
 		next();
 	}, cb);
 };
@@ -229,19 +228,33 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
 							console.log("Traveller events set up.");
-							traveller.sendRPCFunctions(self._clientMethods, function (err) {
+							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
 								console.log("Sent RPC functions to traveller.");
 								self.emit("connection", traveller);
 							});
 						});
 					});
 				});
+				next();
 			}, done);
 	}], cb);
 };
 wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.
+	var self = this;
 	async.parallel([
+		function (done) {
+			async.forEach(Object.keys(self._clientMethods), function (method, next) {
+				next();
+				traveller.addClientMethod(method);
+			}, done);
+		},
+		function (done) {
+			async.forEach(Object.keys(self._serverMethods), function (method, next) {
+				next();
+				traveller.addServerMethod(method);
+			}, done);
+		},
 		function (done) {
 			traveller.on("executeClientRPC", function (func) {
 				// Send RPC data to Client.
@@ -338,18 +351,19 @@ var wormholeTraveller = function (socket) {
 	this.customRpc = {};
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
-wormholeTraveller.prototype.sendRPCFunctions = function(methods, cb) {
-	this.socket.emit("syncClientFunctions", methods);
-	cb();
+wormholeTraveller.prototype.sendRPCFunctions = function(clientMethods, serverMethods, cb) {
+	this.socket.emit("syncClientFunctions", clientMethods);
+	this.socket.emit("syncServerFunctions", serverMethods);
+	cb && cb();
 };
 wormholeTraveller.prototype.syncClientMethods = function(methods) {
 	var keys = Object.keys(methods);
 	async.forEach(keys, function (method, next) {
-		this.addClientMethod(method);
+		this.addClientMethod(method, methods[method]);
 		next();
 	}, cb);
 };
-wormholeTraveller.prototype.addClientMethod = function(method) {
+wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	this.rpc[method] = function () {
 		this.executeClientRPC.apply(this, [].slice.call(arguments));
 	};
