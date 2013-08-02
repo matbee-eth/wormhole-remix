@@ -20,6 +20,7 @@ var wormhole = function (options) {
 	this._redisSubClient = options.redisSubClient;
 	this._namespaces = [];
 	this._namespaceClientFunctions = {};
+	this._uuidList = {};
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
 wormhole.prototype.start = function(io, express, options) {
@@ -46,23 +47,39 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	// Capture RPC events from traveller.
 	async.parallel([
 		function (done) {
-			traveller.on("executeClientRPC", function (data) {
+			traveller.on("executeClientRPC", function (func) {
 				// Send RPC data to Client.
+				var hasCallback = false;
+				var callback;
+				var args = [].slice.call(arguments);
+				args.shift();
+				if (typeof args[args.length-1] === "function") { // Expecting last item to be a callback :)
+					hasCallback = true;
+					callback = args.pop();
+				}
+				var out = {
+					"function": func,
+					"uuid": hasCallback ? 1111 : null,
+					"arguments": args
+				};
+				if (hasCallback) {
+					out.uuid = __randomString();
+					self.uuidList[out.uuid] = callback;
+				}
 			});
 			done();
 		},
 		function (done) {
 			// Executing Server RPC.
-			traveller.on("executeServerRPC", function (func, isAsync, UUID) {
+			traveller.on("executeServerRPC", function (func, UUID) {
 				var args = [].slice.call(args);
 			 	var func = args.shift();
-			 	var isAsync = args.shift();
 			 	var UUID = args.shift();
 			 	// Execute RPC function w/ that name.
-			 	// If UUID && isAsync, callback is expected.
+			 	// If UUID, callback is expected.
 			 	if (self._serverMethods[func]) {
 			 		var rpcCallback;
-				 	if (isAsync && UUID) {
+				 	if (UUID) {
 				 		rpcCallback = function () {
 				 			// UUID
 				 			traveller.callback.apply(traveller, [null, UUID].concat([].slice.call(arguments)));
@@ -112,7 +129,6 @@ var wormholeTraveller = function (socket) {
 	events.EventEmitter.call(this);
 	this.socket = socket;
 	this.cloakEngaged = false;
-	this.uuidList = {};
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
@@ -158,9 +174,9 @@ wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
 	this.socket.on("rpc", function (data) {
-		/* data.function, data.async, data.arguments, data.uuid */
-		if (data && data.function) {
-			self.executeServerRPC.apply(self, [data.function, data.async, data.uuid].concat(data.arguments));
+		/* data.func, data.async, data.arguments, data.uuid */
+		if (data && data.func) {
+			self.executeServerRPC.apply(self, [data.func, data.uuid].concat(data.arguments));
 		}
 	});
 	this.socket.on("disconnect", function () {
