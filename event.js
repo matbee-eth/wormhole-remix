@@ -21,13 +21,60 @@ var wormhole = function (options) {
 	this._namespaces = [];
 	this._namespaceClientFunctions = {};
 	this._uuidList = {};
+
+	// Javascript file cache.
+	this.__wormholeClientJs;
+	this.__socketIOJs;
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
 wormhole.prototype.start = function(io, express, options) {
-	// body...
+	this.getScripts(function (err, response) {
+		if (!err && this.__wormholeClientJs && this.__socketIOJs) {
+			// Ready, Freddy!
+		}
+	});
 };
 wormhole.prototype.setupExpressRoutes = function (cb) {
-	// body...
+	var self = this;
+	this._express.get('/wormhole/client.js', function (req, res) {
+		res.setHeader("Content-Type", "application/javascript");
+		if (!wormholeClientJs) {
+		} else {
+			sendTheClientJs(req, res);
+		}
+	});
+	this._express.get('/wormhole/:namespace/connect.js', function (req, res) {
+		doIt(req, res, req.params.namespace);
+	});
+};
+wormhole.prototype.getScripts = function (cb) {
+	async.parallel([
+		function (done) {
+			fs.readFile(__dirname + '/client.js', function (err, data) {
+				if (!err) {
+					var wormholeClientJs = data.toString();
+					var port = "";
+					if (options.port) {
+						port = ":"+options.port;
+					}
+					wormholeClientJs = wormholeClientJs.replace('REPLACETHISFUCKINGSTRINGLOL', '//'+self._hostname + self._port);
+					self.__wormholeClientJs = wormholeClientJs;
+				}
+				done(err);
+			});
+		},
+		function (done) {
+			request(this._protocol + "://" + this._hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
+				if (!error && response.statusCode == 200) {
+					self.__socketIOJs = body.toString();
+					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
+				} else {
+					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + port + '/socket.io/socket.io.js');
+				}
+				done(error);
+			});
+		}
+	], cb);
 };
 wormhole.prototype.setupIOEvents = function (cb) {
 	// body...
