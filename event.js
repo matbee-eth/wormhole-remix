@@ -351,8 +351,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("callback", function (uuid) {
 				console.log("RPC CALLBACK", uuid);
+				var args = [].slice.call(arguments);
+				args.shift();
 				if (uuid && self._uuidList[uuid]) {
-					self._uuidList[uuid].apply(traveller, [].slice.call(arguments).slice(1)[0][0]);
+					self._uuidList[uuid].apply(traveller, [].slice.call(arguments).slice(1)[0]);
 					delete self._uuidList[uuid];
 				}
 			});
@@ -460,7 +462,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	this.socket.on("rpcResponse", function (data) { // ClientRPC response.
 		var uuid = data.uuid;
 		var args = data.args;
-		self.emit("callback", data.uuid, data.args);
+		self.emit.apply(self, ["callback", data.uuid].concat(data.args));
 	});
 	this.socket.on("disconnect", function () {
 		self.emit("disconnect");
