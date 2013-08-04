@@ -331,8 +331,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
-			traveller.on("executeGroupClientRPC", function (channel, func) {
-				//
+			traveller.on("executeChannelClientRPC", function (channel, func) {
+				// Channel RPC emitted.
+				var args = [].slice.call(arguments).slice(2);
+				self._redisPubClient.publish(channel, JSON.stringify({function: func, args: args}));
 			});
 		},
 		function (done) {
@@ -457,9 +459,9 @@ wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	var argsArray = ["executeClientRPC", funcName];
 	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
 };
-wormholeTraveller.prototype.executeGroupClientRPC = function(channel, funcName) {
+wormholeTraveller.prototype.executeChannelClientRPC = function(channel, funcName) {
 	// Server triggers client RPC execution
-	var argsArray = ["executeGroupClientRPC", channel, funcName];
+	var argsArray = ["executeChannelClientRPC", channel, funcName];
 	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(2)));
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
