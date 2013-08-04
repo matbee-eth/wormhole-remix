@@ -387,9 +387,16 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 	// Connect pubsubbies
 	var socketIdSub = function () {
 		// Now what!?
+		// executeChannelClientRPC
+		// executeClientRPC
+		// executeServerRPC (maybe not.)
+		// Should it only execute from Client->Server!?
+		// Or Could we enable Server->Server(s)?
+		console.log("SocketID publishies", arguments);
 	};
 	var sessionIdSub = function () {
 		// Now what!?
+		console.log("SessionID publishies", arguments);
 	}
 	var sessionIdString;
 	var socketIdString = "wormhole:"+traveller.socket.id;
