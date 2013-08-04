@@ -383,12 +383,35 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	],
 	cb);
 };
+wormhole.prototype.setupPubSub = function(traveller, cb) {
+	// Connect pubsubbies
+	var socketIdSub = function () {
+		// Now what!?
+	};
+	var sessionIdSub = function () {
+		// Now what!?
+	}
+	this._pubsub.on(traveller.socket.id, socketIdSub);
+	if (traveller.socket.handshake.sessionId) {
+		this._pubsub.on(traveller.socket.handshake.sessionId, sessionIdSub);
+	}
+	// Kill subscriptions-- memory stuff.
+	traveller.socket.on("disconnect", function () {
+		this._pubsub.removeListener(traveller.socket.id, socketIdSub);
+		if (traveller.socket.handshake.sessionId) {
+			this._pubsub.removeListener(traveller.socket.handshake.sessionId, sessionIdSub);
+		}
+	});
+};
 wormhole.prototype.createTraveller = function(socket, cb) {
 	// body...
+	var self = this;
 	var traveller = new wormholeTraveller(socket);
 	this.extendSocket(socket, function (err) {
 		traveller.setupClientEvents(function (err) {
-			cb(err, traveller);
+			self.setupPubSub(traveller, function (err) {
+				cb && cb(err, traveller);
+			});
 		});
 	});
 };
