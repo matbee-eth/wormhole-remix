@@ -402,7 +402,8 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 	};
 	var allTheFunctions = function (clientFunc, args) {
 		console.log("MOTHER OF ALL THE FUNCTIONS!", func);
-		traveller.emit.apply(traveller, ["executeClientRPC", clientFunc].concat(args));
+		args = JSON.parse(args);
+		traveller.executeClientRPC([clientFunc].concat(args))
 	};
 	var sessionIdString;
 	var socketIdString = "wormhole:"+traveller.socket.id;
