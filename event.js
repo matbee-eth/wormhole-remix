@@ -85,7 +85,7 @@ wormhole.prototype.start = function(options, callback) {
 	if (!this._express) {
 		throw new Error("No Express");
 	}
-	if (!this._sessionStore.subClient || !this._sessionStore.client || !this._redisPubClient || !this._redisPubClient) {
+	if ((this._sessionStore && (!this._sessionStore.subClient || !this._sessionStore.client)) || !this._redisPubClient || !this._redisPubClient) {
 		throw new Error("No PubSub clients");
 	} else {
 		if (!this._redisPubClient || !this._redisPubClient) {
