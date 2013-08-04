@@ -7,7 +7,8 @@ var util = require('util')
   , jsdom = require('jsdom')
   , async = require('async')
   , request = require('request')
-  , events = require('events');
+  , events = require('events')
+  , redispubsub = require('redis-sub');
 
 var wormhole = function (options) {
 	options = options || {};
@@ -84,8 +85,14 @@ wormhole.prototype.start = function(options, callback) {
 	if (!this._express) {
 		throw new Error("No Express");
 	}
-	if (!this._redisPubClient || !this._redisPubClient) {
+	if (!this._sessionStore.subClient || !this._sessionStore.client || !this._redisPubClient || !this._redisPubClient) {
 		throw new Error("No PubSub clients");
+	} else {
+		if (!this._redisPubClient || !this._redisPubClient) {
+			this._redisPubClient = this._sessionStore.client;
+			this._redisSubClient = this._sessionStore.subClient;
+		}
+		this._pubsub = this._sessionStore.pubsub || new redispubsub({pubClient: this._redisPubClient, subClient: this._redisSubClient});
 	}
 	if (this._namespaces.length == 0) {
 		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
@@ -324,6 +331,11 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
+			traveller.on("executeGroupClientRPC", function (channel, func) {
+				//
+			});
+		},
+		function (done) {
 			// Executing Server RPC.
 			traveller.on("executeServerRPC", function (func, UUID) {
 				var args = [].slice.call(arguments);
@@ -444,6 +456,11 @@ wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
 	var argsArray = ["executeClientRPC", funcName];
 	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
+};
+wormholeTraveller.prototype.executeGroupClientRPC = function(channel, funcName) {
+	// Server triggers client RPC execution
+	var argsArray = ["executeGroupClientRPC", channel, funcName];
+	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(2)));
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 	// Client triggers server RPC execution
