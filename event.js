@@ -402,6 +402,7 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 			this._pubsub.removeListener(traveller.socket.handshake.sessionId, sessionIdSub);
 		}
 	});
+	cb && cb();
 };
 wormhole.prototype.createTraveller = function(socket, cb) {
 	// body...
