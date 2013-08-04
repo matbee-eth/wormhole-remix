@@ -393,10 +393,12 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 		// Should it only execute from Client->Server!?
 		// Or Could we enable Server->Server(s)?
 		console.log("SocketID publishies", arguments);
+		allTheFunctions(func, args);
 	};
 	var sessionIdSub = function (func, args) {
 		// Now what!?
 		console.log("SessionID publishies", arguments);
+		allTheFunctions(func, args);
 	};
 	var allTheFunctions = function (clientFunc, args) {
 		console.log("MOTHER OF ALL THE FUNCTIONS!", func);
