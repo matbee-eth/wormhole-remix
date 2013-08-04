@@ -385,7 +385,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 };
 wormhole.prototype.setupPubSub = function(traveller, cb) {
 	// Connect pubsubbies
-	var socketIdSub = function () {
+	var socketIdSub = function (func, args) {
 		// Now what!?
 		// executeChannelClientRPC
 		// executeClientRPC
@@ -394,10 +394,14 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 		// Or Could we enable Server->Server(s)?
 		console.log("SocketID publishies", arguments);
 	};
-	var sessionIdSub = function () {
+	var sessionIdSub = function (func, args) {
 		// Now what!?
 		console.log("SessionID publishies", arguments);
-	}
+	};
+	var allTheFunctions = function (clientFunc, args) {
+		console.log("MOTHER OF ALL THE FUNCTIONS!", func);
+		traveller.emit.apply(traveller, ["executeClientRPC", clientFunc].concat(args));
+	};
 	var sessionIdString;
 	var socketIdString = "wormhole:"+traveller.socket.id;
 	this._pubsub.on(socketIdString, socketIdSub);
