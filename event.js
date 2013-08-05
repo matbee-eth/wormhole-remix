@@ -468,9 +468,7 @@ var wormholeTraveller = function (socket) {
 	this._methods = {};
 	this._clientMethods = {};
 	this.rpc = {};
-	this.groupRpc = {};
-	this.othersRpc = {};
-	this.customRpc = {};
+	this.channelRpc = {};
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeTraveller.prototype.sendRPCFunctions = function(clientMethods, serverMethods, cb) {
@@ -489,6 +487,9 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	var self = this;
 	this.rpc[method] = function () {
 		self.executeClientRPC.apply(self, [method].concat([].slice.call(arguments)));
+	};
+	this.channelRpc[method] = function (channel) {
+		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
