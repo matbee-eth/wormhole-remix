@@ -386,6 +386,12 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.removeAllListeners();
 			});
 			done();
+		},
+		function (done) {
+			traveller.socket.subscribeToSession(function (err, session) {
+				self.emit.call(traveller, "sessionUpdated", session);
+			});
+			done();
 		}
 	],
 	cb);

@@ -1,6 +1,6 @@
 {
   "name": "wormhole-remix",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "main": "server.js",
   "private": true,
   "scripts": {
