@@ -85,7 +85,7 @@ wormhole.prototype.start = function(options, callback) {
 	if (!this._express) {
 		throw new Error("No Express");
 	}
-	if ((this._sessionStore && (!this._sessionStore.subClient || !this._sessionStore.client)) || !this._redisPubClient || !this._redisPubClient) {
+	if ((this._sessionStore && (!this._sessionStore.subClient || !this._sessionStore.client)) && (!this._redisPubClient && !this._redisSubClient)) {
 		throw new Error("No PubSub clients");
 	} else {
 		if (!this._redisPubClient || !this._redisPubClient) {
@@ -113,6 +113,10 @@ wormhole.prototype.start = function(options, callback) {
 			callback && callback(err);
 		}
 	});
+};
+wormhole.prototype.executeChannelClientRPC = function(channel, func) {
+	var args = [].slice.call(arguments).slice(2);
+	this._redisPubClient.publish("wormhole:" + channel, JSON.stringify({func: func, args: args}));
 };
 wormhole.prototype.clientMethods = function(methods, cb) {
 	var self = this;
@@ -333,9 +337,11 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("executeChannelClientRPC", function (channel, func) {
 				// Channel RPC emitted.
+				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
-				self._redisPubClient.publish(channel, JSON.stringify({function: func, args: args}));
+				self._redisPubClient.publish(channel, JSON.stringify({func: func, args: args}));
 			});
+			done();
 		},
 		function (done) {
 			// Executing Server RPC.
@@ -385,24 +391,25 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 };
 wormhole.prototype.setupPubSub = function(traveller, cb) {
 	// Connect pubsubbies
-	var socketIdSub = function (func, args) {
+	var socketIdSub = function (data) {
 		// Now what!?
 		// executeChannelClientRPC
 		// executeClientRPC
 		// executeServerRPC (maybe not.)
 		// Should it only execute from Client->Server!?
 		// Or Could we enable Server->Server(s)?
-		console.log("SocketID publishies", arguments);
-		allTheFunctions(func, args);
+		data = JSON.parse(data);
+		console.log("SocketID publishies", data.func, data.args);
+		allTheFunctions(data.func, data.args);
 	};
-	var sessionIdSub = function (func, args) {
+	var sessionIdSub = function (data) {
 		// Now what!?
-		console.log("SessionID publishies", arguments);
-		allTheFunctions(func, args);
+		data = JSON.parse(data);
+		console.log("SessionID publishies", data.func, data.args);
+		allTheFunctions(data.func, data.args);
 	};
 	var allTheFunctions = function (clientFunc, args) {
-		console.log("MOTHER OF ALL THE FUNCTIONS!", func);
-		args = JSON.parse(args);
+		console.log("MOTHER OF ALL THE FUNCTIONS!", clientFunc);
 		traveller.executeClientRPC([clientFunc].concat(args))
 	};
 	var sessionIdString;
@@ -419,6 +426,7 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 			this._pubsub.removeListener(sessionIdString, sessionIdSub);
 		}
 	});
+	console.log("Set up pubsub channels");
 	cb && cb();
 };
 wormhole.prototype.createTraveller = function(socket, cb) {
@@ -502,7 +510,8 @@ wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 };
 wormholeTraveller.prototype.executeChannelClientRPC = function(channel, funcName) {
 	// Server triggers client RPC execution
-	var argsArray = ["executeChannelClientRPC", channel, funcName];
+	var argsArray = ["executeChannelClientRPC", "wormhole:"+channel, funcName];
+	console.log(argsArray.concat([].slice.call(arguments).slice(2)));
 	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(2)));
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
