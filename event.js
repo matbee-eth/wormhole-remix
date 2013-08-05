@@ -383,6 +383,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("disconnect", function () {
 				// wut?
+				traveller.removeAllListeners();
 			});
 			done();
 		}
