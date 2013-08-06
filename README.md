@@ -28,7 +28,7 @@ $ npm install wormhole-remix
 	- protocol: - Mandatory - To Pass to client for socket.io connection.
 
 ```javascript
-	// Quick and dirty:
+	// Server-Side: Quick and dirty,
 	var wormhole = require('wormhole-remix'),
 		cookieParser = express.cookieParser('WORMHOLE.SECRET');
 
@@ -45,6 +45,10 @@ $ npm install wormhole-remix
 		getWebsite: function (cb) { cb(window.location.href); }
 	});
 
+	wh.serverMethods({
+		whoAmI: function (cb) { cb("You're a wormhol-er that's who!"); }
+	});
+
 	// Use this to specify which namespaces to support.
 	// Function is optional - Will execute on the client, once connected.
 	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "ARG!!!");
@@ -56,6 +60,36 @@ $ npm install wormhole-remix
         });
       });
     });
+```
+
+```javascript
+	// After the madness below
+	var connected = function () {
+		// Yay, I'm connected!
+		// Now, lets execute some Server RPC's.
+	};
+```
+```javascript
+	// Client-side: Magic!
+	var scripty = document.createElement("script");
+	scripty.src = "http://localhost:3000/wormhole/example/connect.js";
+	document.appendChild(scripty);
+	scripty.onload = function () {
+		wh.ready(connected);
+	};
+	// Done.
+
+	// Or do some EVIL EVAL!
+	var req = new XMLHttpRequest();
+	var wh;
+	req.open("GET", "http://localhost:3000" + "/wormhole/example/connect.js", true);
+	req.addEventListener("load", function(e) {
+	    var window = {}; // I fake the window, yeah, because I'm cool like that.
+		eval(req.responseText); // Don't hate me. I didn't have a choice.
+		wh = window.wh;
+		wh.ready(connected)
+	}, false);
+	req.send(null);
 ```
 
 ## License (MIT)

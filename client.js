@@ -4,7 +4,7 @@ var wormhole = function (socket) {
 	this.socket = socket;
 	this.uuidList = {};
 	this.rpc = {};
-	this.callback = function () {};
+	this.callback = [];
 	var self = this;
 	this.setupSocket(socket);
 };
@@ -266,10 +266,12 @@ wormhole.prototype.execute = function(func) {
 };
 wormhole.prototype.ready = function (cb) {
 	if (cb) {
-		this.callback = cb;
+		this.callback.push(cb);
 	} else {
 		if (this.callback) {
-			this.callback();
+			for (var i in this.callback) {
+				this.callback[i].call(this);
+			}
 		}
 	}
 };
