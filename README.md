@@ -37,6 +37,12 @@ $ npm install wormhole-remix
 	  sessionKey: sessionKey
 	});
 
+	wh.clientMethods({
+		getWebsite: function (cb) {
+			cb(window.location.href);
+		}
+	});
+
 	// Use this to specify which namespaces to support.
 	// Function is optional - Will execute on the client, once connected.
 	wh.addNamespace('/example', function (Arg1, Arg2, SoMany) {
@@ -52,8 +58,8 @@ $ npm install wormhole-remix
       wh.on("connection", function (traveller) {
       	// Also, traveller.socket exists, as well.
         console.log("Welcome to Wormhole, traveller!");
-        traveller.rpc.getHostname(function (host, extra) {
-          console.log("RPC Client HOSTNAME:", host, extra);
+        traveller.rpc.getWebsite(function (url) {
+          console.log("Current RPC Client Website:", url);
         });
       });
       wh.on("sessionUpdated", function (session) {
