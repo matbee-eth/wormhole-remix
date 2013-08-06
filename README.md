@@ -17,7 +17,50 @@ $ npm install wormhole-remix
 
   - Options
     -
+```javascript
+	// Quick and dirty:
+	var wormhole = require('wormhole-remix'),
+		os = require('os'),
+		sessionStore = require('connect-redis-pubsub'),
+		port = 3000,
+		wormholeExternalProtocol = "https", /* Socket.IO Protocol. */
+		sessionSecret = process.env.sessionSecret || 'WORMHOLE.SECRET',
+		sessionKey = process.env.sessionKey || 'express.sid',
+		cookieParser = express.cookieParser(sessionSecret);
 
+	var wh = new wormhole({
+	  protocol: wormholeExternalProtocol,
+	  hostname: os.hostname(),
+	  port: wormholeExternalPort,
+	  sessionStore: sessionStore,
+	  cookieParser: cookieParser,
+	  sessionKey: sessionKey
+	});
+
+	// Use this to specify which namespaces to support.
+	// Function is optional - Will execute on the client, once connected.
+	wh.addNamespace('/example', function (Arg1, Arg2, SoMany) {
+		alert("Wormhole has loaded.");
+		console.log(Arg1, Arg2, SoMany);
+	}, "Argument1", "Argumen2", "So Many Arguments");
+
+	wh.start({
+      io: io,
+      express: app
+    }, function (err) {
+      console.log("Wormhole setup!");
+      wh.on("connection", function (traveller) {
+      	// Also, traveller.socket exists, as well.
+        console.log("Welcome to Wormhole, traveller!");
+        traveller.rpc.getHostname(function (host, extra) {
+          console.log("RPC Client HOSTNAME:", host, extra);
+        });
+      });
+      wh.on("sessionUpdated", function (session) {
+        console.log("Session Updated: Thanks, connect-redis-pubsub!", this, session);
+      });
+    });
+```
 ```javascript
 	// Server-side:
 	var wormhole = require('wormhole-remix'),
