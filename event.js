@@ -256,6 +256,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						// done!! HEHEHE!
 						if (socket.handshake.sessionId) {
 							traveller.sessionId = socket.handshake.sessionId;
+							socket.setSessionId(socket.handshake.sessionId);
 						}
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
@@ -273,15 +274,24 @@ wormhole.prototype.setupIOEvents = function (cb) {
 };
 wormhole.prototype.extendSocket = function(socket, cb) {
 	var self = this;
+	socket.setSessionId = function (id) {
+		self.set("sessionId", id);
+	};
 	socket.getSession = function (cb) {
-		self._sessionStore.get(socket.handshake.sessionId, cb);
+		socket.get("sessionId", function (err, id) {
+			self._sessionStore.get(id, cb);
+		});
 	};
 	socket.subscribeToSession = function(cb) {
-		console.log("Subscribing to: ", socket.handshake.sessionId);
-		self._sessionStore.subscribe(socket.handshake.sessionId, cb);
+		socket.get("sessionId", function (err, id) {
+			console.log("Subscribing to: ", socket.handshake.sessionId);
+			self._sessionStore.subscribe(id, cb);
+		});
 	};
 	socket.unsubscribeFromSession = function(cb) {
-		self._sessionStore.unsubscribe(socket.handshake.sessionId, cb);
+		socket.get("sessionId", function (err, id) {
+			self._sessionStore.unsubscribe(id, cb);
+		});
 	};
 	socket.getSessionKey = function (key, cb) {
 		socket.getSession(function (err, session) {
@@ -290,9 +300,11 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 		});
 	};
 	socket.setSession = function (session, cb) {
-		self._sessionStore.set(socket.handshake.sessionId, session, function (err) {
-			console.log("setSession, err?", arguments);
-			cb(err);
+		socket.get("sessionId", function (err, id) {
+			self._sessionStore.set(id, session, function (err) {
+				console.log("setSession, err?", arguments);
+				cb(err);
+			});
 		});
 	};
 	socket.setSessionKey = function (key, value, cb) {
@@ -404,6 +416,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("disconnect", function () {
 				// wut?
 				traveller.removeAllListeners();
+				traveller.socket.unsubscribeFromSession();
 			});
 			done();
 		},
