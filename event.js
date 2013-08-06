@@ -274,6 +274,7 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 		self._sessionStore.get(socket.handshake.sessionId, cb);
 	};
 	socket.subscribeToSession = function(cb) {
+		console.log("Subscribing to: ", socket.handshake.sessionId);
 		socket.sessionSubscriptions.push(cb);
 		self._sessionStore.subscribe(socket.handshake.sessionId, cb);
 	};
