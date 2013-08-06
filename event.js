@@ -202,8 +202,8 @@ wormhole.prototype.getScripts = function (cb) {
 								self._cachedNamespace[namespace] = clientJSData + ";\n";
 								self._cachedNamespace[namespace] = self._cachedNamespace[namespace] + data;
 							}
-							var func = self._namespaceClientFunctions[namespace];
-							data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func || function () {}.toString());
+							var func = self._namespaceClientFunctions[namespace] || "(" + function(){}.toString() + "())";;
+							data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func);
 							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace ? namespace.replace("/", "") : "");
 							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, self._protocol + "://" + self._hostname + ":" + self._port);
 							data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, self.__socketIOJs);
