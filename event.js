@@ -269,13 +269,11 @@ wormhole.prototype.setupIOEvents = function (cb) {
 };
 wormhole.prototype.extendSocket = function(socket, cb) {
 	var self = this;
-	socket.sessionSubscriptions = [];
 	socket.getSession = function (cb) {
 		self._sessionStore.get(socket.handshake.sessionId, cb);
 	};
 	socket.subscribeToSession = function(cb) {
 		console.log("Subscribing to: ", socket.handshake.sessionId);
-		socket.sessionSubscriptions.push(cb);
 		self._sessionStore.subscribe(socket.handshake.sessionId, cb);
 	};
 	socket.unsubscribeFromSession = function(cb) {
@@ -408,7 +406,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.socket.subscribeToSession(function (err, session) {
 				console.log("Session updated!", traveller.socket.id);
-				self.emit.call(traveller, "sessionUpdated", session);
+				// self.emit.call(traveller, "sessionUpdated", session);
+				self.emit("sessionUpdated", session);
 			});
 			done();
 		}
