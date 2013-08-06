@@ -18,7 +18,7 @@ $ npm install wormhole-remix
   - Options
     - io: - Mandatory - Socket.IO instance
     - express: - Mandatory - Express instance
-	- sessionStore: - Mandatory - for PubSub Sessions.
+	- sessionStore: - Mandatory - for Express Sessions.
 	    - redisPubClient: -optional if connect-redis-pubsub sessionStore supplied-, for PubSub across servers.
 		- redisSubClient: -optional if connect-redis-pubsub sessionStore supplied-, for PubSub across servers.
 	- cookieParser: - Mandatory - To read session cookies.
