@@ -236,6 +236,8 @@ wormhole.prototype.setupSocket = function(socket) {
 	};
 	socket.on('disconnect', function () {
 		self._connected = false;
+		self._clientFunctionsSynced = false;
+		self._serverFunctionsSynced = false;
 		if (self.forcingDisconnect) {
 			for (var sock in socket.socket.namespaces) {
 				if (sock) {
