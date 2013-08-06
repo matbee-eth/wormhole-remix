@@ -63,9 +63,14 @@ var wormhole = function (socket) {
 	this.uuidList = {};
 	this.rpc = {};
 	this.callback = [];
+	this.customClientfunctions = [];
+
+	this._connected = false;
+
 	var self = this;
 	this.setupSocket(socket);
 	this.setupClientEvents();
+
 };
 wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
 wormhole.prototype.setupClientEvents = function() {
@@ -74,7 +79,11 @@ wormhole.prototype.setupClientEvents = function() {
 		if (event != "newListener" && event != "removeListener") {
 			// Client RPC. Add it!
 			console.log("Adding", event, "To Client RPC list. Must sync to server!");
+			this.customClientfunctions.push(event);
 			self.addClientFunction(event, func);
+			if (self._connected) {
+				socket.emit("syncClientFunctions", self.customClientfunctions);
+			}
 		}
 	});
 };
@@ -193,10 +202,14 @@ wormhole.prototype.setupSocket = function(socket) {
 	});
 	var socketTimeout;
 	socket.on('connect', function () {
-		if (socketTimeout)
+		self._connected = true;
+		if (socketTimeout) {
 			clearTimeout(socketTimeout);
+		}
+		socket.emit("syncClientFunctions", self.customClientfunctions);
 	});
 	socket.on('disconnect', function () {
+		self._connected = false;
 		if (self.forcingDisconnect) {
 			for (var sock in socket.socket.namespaces) {
 				if (sock) {
