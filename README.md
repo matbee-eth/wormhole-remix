@@ -81,26 +81,16 @@ $ npm install wormhole-remix
 	// Client-side: Magic!
 	var scripty = document.createElement("script");
 	scripty.src = "http://localhost:3000/wormhole/example/connect.js";
-	document.appendChild(scripty);
+	document.body.appendChild(scripty);
 	scripty.onload = function () {
 		wh.ready(connected);
 		wh.on("getWebsite", function (cb) {
 			cb(window.location.href);
 		});
+		wh.on("reconnect", function (script) {
+			document.body.appendChild(script);
+		});
 	};
-	// Done.
-
-	// Or do some EVIL EVAL!
-	var req = new XMLHttpRequest();
-	var wh;
-	req.open("GET", "http://localhost:3000" + "/wormhole/example/connect.js", true);
-	req.addEventListener("load", function(e) {
-	    var window = {}; // I fake the window, yeah, because I'm cool like that.
-		eval(req.responseText); // Don't hate me. I didn't have a choice.
-		wh = window.wh;
-		wh.ready(connected);
-	}, false);
-	req.send(null);
 ```
 
 ## License (MIT)
