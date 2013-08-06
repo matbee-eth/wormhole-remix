@@ -471,9 +471,6 @@ wormhole.prototype.addNamespace = function (namespace, func) {
 	}
 	this._namespaces.push(namespace);
 };
-wormhole.prototype.executeClientRPC = function (traveller, func) {
-	//
-};
 wormhole.prototype.executeServerRPC = function (traveller, func) {
 	var args = [].slice.call(arguments);
 	traveller = args.shift();
@@ -556,6 +553,17 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	});
 	this.socket.on("disconnect", function () {
 		self.emit("disconnect");
+	});
+	this.socket.on("syncClientFunctions", function (method) {
+		if (Array.isArray(method)) {
+			// Array of client functions
+			for (var i in method) {
+				self.addClientMethod(method[i]);
+			}
+		} else {
+			// Single client function name.
+			self.addClientMethod(method);
+		}
 	});
 	cb && cb();
 };
