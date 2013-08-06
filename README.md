@@ -15,7 +15,7 @@ $ npm install wormhole-remix
   - connect-redis-pubsub
 ## Usage
 
-  - Options
+  - Options - on Instantiation and on .start({})!
     - io: - Mandatory - Socket.IO instance
     - express: - Mandatory - Express instance
 	- sessionStore: - Mandatory - for Express Sessions.
