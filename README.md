@@ -41,18 +41,25 @@ $ npm install wormhole-remix
 	  sessionKey: 'express.sid'
 	});
 
+	// Specify client rpc functions on the server:
 	wh.clientMethods({
 		getWebsite: function (cb) { cb(window.location.href); }
 	});
+	// OR create it on the client:
+	// wh.on("clientMethods", function (cb) { cb(window.location.href)});
 
 	wh.serverMethods({
 		whoAmI: function (cb) { cb("You're a wormhol-er that's who!"); }
+	});
+	// OR
+	wh.on("whoAmI", function (cb) {
+		cb("You're a wormhol-er, that's who!");
 	});
 
 	// Use this to specify which namespaces to support.
 	// Function is optional - Will execute on the client, once connected.
 	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "ARG!!!");
-
+	wh.setPath('http://localhost:3000/wormhole/example/connect.js');
 	wh.start({io: io,express: app}, function (err) {
       wh.on("connection", function (traveller) {
         traveller.rpc.getWebsite(function (url) {
@@ -77,6 +84,9 @@ $ npm install wormhole-remix
 	document.appendChild(scripty);
 	scripty.onload = function () {
 		wh.ready(connected);
+		wh.on("getWebsite", function (cb) {
+			cb(window.location.href);
+		});
 	};
 	// Done.
 
@@ -88,7 +98,7 @@ $ npm install wormhole-remix
 	    var window = {}; // I fake the window, yeah, because I'm cool like that.
 		eval(req.responseText); // Don't hate me. I didn't have a choice.
 		wh = window.wh;
-		wh.ready(connected)
+		wh.ready(connected);
 	}, false);
 	req.send(null);
 ```
