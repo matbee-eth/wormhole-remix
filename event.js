@@ -404,10 +404,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
-			traveller.socket.subscribeToSession(function (err, session) {
+			traveller.socket.subscribeToSession(function (session) {
 				console.log("Session updated!", traveller.socket.id);
-				// self.emit.call(traveller, "sessionUpdated", session);
-				self.emit("sessionUpdated", session);
+				self.emit("sessionUpdated", traveller, session);
 			});
 			done();
 		}
