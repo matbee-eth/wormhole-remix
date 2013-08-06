@@ -47,7 +47,7 @@ $ npm install wormhole-remix
 
 	// Use this to specify which namespaces to support.
 	// Function is optional - Will execute on the client, once connected.
-	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "This is an argument");
+	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "ARG!!!");
 
 	wh.start({io: io,express: app}, function (err) {
       wh.on("connection", function (traveller) {
