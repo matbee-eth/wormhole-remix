@@ -274,6 +274,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 };
 wormhole.prototype.extendSocket = function(socket, cb) {
 	var self = this;
+	socket.sessionSubscriptions = [];
 	socket.setSessionId = function (id) {
 		socket.set("sessionId", id);
 	};
@@ -286,11 +287,15 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 		socket.get("sessionId", function (err, id) {
 			console.log("Subscribing to: ", socket.handshake.sessionId);
 			self._sessionStore.subscribe(id, cb);
+			socket.sessionSubscriptions.push(cb);
 		});
 	};
-	socket.unsubscribeFromSession = function(cb) {
+	socket.unsubscribeFromSession = function() {
 		socket.get("sessionId", function (err, id) {
-			self._sessionStore.unsubscribe(id, cb);
+			for (var i in socket.sessionSubscriptions) {
+				self._sessionStore.unsubscribe(id, socket.sessionSubscriptions[i]);
+			}
+			socket.sessionSubscriptions = null;
 		});
 	};
 	socket.getSessionKey = function (key, cb) {
