@@ -36,8 +36,21 @@ var wormhole = function (options) {
 	// Javascript file cache.
 	this.__wormholeClientJs;
 	this.__socketIOJs;
+	this.setupListeners();
 };
 wormhole.prototype.__proto__ = events.EventEmitter.prototype;
+wormhole.prototype.setupListeners = function(cb) {
+	// this.on("removeListener", this._unsubscribe);
+	var self = this;
+	this.on("newListener", function (event, func) {
+		if (event != "removeListener" && event != "newListener" && event != "connection" && event != "sessionUpdated") {
+			// Oh, this is an RPC, Add the fucker!
+			var method = {};
+			method[event] = func;
+			self.serverMethods([method]);
+		}
+	});
+};
 wormhole.prototype.start = function(options, callback) {
 	var self = this;
 	// io, express and redis pub/sub are all mandatory.
