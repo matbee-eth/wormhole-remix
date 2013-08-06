@@ -67,6 +67,7 @@ $ npm install wormhole-remix
 	var connected = function () {
 		// Yay, I'm connected!
 		// Now, lets execute some Server RPC's.
+		this.rpc.whoAmI(function (Iam) { console.log("Server says:", Iam)});
 	};
 ```
 ```javascript
