@@ -232,15 +232,16 @@ wormhole.prototype.setupIOEvents = function (cb) {
 		function (done) {
 			if (self._cookieParser && self._sessionStore && self._sessionKey) {
 				self._io.set('authorization', function(handshake, callback) {
-				  self._cookieParser(handshake, {}, function (err) {
-				    // Fancy, huh?
-				    err && callback(err, false);
-				    // So fancy!
-				    !err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
-				    	handshake.sessionId = handshake.signedCookies[self._sessionKey];
-				  		callback(err, true);
-				    });
-				  });
+					console.log("AUTHORIZATION: ", handshake);
+					self._cookieParser(handshake, {}, function (err) {
+						// Fancy, huh?
+						err && callback(err, false);
+						// So fancy!
+						!err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
+						handshake.sessionId = handshake.signedCookies[self._sessionKey];
+							callback(err, true);
+						});
+					});
 				});
 			}
 			done();
