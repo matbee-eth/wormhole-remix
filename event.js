@@ -254,6 +254,9 @@ wormhole.prototype.setupIOEvents = function (cb) {
 					self.createTraveller(socket, function (err, traveller) {
 						console.log("Traveller, welcome to the Wormhole.");
 						// done!! HEHEHE!
+						if (socket.handshake.sessionId) {
+							traveller.sessionId = socket.handshake.sessionId;
+						}
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
 							console.log("Traveller events set up.");
