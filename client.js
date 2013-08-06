@@ -127,12 +127,14 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 		self.sync(data);
 		self.ready();
+		self.emit("ready");
 	});
 	socket.on("syncClientFunctions", function (data) {
 		self.syncClientRpc(data);
 		self._clientFunctionsSynced = true;
 		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
 			self.ready();
+			self.emit("ready");
 		}
 	});
 	socket.on("syncServerFunctions", function (data) {
@@ -140,6 +142,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		self._serverFunctionsSynced = true;
 		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
 			self.ready();
+			self.emit("ready");
 		}
 	});
 	socket.on("syncB", function (data) {
@@ -147,6 +150,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		data = JSON.parse(data);
 		self.sync(data);
 		self.ready();
+		self.emit("ready");
 	});
 	socket.on("rpc", function (data) {
 		if (self.encryptAsBinary) {
