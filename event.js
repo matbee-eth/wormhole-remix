@@ -51,6 +51,9 @@ wormhole.prototype.setupListeners = function(cb) {
 		}
 	});
 };
+wormhole.prototype.setPath = function(path) {
+	this.__wormholeScriptPath = path;
+};
 wormhole.prototype.start = function(options, callback) {
 	var self = this;
 	// io, express and redis pub/sub are all mandatory.
@@ -202,11 +205,12 @@ wormhole.prototype.getScripts = function (cb) {
 								self._cachedNamespace[namespace] = clientJSData + ";\n";
 								self._cachedNamespace[namespace] = self._cachedNamespace[namespace] + data;
 							}
-							var func = self._namespaceClientFunctions[namespace] || "(" + function(){}.toString() + "())";;
+							var func = self._namespaceClientFunctions[namespace] || "(" + function(){}.toString() + "())";
 							data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func);
 							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace ? namespace.replace("/", "") : "");
 							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, self._protocol + "://" + self._hostname + ":" + self._port);
 							data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, self.__socketIOJs);
+							data = data.replace(/THISISTHEHOSTNAMEOFTHESCRIPTSERVER/g, self.__wormholeScriptPath || "");
 							self._cachedNamespace[namespace] = data.toString();
 							next(err);
 						});

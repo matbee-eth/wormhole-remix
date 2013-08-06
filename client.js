@@ -57,6 +57,7 @@ var EventEmitter = (typeof window !== 'undefined') ?
 
 var wormhole = function (socket) {
 	EventEmitter.EventEmitter.call(this);
+	console.log("NEW WORMHOLE");
 	this.clientFunctions = {};
 	this.serverFunctions = {};
 	this.socket = socket;
@@ -76,7 +77,7 @@ wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
 wormhole.prototype.setupClientEvents = function() {
 	var self = this;
 	this.on("newListener", function (event, func) {
-		if (event != "newListener" && event != "removeListener") {
+		if (event != "newListener" && event != "removeListener" && event != "reconnect" && self.customClientfunctions.indexOf(event) == -1) {
 			// Client RPC. Add it!
 			console.log("Adding", event, "To Client RPC list. Must sync to server!");
 			this.customClientfunctions.push(event);
@@ -218,29 +219,15 @@ wormhole.prototype.setupSocket = function(socket) {
 				}
 			}
 		} else {
-			// attempt reconnect?
-			if (reconnectionAttempts < maxReconnectionAttempts) {
-				// Reconnect
-				setTimeout(function () {
-					socket.socket.reconnect();
-					reconnectionAttempts++;
-					reconnectionDelay = reconnectionDelay * 2;
-				}, reconnectionDelay);
-			} else {
-				self.forcingDisconnect = true;
-				// Connection failed;
-				socket.disconnect();
-				if (self._connectionFailed) {
-					self._connectionFailed();
-				}
-			}
+			var scripty = document.createElement("script");
+			scripty.src = self._path;
+			self.emit("reconnect", scripty);
 		}
 	});
-	// socket.on('reconnect_failed', function () {
-	// 	if (self._connectionFailed) {
-	// 		self._connectionFailed();
-	// 	}
-	// });
+};
+wormhole.prototype.setPath = function(hostnameOfConnect) {
+	console.log("Setting path.");
+	this._path = hostnameOfConnect;
 };
 wormhole.prototype.onConnectFailed = function (callback) {
 	this._connectionFailed = callback;
