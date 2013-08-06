@@ -424,19 +424,18 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.socket.unsubscribeFromSession();
 			});
 			done();
-		},
-		function (done) {
-			traveller.socket.subscribeToSession(function (session) {
-				console.log("Session updated!", traveller.socket.id);
-				self.emit("sessionUpdated", traveller, session);
-			});
-			done();
 		}
 	],
 	function (err) {
 		// Done.
 		// Now wait for syncClientFunctionsComplete before we call back.
-		traveller.on("syncClientFunctionsComplete", cb);
+		traveller.on("syncClientFunctionsComplete", function () {
+			traveller.socket.subscribeToSession(function (session) {
+				console.log("Session updated!", traveller.socket.id);
+				self.emit("sessionUpdated", traveller, session);
+			});
+			cb();
+		});
 	});
 };
 wormhole.prototype.setupPubSub = function(traveller, cb) {
