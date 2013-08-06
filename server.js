@@ -376,6 +376,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, socketioJs);
+								data = data.replace(/THISISTHEHOSTNAMEOFTHESCRIPTSERVER/g, self._path || (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								res.send(data);
 							}
 

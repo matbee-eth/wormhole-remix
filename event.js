@@ -210,7 +210,7 @@ wormhole.prototype.getScripts = function (cb) {
 							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace ? namespace.replace("/", "") : "");
 							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, self._protocol + "://" + self._hostname + ":" + self._port);
 							data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, self.__socketIOJs);
-							data = data.replace(/THISISTHEHOSTNAMEOFTHESCRIPTSERVER/g, self.__wormholeScriptPath || "");
+							data = data.replace(/THISISTHEHOSTNAMEOFTHESCRIPTSERVER/g, self.__wormholeScriptPath || self._protocol + "://" + self._hostname + ":" + self._port);
 							self._cachedNamespace[namespace] = data.toString();
 							next(err);
 						});
