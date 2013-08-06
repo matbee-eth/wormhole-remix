@@ -46,12 +46,14 @@ $ npm install wormhole-remix
 		getWebsite: function (cb) { cb(window.location.href); }
 	});
 	// OR create it on the client:
-	// wh.on("clientMethods", function (cb) { cb(window.location.href)});
+	// wh.on("getWebsite", function (cb) { cb(window.location.href)});
 
+	// Server methods can be defined object-style, or event-style.
+	// Object style:
 	wh.serverMethods({
 		whoAmI: function (cb) { cb("You're a wormhol-er that's who!"); }
 	});
-	// OR
+	// Event style:
 	wh.on("whoAmI", function (cb) {
 		cb("You're a wormhol-er, that's who!");
 	});
@@ -70,23 +72,19 @@ $ npm install wormhole-remix
 ```
 
 ```javascript
-	// After the madness below
 	var connected = function () {
 		// Yay, I'm connected!
 		// Now, lets execute some Server RPC's.
 		this.rpc.whoAmI(function (Iam) { console.log("Server says:", Iam)});
 	};
-```
-```javascript
 	// Client-side: Magic!
 	var scripty = document.createElement("script");
 	scripty.src = "http://localhost:3000/wormhole/example/connect.js";
 	document.body.appendChild(scripty);
 	scripty.onload = function () {
 		wh.ready(connected);
-		wh.on("getWebsite", function (cb) {
-			cb(window.location.href);
-		});
+		// Create client functions on the client AND/OR server.
+		wh.on("getWebsite", function (cb) { cb(window.location.href)});
 		wh.on("reconnect", function (script) {
 			document.body.appendChild(script);
 		});
