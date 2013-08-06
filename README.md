@@ -30,50 +30,30 @@ $ npm install wormhole-remix
 ```javascript
 	// Quick and dirty:
 	var wormhole = require('wormhole-remix'),
-		os = require('os'),
-		sessionStore = require('connect-redis-pubsub'),
-		port = 3000,
-		wormholeExternalProtocol = "https", /* Socket.IO Protocol. */
-		sessionSecret = process.env.sessionSecret || 'WORMHOLE.SECRET',
-		sessionKey = process.env.sessionKey || 'express.sid',
-		cookieParser = express.cookieParser(sessionSecret);
+		cookieParser = express.cookieParser('WORMHOLE.SECRET');
 
 	var wh = new wormhole({
-	  protocol: wormholeExternalProtocol,
-	  hostname: os.hostname(),
-	  port: wormholeExternalPort,
-	  sessionStore: sessionStore,
+	  protocol: "https", /* Socket.IO/Express Protocol. */
+	  hostname: require('os').hostname(),
+	  port: 3000,
+	  sessionStore: require('connect-redis-pubsub'),
 	  cookieParser: cookieParser,
-	  sessionKey: sessionKey
+	  sessionKey: 'express.sid'
 	});
 
 	wh.clientMethods({
-		getWebsite: function (cb) {
-			cb(window.location.href);
-		}
+		getWebsite: function (cb) { cb(window.location.href); }
 	});
 
 	// Use this to specify which namespaces to support.
 	// Function is optional - Will execute on the client, once connected.
-	wh.addNamespace('/example', function (Arg1, Arg2, SoMany) {
-		alert("Wormhole has loaded.");
-		console.log(Arg1, Arg2, SoMany);
-	}, "Argument1", "Argumen2", "So Many Arguments");
+	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "This is an argument");
 
-	wh.start({
-      io: io,
-      express: app
-    }, function (err) {
-      console.log("Wormhole setup!");
+	wh.start({io: io,express: app}, function (err) {
       wh.on("connection", function (traveller) {
-      	// Also, traveller.socket exists, as well.
-        console.log("Welcome to Wormhole, traveller!");
         traveller.rpc.getWebsite(function (url) {
           console.log("Current RPC Client Website:", url);
         });
-      });
-      wh.on("sessionUpdated", function (session) {
-        console.log("Session Updated: Thanks, connect-redis-pubsub!", this, session);
       });
     });
 ```
