@@ -71,6 +71,8 @@ $ npm install wormhole-remix
     });
 ```
 
+#Client:
+
 ```javascript
 	var connected = function () {
 		// Yay, I'm connected!
