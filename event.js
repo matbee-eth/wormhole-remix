@@ -275,7 +275,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 wormhole.prototype.extendSocket = function(socket, cb) {
 	var self = this;
 	socket.setSessionId = function (id) {
-		self.set("sessionId", id);
+		socket.set("sessionId", id);
 	};
 	socket.getSession = function (cb) {
 		socket.get("sessionId", function (err, id) {
