@@ -209,6 +209,26 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 		socket.emit("syncClientFunctions", self.customClientfunctions);
 	});
+	var getScript = function (self) {
+		console.log("CALLING GETSCRIPT");
+		var scripty = document.createElement("script");
+		scripty.src = self._path;
+		scripty.onload = function (e) {
+			if (e.status = 200 || e.responseCode = 200) {
+				// Yay.
+			} else {
+				self.emit("reconnect", scripty);
+			}
+		};
+		scripty.onerror = function (err) {
+			console.log("ERROR SELF:", self, self._path);
+			setTimeout(function() {
+				getScript(self);
+			}, 1000);
+		};
+
+		self.emit("reconnect", scripty);
+	};
 	socket.on('disconnect', function () {
 		self._connected = false;
 		if (self.forcingDisconnect) {
@@ -219,9 +239,7 @@ wormhole.prototype.setupSocket = function(socket) {
 				}
 			}
 		} else {
-			var scripty = document.createElement("script");
-			scripty.src = self._path;
-			self.emit("reconnect", scripty);
+			getScript(self);
 		}
 	});
 };
