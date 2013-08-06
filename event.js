@@ -407,7 +407,11 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		}
 	],
-	cb);
+	function (err) {
+		// Done.
+		// Now wait for syncClientFunctionsComplete before we call back.
+		traveller.on("syncClientFunctionsComplete", cb);
+	});
 };
 wormhole.prototype.setupPubSub = function(traveller, cb) {
 	var self = this;
@@ -542,7 +546,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
 	this.socket.on("rpc", function (data) {
 		/* data.func, data.async, data.arguments, data.uuid */
-		console.log("Executing Server RPC")
+		console.log("Executing Server RPC");
 		if (data && data.function) {
 			self.executeServerRPC.apply(self, [data.function, data.uuid].concat(data.arguments));
 		}
@@ -556,6 +560,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		self.emit("disconnect");
 	});
 	this.socket.on("syncClientFunctions", function (method) {
+		console.log("LOLO?", method);
 		if (Array.isArray(method)) {
 			// Array of client functions
 			for (var i in method) {
@@ -565,6 +570,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 			// Single client function name.
 			self.addClientMethod(method);
 		}
+		self.emit("syncClientFunctionsComplete");
 	});
 	cb && cb();
 };
