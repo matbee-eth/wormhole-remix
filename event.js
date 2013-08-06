@@ -410,6 +410,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	cb);
 };
 wormhole.prototype.setupPubSub = function(traveller, cb) {
+	var self = this;
 	// Connect pubsubbies
 	var socketIdSub = function (data) {
 		// Now what!?

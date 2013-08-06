@@ -117,18 +117,22 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.ready();
 	});
 	socket.on("syncClientFunctions", function (data) {
-		// console.log("syncClientFunctions", data);
 		self.syncClientRpc(data);
+		self._clientFunctionsSynced = true;
+		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
+			self.ready();
+		}
 	});
 	socket.on("syncServerFunctions", function (data) {
-		// console.log("syncClientFunctions", data);
 		self.syncRpc(data);
+		self._serverFunctionsSynced = true;
+		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
+			self.ready();
+		}
 	});
 	socket.on("syncB", function (data) {
-		console.log("SYNCBING");
 		data = self.charcodeArrayToString(data);
 		data = JSON.parse(data);
-		console.log("SYNCBINGssss", data);
 		self.sync(data);
 		self.ready();
 	});
@@ -218,7 +222,6 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 	// socket.on('reconnect_failed', function () {
-	// 	console.log("client failed to connect, retrying new server.");
 	// 	if (self._connectionFailed) {
 	// 		self._connectionFailed();
 	// 	}
@@ -232,7 +235,6 @@ wormhole.prototype.setSocket = function(socket) {
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	var self = this;
-	console.log("Executing Client RPC", methodName, isAsync, args, uuid);
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
 		if (isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
@@ -335,11 +337,13 @@ wormhole.prototype.execute = function(func) {
 wormhole.prototype.ready = function (cb) {
 	if (cb) {
 		this.callback.push(cb);
+		if (this._readyFired) {
+			cb.call(this);
+		}
 	} else {
-		if (this.callback) {
-			for (var i in this.callback) {
-				this.callback[i].call(this);
-			}
+		this._readyFired = true;
+		for (var i in this.callback) {
+			this.callback[i].call(this);
 		}
 	}
 };
