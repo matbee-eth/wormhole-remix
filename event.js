@@ -441,9 +441,9 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 	}
 	// Kill subscriptions-- memory stuff.
 	traveller.socket.on("disconnect", function () {
-		this._pubsub.removeListener(socketIdString, socketIdSub);
+		self._pubsub.removeListener(socketIdString, socketIdSub);
 		if (traveller.socket.handshake.sessionId) {
-			this._pubsub.removeListener(sessionIdString, sessionIdSub);
+			self._pubsub.removeListener(sessionIdString, sessionIdSub);
 		}
 	});
 	console.log("Set up pubsub channels");

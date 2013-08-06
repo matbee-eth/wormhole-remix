@@ -55,7 +55,6 @@ var EventEmitter = (typeof window !== 'undefined') ?
   };
 })(EventEmitter);
 
-
 var wormhole = function (socket) {
 	EventEmitter.EventEmitter.call(this);
 	this.clientFunctions = {};
@@ -66,8 +65,17 @@ var wormhole = function (socket) {
 	this.callback = [];
 	var self = this;
 	this.setupSocket(socket);
+	this.setupClientEvents();
 };
 wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
+wormhole.prototype.setupClientEvents = function() {
+	this.on("newListener", function (event, func) {
+		if (event != "newListener" && event != "removeListener") {
+			// Client RPC. Add it!
+			console.log("Adding", event, "To Client RPC list. Must sync to server!");
+		}
+	});
+};
 wormhole.prototype.charcodeArrayToString = function (arr) {
 	var string = "";
 	for (var i = 0; i < arr.length; i++) {
