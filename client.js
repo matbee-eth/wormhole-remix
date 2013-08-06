@@ -69,10 +69,12 @@ var wormhole = function (socket) {
 };
 wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
 wormhole.prototype.setupClientEvents = function() {
+	var self = this;
 	this.on("newListener", function (event, func) {
 		if (event != "newListener" && event != "removeListener") {
 			// Client RPC. Add it!
 			console.log("Adding", event, "To Client RPC list. Must sync to server!");
+			self.addClientFunction(event, func);
 		}
 	});
 };
@@ -266,13 +268,18 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 wormhole.prototype.syncClientRpc = function (data) {
 	var self = this;
 	for (var k in data) {
-		this.clientFunctions[k] = eval("(function () { return " + data[k] + "}())");
-		this.clientFunctions[k].bindTo = (function (k) {
-			return function (func) {
-				self.clientFunctions[k].bound = func;
-			}
-		})(k);
+		var key = k;
+		var func = eval("(function () { return " + data[k] + "}())");;
+		this.clientFunctions[k] = func;
 	}
+};
+wormhole.prototype.addClientFunction = function(key, func) {
+	this.clientFunctions[key] = func;
+	func.bindTo = (function (key) {
+		return function (func) {
+			self.clientFunctions[key].bound = func;
+		}
+	})(key);
 };
 wormhole.prototype.syncRpc = function (data) {
 	for (var j in data) {
