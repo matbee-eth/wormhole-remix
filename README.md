@@ -144,7 +144,13 @@ $ npm install wormhole-remix
 ```
 
 ###Client
-
+	- Define client side functions on the client.
+	- Supports callbacks, too.
+```javascript
+	wh.on("clientsideCustomFunction", function (arg1, arg2, cb) {
+		cb((arg1+arg2)*2);
+	});
+```
 
 ## License (MIT)
 
