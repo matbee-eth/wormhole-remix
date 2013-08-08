@@ -13,25 +13,10 @@ $ npm install wormhole-remix
   - request
   - redis-sub
   - connect-redis-pubsub
-## Usage
 
-  - Options - on Instantiation and on .start({})!
-    - io: - Mandatory - Socket.IO instance
-    - express: - Mandatory - Express instance
-	- sessionStore: - Mandatory - for Express Sessions.
-	    - redisPubClient: -optional if connect-redis-pubsub sessionStore supplied-, for PubSub across servers.
-		- redisSubClient: -optional if connect-redis-pubsub sessionStore supplied-, for PubSub across servers.
-	- cookieParser: - Mandatory - To read session cookies.
-	- sessionKey: - Mandatory - To decrypt express sessions.
-	- port: - Mandatory - To Pass to client for socket.io connection.
-	- hostname: - Mandatory - To Pass to client for socket.io connection.
-	- protocol: - Mandatory - To Pass to client for socket.io connection.
+## How to use
 
-#Node.JS
-
-##Events
-
-
+###Server
 ```javascript
 	// Server-Side: Quick and dirty,
 	var wormhole = require('wormhole-remix'),
@@ -76,7 +61,7 @@ $ npm install wormhole-remix
     });
 ```
 
-#Client:
+###Client
 
 ```javascript
 	var connected = function () {
@@ -96,6 +81,59 @@ $ npm install wormhole-remix
 			document.body.appendChild(script);
 		});
 	};
+```
+## API
+
+### Server
+
+  Exposed by `require('wormhole-remix')`.
+
+  ### Server()
+
+  Creates a new `Server`.
+
+  ```js
+  var WormholeServer = require('wormhole-remix')();
+  var wh = new WormholeServer();
+  ```
+
+  ### Server(opts:Object)
+
+  Optionally, the first argument (see below) of the `Server`
+  constructor can be an options object.
+
+  The following options are supported:
+
+    - `io`: - Mandatory - Socket.IO instance
+    - `express`: - Mandatory - Express instance
+	- `sessionStore`: - Mandatory - for Express Sessions. Use `connect-redis-pubsub`.
+    	- `redisPubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-, for PubSub across servers.
+		- `redisSubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-, for PubSub across servers.
+	- `cookieParser`: - Mandatory - To read session cookies.
+	- `sessionKey`: - Mandatory - To decrypt express sessions.
+	- `port`: - Mandatory - To Pass to client for socket.io connection.
+	- `hostname`: - Mandatory - To Pass to client for socket.io connection.
+	- `protocol`: - Mandatory - To Pass to client for socket.io connection.
+
+#### Events
+	- `connection`. Fired upon a connection.
+		Parameters:
+		- `Traveller` the connected socket.io RPC client.
+
+### Custom Server RPC Functions
+	- `Callbacks`. Server -> Client callbacks are always "err"-first.
+```javascript
+	wh.on("CustomRPCFunctionName", function (argument, argument2, cb) {
+		// The client calls this function on the server.
+		// Supports callbacks to the client.
+		cb(null, "Done!");
+	});
+```
+```javascript
+	// Client
+	wh.rpc.CustomRPCFunctionName("test", "onetwothree", function (err, yes) {
+		console.log(yes); // === "Done!"
+	});
 ```
 
 ## License (MIT)
