@@ -130,6 +130,7 @@ $ npm install wormhole-remix
 ```
 
 ### Custom Server RPC Functions
+	Defined before clients are connected.
 	- `Callbacks`. Server -> Client callbacks are always "err"-first.
 ```javascript
 	wh.on("CustomRPCFunctionName", function (argument, argument2, cb) {
@@ -144,6 +145,9 @@ $ npm install wormhole-remix
 		console.log(yes); // === "Done!"
 	});
 ```
+
+###Client
+
 
 ## License (MIT)
 
