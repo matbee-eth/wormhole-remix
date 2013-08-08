@@ -38,7 +38,8 @@ $ npm install wormhole-remix
 
 	// Use this to specify which namespaces to support.
 	wh.addNamespace('/example');
-	wh.setPath('http://localhost:3000/wormhole/example/connect.js'); // In case of disconnect, retry here.
+	// In case of disconnect, retry here.
+	wh.setPath('http://localhost:3000/wormhole/example/connect.js');
 	wh.start({io: io, express: app}, function (err) {
       wh.on("connection", function (traveller) {
         traveller.rpc.getWebsite(function (url) {
