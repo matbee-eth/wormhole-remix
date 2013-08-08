@@ -119,6 +119,7 @@ $ npm install wormhole-remix
 	- `connection`. Fired upon a connection.
 		Parameters:
 		- `Traveller` the connected socket.io RPC client.
+	- `sessionUpdated`. Fired when a connected clients session is updated.
 
 #### Event Example
 ```javascript
