@@ -107,9 +107,9 @@ $ npm install wormhole-remix
     - `io`: - Mandatory - Socket.IO instance
     - `express`: - Mandatory - Express instance
 	- `sessionStore`: - Mandatory - for Express Sessions. Use `connect-redis-pubsub`.
-    	- `redisPubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-, for PubSub across servers.
-		- `redisSubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-, for PubSub across servers.
-	- `cookieParser`: - Mandatory - To read session cookies.
+    	- `redisPubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-.
+		- `redisSubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-.
+	- `cookieParser`: - Mandatory - To read express session cookies.
 	- `sessionKey`: - Mandatory - To decrypt express sessions.
 	- `port`: - Mandatory - To Pass to client for socket.io connection.
 	- `hostname`: - Mandatory - To Pass to client for socket.io connection.
@@ -119,6 +119,14 @@ $ npm install wormhole-remix
 	- `connection`. Fired upon a connection.
 		Parameters:
 		- `Traveller` the connected socket.io RPC client.
+
+#### Event Example
+```javascript
+	wh.on("connection", function (traveller) {
+		// Traveller is our wormhole rpc object.
+		// You also have access to traveller.socket for direct socket.io access.
+	});
+```
 
 ### Custom Server RPC Functions
 	- `Callbacks`. Server -> Client callbacks are always "err"-first.
