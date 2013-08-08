@@ -104,19 +104,19 @@ $ npm install wormhole-remix
 
   The following options are supported:
 
-    - `io`: - Mandatory - Socket.IO instance
-    - `express`: - Mandatory - Express instance
-	- `sessionStore`: - Mandatory - for Express Sessions. Use `connect-redis-pubsub`.
-    	- `redisPubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-.
-		- `redisSubClient`: -optional if `connect-redis-pubsub` sessionStore supplied-.
-	- `cookieParser`: - Mandatory - To read express session cookies.
-	- `sessionKey`: - Mandatory - To decrypt express sessions.
-	- `port`: - Mandatory - To Pass to client for socket.io connection.
-	- `hostname`: - Mandatory - To Pass to client for socket.io connection.
-	- `protocol`: - Mandatory - To Pass to client for socket.io connection.
+    - io: - Mandatory - Socket.IO instance
+    - express: - Mandatory - Express instance
+	- sessionStore: - Mandatory - for Express Sessions. Use connect-redis-pubsub.
+    	- redisPubClient: -optional if connect-redis-pubsub sessionStore supplied-.
+		- redisSubClient: -optional if connect-redis-pubsub sessionStore supplied-.
+	- cookieParser: - Mandatory - To read express session cookies.
+	- sessionKey: - Mandatory - To decrypt express sessions.
+	- port: - Mandatory - To Pass to client for socket.io connection.
+	- hostname: - Mandatory - To Pass to client for socket.io connection.
+	- protocol: - Mandatory - To Pass to client for socket.io connection.
 
-	### Server#Start(opts:Object)
-		`Same options as above.`
+### Server#Start(opts:Object)
+	`Same options as above.`
 
 ### Events
 
