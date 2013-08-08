@@ -115,6 +115,9 @@ $ npm install wormhole-remix
 	- `hostname`: - Mandatory - To Pass to client for socket.io connection.
 	- `protocol`: - Mandatory - To Pass to client for socket.io connection.
 
+	### Server#Start(opts:Object)
+		`Same options as above.`
+
 ### Events
 
 #### Server()
