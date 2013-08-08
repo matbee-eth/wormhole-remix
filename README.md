@@ -50,25 +50,24 @@ $ npm install wormhole-remix
 ```
 
 ###Client
-
+```html
+	<script type="text/javascript" src="http://localhost:3000/wormhole/example/connect.js"></script>
+```
 ```javascript
 	var connected = function () {
 		// Yay, I'm connected!
 		// Now, lets execute some Server RPC's.
 		this.rpc.whoAmI(function (Iam) { console.log("Server says:", Iam)});
 	};
-	// Client-side: Magic!
-	var scripty = document.createElement("script");
-	scripty.src = "http://localhost:3000/wormhole/example/connect.js";
-	document.body.appendChild(scripty);
-	scripty.onload = function () {
-		wh.ready(connected);
-		// Create client functions on the client AND/OR server.
-		wh.on("getWebsite", function (cb) { cb(window.location.href)});
-		wh.on("reconnect", function (script) {
-			document.body.appendChild(script);
-		});
-	};
+	wh.ready(connected);
+	// Create client functions on the client for the server.
+	wh.on("getWebsite", function (cb) { cb(window.location.href)});
+
+	// When socket.io disconnects, we provide you with a HTML object to re-add
+	// to the dom, if need be.
+	wh.on("reconnect", function (script) {
+		document.body.appendChild(script);
+	});
 ```
 ## API
 
