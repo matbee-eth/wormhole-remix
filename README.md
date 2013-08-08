@@ -31,28 +31,15 @@ $ npm install wormhole-remix
 	  sessionKey: 'express.sid'
 	});
 
-	// Specify client rpc functions on the server:
-	wh.clientMethods({
-		getWebsite: function (cb) { cb(window.location.href); }
-	});
-	// OR create it on the client:
-	// wh.on("getWebsite", function (cb) { cb(window.location.href)});
-
-	// Server methods can be defined object-style, or event-style.
-	// Object style:
-	wh.serverMethods({
-		whoAmI: function (cb) { cb("You're a wormhol-er that's who!"); }
-	});
-	// Event style:
+	// Defining server-side RPC function.
 	wh.on("whoAmI", function (cb) {
 		cb("You're a wormhol-er, that's who!");
 	});
 
 	// Use this to specify which namespaces to support.
-	// Function is optional - Will execute on the client, once connected.
-	wh.addNamespace('/example', function (Arg1) {console.log(Arg1);}, "ARG!!!");
-	wh.setPath('http://localhost:3000/wormhole/example/connect.js');
-	wh.start({io: io,express: app}, function (err) {
+	wh.addNamespace('/example');
+	wh.setPath('http://localhost:3000/wormhole/example/connect.js'); // In case of disconnect, retry here.
+	wh.start({io: io, express: app}, function (err) {
       wh.on("connection", function (traveller) {
         traveller.rpc.getWebsite(function (url) {
           console.log("Current RPC Client Website:", url);
