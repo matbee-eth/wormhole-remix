@@ -115,10 +115,10 @@ $ npm install wormhole-remix
 	- hostname: - Mandatory - To Pass to client for socket.io connection.
 	- protocol: - Mandatory - To Pass to client for socket.io connection.
 
-### Server#Start(opts:Object)
+#### Server#Start(opts:Object)
 	`Same options as above.`
 
-### Server#AddNamespace(namespace:String, clientsideFunction:Function, [argument1, argument2]...)
+#### Server#AddNamespace(namespace:String, clientsideFunction:Function, [argument1, argument2]...)
 	`namespace` defines which socket.io namespace it belongs.
 	`clientsideFunction`: Function to execute on the client script on connect.
 	`[arguments]`: Pass server side arguments to the client function.
