@@ -291,14 +291,17 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	}
 };
 wormhole.prototype.syncClientRpc = function (data) {
+	console.log("syncClientRpc");
 	var self = this;
 	for (var k in data) {
 		var key = k;
 		var func = eval("(function () { return " + data[k] + "}())");;
-		this.clientFunctions[k] = func;
+		this.addClientFunction(k, func);
 	}
 };
 wormhole.prototype.addClientFunction = function(key, func) {
+	console.log("addClientFunction", key);
+	var self = this;
 	this.clientFunctions[key] = func;
 	func.bindTo = (function (key) {
 		return function (func) {

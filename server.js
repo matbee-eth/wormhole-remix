@@ -332,7 +332,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		request(options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				socketioJs = body.toString();
-				socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
+				// socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
 			} else {
 				console.log("There has been an error with downloading Local Socket.IO", error, response, options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js');
 			}
@@ -387,7 +387,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 										cachedNamespace[namespace] = data.toString();
 										fs.readFile(__dirname + '/client.js', function (err, data) {
 											if (!err && data) {
-												data = uglify.minify(data.toString(), {fromString: true}).code;
+												// data = uglify.minify(data.toString(), {fromString: true}).code;
 												cachedNamespace[namespace] = data + ";\n" + cachedNamespace[namespace];
 												cachedNamespace[namespace] = self._namespaceStrings["/"+namespace] + cachedNamespace[namespace];
 												sendAndCustomizeItBitches();
