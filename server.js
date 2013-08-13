@@ -56,11 +56,9 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				if (subscriptions[channel]) {
 					var indexOfTraveller = subscriptions[channel].indexOf(travel);
 					if (subscriptions[channel].indexOf(travel)) {
-						console.log("Is traveller in subscriptions?", subscriptions[channel].indexOf(travel));
-						setTimeout(function () {
-							// Is traveller still in subscriptions?
-							superlog('MIC CHECK ONE TWO?', ["Is traveller in subscriptions?", subscriptions[channel].indexOf(travel), "What is travel, anyway?", travel], 25);
-						}, 5000);
+						if (subscriptions && channel && travel && subscriptions[channel]) {
+							console.log("Is traveller in subscriptions?", subscriptions[channel].indexOf(travel));
+						}
 					}
 					if (indexOfTraveller > -1) {
 						subscriptions[channel].splice(indexOfTraveller, 1);
