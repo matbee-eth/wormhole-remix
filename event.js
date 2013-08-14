@@ -255,6 +255,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						console.log("Traveller, welcome to the Wormhole.");
 						// done!! HEHEHE!
 						if (socket.handshake.sessionId) {
+							traveller.setSessionId(socket.handshake.sessionId);
 							traveller.sessionId = socket.handshake.sessionId;
 							socket.setSessionId(socket.handshake.sessionId);
 						}
@@ -281,22 +282,6 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 	socket.getSession = function (cb) {
 		socket.get("sessionId", function (err, id) {
 			self._sessionStore.get(id, cb);
-		});
-	};
-	socket.subscribeToSession = function(cb) {
-		socket.get("sessionId", function (err, id) {
-			console.log("Subscribing to: ", socket.handshake.sessionId);
-			self._sessionStore.subscribe(id, cb);
-			socket.sessionSubscriptions.push(cb);
-		});
-	};
-	socket.unsubscribeFromSession = function() {
-		socket.get("sessionId", function (err, id) {
-			for (var i in socket.sessionSubscriptions) {
-				self._sessionStore.unsubscribe(id, socket.sessionSubscriptions[i]);
-				console.log("Unsubscribing from session updates:", id, socket.sessionSubscriptions[i]);
-			}
-			socket.sessionSubscriptions = null;
 		});
 	};
 	socket.getSessionKey = function (key, cb) {
@@ -419,12 +404,21 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
+			// Subscribe to session Id.
+			var id = traveller.getSessionId();
+			console.log("Subscribing to: ", socket.handshake.sessionId);
+			var sessionSubscribe = function (session) {
+				self.emit("sessionUpdated", traveller, session);
+			};
+			self._sessionStore.subscribe(id, sessionSubscribe);
+
 			traveller.isConnected = true;
 			traveller.on("disconnect", function () {
 				// wut?
+				// unsubscribe from session id
 				traveller.removeAllListeners();
-				traveller.socket.unsubscribeFromSession();
 				traveller.socket.removeAllListeners();
+				self._sessionStore.unsubscribe(id, sessionSubscribe);
 				traveller.isConnected = false;
 			});
 			done();
@@ -434,15 +428,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		// Done.
 		// Now wait for syncClientFunctionsComplete before we call back.
 		traveller.on("syncClientFunctionsComplete", function () {
-			traveller.socket.subscribeToSession(function (session) {
-				console.log("Wormhole::Session updated!", traveller.socket.id, traveller.isConnected);
-				if (!traveller.isConnected) {
-					console.log("Attempting to RETRY unsubscribing from session");
-					traveller.socket.unsubscribeFromSession();
-				} else {
-					self.emit("sessionUpdated", traveller, session);
-				}
-			});
 			cb();
 		});
 	});
@@ -527,8 +512,16 @@ var wormholeTraveller = function (socket) {
 	this._clientMethods = {};
 	this.rpc = {};
 	this.channelRpc = {};
+
+	this._sessionId = null;
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeTraveller.prototype.setSessionId = function(sessionId) {
+	this._sessionId = sessionId;
+};
+wormholeTraveller.prototype.getSessionId = function() {
+	return this._sessionId;
+};
 wormholeTraveller.prototype.sendRPCFunctions = function(clientMethods, serverMethods, cb) {
 	this.socket.emit("syncClientFunctions", clientMethods);
 	this.socket.emit("syncServerFunctions", serverMethods);
