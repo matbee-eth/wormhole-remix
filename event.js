@@ -432,7 +432,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		// Now wait for syncClientFunctionsComplete before we call back.
 		traveller.on("syncClientFunctionsComplete", function () {
 			traveller.socket.subscribeToSession(function (session) {
-				console.log("Session updated!", traveller.socket.id);
+				console.log("Wormhole::Session updated!", traveller.socket.id);
 				self.emit("sessionUpdated", traveller, session);
 			});
 			cb();
