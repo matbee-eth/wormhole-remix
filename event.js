@@ -294,7 +294,7 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 		socket.get("sessionId", function (err, id) {
 			for (var i in socket.sessionSubscriptions) {
 				self._sessionStore.unsubscribe(id, socket.sessionSubscriptions[i]);
-				console.log("Unsubscribing from session updates:", id);
+				console.log("Unsubscribing from session updates:", id, socket.sessionSubscriptions[i]);
 			}
 			socket.sessionSubscriptions = null;
 		});
@@ -424,6 +424,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				// wut?
 				traveller.removeAllListeners();
 				traveller.socket.unsubscribeFromSession();
+				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
 			});
 			done();
