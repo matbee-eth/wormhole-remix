@@ -294,6 +294,7 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 		socket.get("sessionId", function (err, id) {
 			for (var i in socket.sessionSubscriptions) {
 				self._sessionStore.unsubscribe(id, socket.sessionSubscriptions[i]);
+				console.log("Unsubscribing from session updates:", id);
 			}
 			socket.sessionSubscriptions = null;
 		});
