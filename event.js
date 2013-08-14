@@ -419,10 +419,12 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
+			traveller.isConnected = true;
 			traveller.on("disconnect", function () {
 				// wut?
 				traveller.removeAllListeners();
 				traveller.socket.unsubscribeFromSession();
+				traveller.isConnected = false;
 			});
 			done();
 		}
