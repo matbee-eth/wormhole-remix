@@ -466,19 +466,21 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 	var sessionIdString;
 	var socketIdString = "wormhole:"+traveller.socket.id;
 	this._pubsub.on(socketIdString, socketIdSub);
-	if (traveller.socket.handshake.sessionId) {
-		sessionIdString = "wormhole:"+sessionIdString
-		this._pubsub.on(sessionIdString, sessionIdSub);
-	}
-	// Kill subscriptions-- memory stuff.
-	traveller.socket.on("disconnect", function () {
-		self._pubsub.removeListener(socketIdString, socketIdSub);
-		if (traveller.socket.handshake.sessionId) {
-			self._pubsub.removeListener(sessionIdString, sessionIdSub);
+	traveller.socket.get("sessionId", function (err, sessionId) {
+		if (sessionId) {
+			sessionIdString = "wormhole:"+sessionIdString
+			this._pubsub.on(sessionIdString, sessionIdSub);
 		}
+		// Kill subscriptions-- memory stuff.
+		traveller.socket.on("disconnect", function () {
+			self._pubsub.removeListener(socketIdString, socketIdSub);
+			if (sessionId) {
+				self._pubsub.removeListener(sessionIdString, sessionIdSub);
+			}
+		});
+		console.log("Set up pubsub channels");
+		cb && cb();
 	});
-	console.log("Set up pubsub channels");
-	cb && cb();
 };
 wormhole.prototype.createTraveller = function(socket, cb) {
 	// body...
