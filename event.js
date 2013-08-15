@@ -419,6 +419,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				// unsubscribe from session id
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
+				console.log("SESSION UNSUBSCRIBING NOW?!", id, sessionSubscribe);
 				self._sessionStore.unsubscribe(id, sessionSubscribe);
 				traveller.isConnected = false;
 			});
