@@ -406,7 +406,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			// Subscribe to session Id.
 			var id = traveller.getSessionId();
-			console.log("Subscribing to: ", socket.handshake.sessionId);
+			console.log("Subscribing to: ", id);
 			var sessionSubscribe = function (session) {
 				self.emit("sessionUpdated", traveller, session);
 				traveller.emit.call(traveller, "sessionUpdated", session);
