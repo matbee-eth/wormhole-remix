@@ -57,7 +57,6 @@ var EventEmitter = (typeof window !== 'undefined') ?
 
 var wormhole = function (socket) {
 	EventEmitter.EventEmitter.call(this);
-	console.log("NEW WORMHOLE");
 	this.clientFunctions = {};
 	this.serverFunctions = {};
 	this.socket = socket;
@@ -79,7 +78,6 @@ wormhole.prototype.setupClientEvents = function() {
 	this.on("newListener", function (event, func) {
 		if (event != "newListener" && event != "removeListener" && event != "reconnect" && self.customClientfunctions.indexOf(event) == -1) {
 			// Client RPC. Add it!
-			console.log("Adding", event, "To Client RPC list. Must sync to server!");
 			this.customClientfunctions.push(event);
 			self.addClientFunction(event, func);
 			if (self._connected) {
@@ -215,7 +213,6 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.emit("connection");
 	});
 	var getScript = function (self) {
-		console.log("CALLING GETSCRIPT");
 		var scripty = document.createElement("script");
 		scripty.src = self._path;
 		scripty.onload = function (e) {
@@ -226,7 +223,6 @@ wormhole.prototype.setupSocket = function(socket) {
 			}
 		};
 		scripty.onerror = function (err) {
-			console.log("ERROR SELF:", self, self._path);
 			setTimeout(function() {
 				getScript(self);
 			}, 1000);
@@ -251,7 +247,6 @@ wormhole.prototype.setupSocket = function(socket) {
 	});
 };
 wormhole.prototype.setPath = function(hostnameOfConnect) {
-	console.log("Setting path.");
 	this._path = hostnameOfConnect;
 };
 wormhole.prototype.onConnectFailed = function (callback) {
@@ -291,7 +286,6 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
 	}
 };
 wormhole.prototype.syncClientRpc = function (data) {
-	console.log("syncClientRpc");
 	var self = this;
 	for (var k in data) {
 		var key = k;
@@ -300,7 +294,6 @@ wormhole.prototype.syncClientRpc = function (data) {
 	}
 };
 wormhole.prototype.addClientFunction = function(key, func) {
-	console.log("addClientFunction", key);
 	var self = this;
 	this.clientFunctions[key] = func;
 	func.bindTo = (function (key) {
