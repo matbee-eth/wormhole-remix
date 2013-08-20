@@ -55,6 +55,11 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			async.forEach(travel._subscriptions, function (channel, cb) {
 				if (subscriptions[channel]) {
 					var indexOfTraveller = subscriptions[channel].indexOf(travel);
+					if (subscriptions[channel].indexOf(travel)) {
+						if (subscriptions && channel && travel && subscriptions[channel]) {
+							console.log("Is traveller in subscriptions?", subscriptions[channel].indexOf(travel));
+						}
+					}
 					if (indexOfTraveller > -1) {
 						subscriptions[channel].splice(indexOfTraveller, 1);
 					}
@@ -75,9 +80,10 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							travel.socket.set(removed, null);
 						}
 						travel.destruct();
+						console.log("Destroying object");
 						travel = null;
 					}
-				}, 25000);
+				}, 3000);
 			});
 		});
 		self.syncData(travel);
@@ -106,10 +112,18 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			var wh = setupSocket(socket, namespace);
 			wh.setNamespace(namespace);
 			wh.engageCloak(self.cloakEngaged);
+			socket.sessionSubscriptions = [];
+			socket.on("disconnect", function () {
+				for (var i in socket.sessionSubscriptions) {
+					socket.unsubscribeFromSession(socket.sessionSubscriptions[i]);
+				}
+				socket.sessionSubscriptions = null;
+			});
 			socket.getSession = function (cb) {
 				options.sessionStore.get(socket.handshake.sessionId, cb);
 			};
 			socket.subscribeToSession = function(cb) {
+				socket.sessionSubscriptions.push(cb);
 				options.sessionStore.subscribe(socket.handshake.sessionId, cb);
 			};
 			socket.unsubscribeFromSession = function(cb) {
@@ -130,8 +144,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			socket.setSessionKey = function (key, value, cb) {
 				console.log("setSessionKey", key, value, cb);
 				socket.getSession(function (err, session) {
-					session[key] = value;
-					socket.setSession(session, cb);
+					if (!err && session) {
+						session[key] = value;
+						socket.setSession(session, cb);
+					} else {
+						cb && cb(err);
+					}
 				});
 			};
 			socket.removeSessionKey = function (key, cb) {
@@ -309,10 +327,12 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 			port = ":"+options.port;
 		}
 		var socketioJs;
-		request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
+		request(options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js', function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				socketioJs = body.toString();
-				socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
+				// socketioJs = uglify.minify(socketioJs, {fromString: true}).code;
+			} else {
+				console.log("There has been an error with downloading Local Socket.IO", error, response, options.protocol + "://" + options.hostname + port + '/socket.io/socket.io.js');
 			}
 		});
 		express.get('/wormhole/socket.io.js', function (req, res) {
@@ -324,6 +344,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 				res.jsonp(socketioJs);
 			} else {
 				request((options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port + '/socket.io/socket.io.js', function (error, response, body) {
+					console.log("Downloading SocketIO Script.");
 					if (!error && response.statusCode == 200) {
 						socketioJs = body.toString();
 						res.jsonp(socketioJs);
@@ -344,7 +365,6 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 							args = args.substring(1);
 							args = args.substring(0, args.length-1);
 							func = "(" + func.toString() + "(" + args +"))";
-
 							var sendAndCustomizeItBitches = function () {
 								var port= "";
 								if (options.port) {
@@ -354,6 +374,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 								data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace || function () {}.toString());
 								data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, socketioJs);
+								data = data.replace(/THISISTHEHOSTNAMEOFTHESCRIPTSERVER/g, self._path || (options.protocol || req.protocol) + "://" + (options.hostname || req.headers.host) + port);
 								res.send(data);
 							}
 
@@ -364,7 +385,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 										cachedNamespace[namespace] = data.toString();
 										fs.readFile(__dirname + '/client.js', function (err, data) {
 											if (!err && data) {
-												data = uglify.minify(data.toString(), {fromString: true}).code;
+												// data = uglify.minify(data.toString(), {fromString: true}).code;
 												cachedNamespace[namespace] = data + ";\n" + cachedNamespace[namespace];
 												cachedNamespace[namespace] = self._namespaceStrings["/"+namespace] + cachedNamespace[namespace];
 												sendAndCustomizeItBitches();
@@ -402,7 +423,7 @@ var wormhole = function (io, express, pubClient, subClient, options) {
 		}
 	}
 };
-
+wormhole.eventWormhole = require('./event');
 wormhole.packageFunction = function (func, args) {
   var ret = "function() { return (" + fn.toString() + ").apply(this, " + JSON.stringify(args) + ");}";
   return ret;
@@ -438,6 +459,15 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.rpc = null;
 		this.groupRpc = null;
 		this.othersRpc = null;
+		this.customRpc = null;
+		this.currentNamespace = null;
+		this.currentChannel = null;
+		this.test = null;
+		this.subscribe = null;
+		this.execute = null;
+		this.disconnect = null;
+		this.destruct = null;
+		this.charcodeArrayToString = null;
 		this.io = null;
 		this._subscriptions = null;
 
@@ -466,6 +496,7 @@ var traveller = function (socket, io, pubClient, subClient) {
 		this.syncData = null;
 		this.setSubscribeCallback = null;
 		transactions = null;
+		self = null;
 	};
 
 	this.disconnect = function () {
