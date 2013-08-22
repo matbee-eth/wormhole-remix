@@ -410,7 +410,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			var sessionSubscribe = function (session) {
 				if (!traveller.isConnected) {
 					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
-					self._sessionStore.unsubscribe(id, sessionSubscribe);
 				} else {
 					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
