@@ -409,18 +409,15 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			console.log("Subscribing to: ", id);
 			var sessionSubscribe = function (session) {
 				if (!traveller.isConnected) {
-					console.log("Session updated for dead traveller, Trying unsubscribe again.");
-					self._sessionStore.unsubscribe(id, sessionSubscribe);
-					self._sessionStore.unsubscribe(id, sessionSubscribe);
-					self._sessionStore.unsubscribe(id, sessionSubscribe);
-					self._sessionStore.unsubscribe(id, sessionSubscribe);
+					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
 					self._sessionStore.unsubscribe(id, sessionSubscribe);
 				} else {
+					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
 					traveller.emit.call(traveller, "sessionUpdated", session);
 				}
 			};
-			self._sessionStore.subscribe(id, sessionSubscribe);
+			self._sessionStore.subscribeOnce(id, sessionSubscribe);
 
 			traveller.isConnected = true;
 			traveller.on("disconnect", function () {
@@ -428,11 +425,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				// unsubscribe from session id
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
-				self._sessionStore.unsubscribe(id, sessionSubscribe);
-				self._sessionStore.unsubscribe(id, sessionSubscribe);
-				self._sessionStore.unsubscribe(id, sessionSubscribe);
-				self._sessionStore.unsubscribe(id, sessionSubscribe);
-				self._sessionStore.unsubscribe(id, sessionSubscribe);
 				traveller.isConnected = false;
 			});
 			done();
