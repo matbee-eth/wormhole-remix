@@ -364,7 +364,6 @@ wormhole.prototype.execute = function(func) {
 };
 wormhole.prototype.ready = function (cb) {
 	if (cb) {
-		console.log("Adding callback to readylist", cb);
 		this.callback.push(cb);
 		if (this._readyFired) {
 			cb.call(this);
@@ -372,7 +371,6 @@ wormhole.prototype.ready = function (cb) {
 	} else {
 		this._readyFired = true;
 		for (var i =0; i < this.callback.length; i++) {
-			console.log("typeof:", this.callback[i]);
 			this.callback[i].call(this);
 		}
 	}
