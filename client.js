@@ -371,6 +371,9 @@ wormhole.prototype.ready = function (cb) {
 	} else {
 		this._readyFired = true;
 		for (var i in this.callback) {
+			if (typeof this.callback[i] != "function") {
+				console.log("Wormhole Error: Callback is not a function.", this.callback[i]);
+			}
 			this.callback[i].call(this);
 		}
 	}
