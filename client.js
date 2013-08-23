@@ -364,6 +364,7 @@ wormhole.prototype.execute = function(func) {
 };
 wormhole.prototype.ready = function (cb) {
 	if (cb) {
+		console.log("Adding callback to readylist", cb);
 		this.callback.push(cb);
 		if (this._readyFired) {
 			cb.call(this);
