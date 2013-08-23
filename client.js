@@ -216,7 +216,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		var scripty = document.createElement("script");
 		scripty.src = self._path;
 		scripty.onload = function (e) {
-			if (e.status = 200 || e.responseCode = 200) {
+			if (e.status == 200 || e.responseCode == 200) {
 				// Yay.
 			} else {
 				self.emit("reconnect", scripty);
