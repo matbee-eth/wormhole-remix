@@ -370,16 +370,9 @@ wormhole.prototype.ready = function (cb) {
 		}
 	} else {
 		this._readyFired = true;
-		for (var i in this.callback) {
-			if (this.callback[i] && typeof this.callback[i] != "function") {
-				console.log("Wormhole Error: Callback is not a function.", this.callback[i]);
-			} else {
-				try {
-					this.callback[i].call(this);
-				} catch (ex) {
-					console.log(this.callback[i]);
-				}
-			}
+		for (var i =0; i < this.callback.length; i++) {
+			console.log("typeof:", this.callback[i]);
+			this.callback[i].call(this);
 		}
 	}
 };
