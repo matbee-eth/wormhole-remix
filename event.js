@@ -8,7 +8,8 @@ var util = require('util')
   , async = require('async')
   , request = require('request')
   , events = require('events')
-  , redispubsub = require('redis-sub');
+  , redispubsub = require('redis-sub')
+  , fswatch = require('gaze').Gaze;;
 
 var wormhole = function (options) {
 	options = options || {};
@@ -129,6 +130,11 @@ wormhole.prototype.start = function(options, callback) {
 			callback && callback(err);
 		}
 	});
+
+	// Set up Filesystem watching. Leet.
+	if (options.watch) {
+		this.__watcher = new fswatch(options.watch);
+	}
 };
 wormhole.prototype.executeChannelClientRPC = function(channel, func) {
 	var args = [].slice.call(arguments).slice(2);
@@ -427,6 +433,24 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.isConnected = false;
 			});
 			done();
+		},
+		function (done) {
+			// Setting up Filesystem watching.
+			if (self.__watcher) {
+				var watchFunction = function (ev, filename) {
+					console.log("File updated", filename);
+					traveller.emit.call(traveller, "fileUpdated", ev, filename);
+				};
+				self.__watcher.on("all", watchFunction);
+
+				traveller.on("disconnect", function () {
+					self.__watcher.removeListener("all", watchFunction);
+				});
+				console.log("Set up file listeners for traveller");
+				done();
+			} else {
+				done();
+			}
 		}
 	],
 	function (err) {
