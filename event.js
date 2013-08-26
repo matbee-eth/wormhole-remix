@@ -642,6 +642,51 @@ wormholeTraveller.prototype.sendClientRPC = function(out) {
 	this.socket.emit("rpc", out);
 };
 
+var wormholeQuery = function () {
+	events.EventEmitter.call(this);
+
+	wormholeQuery.on("newListener", this.__newListener);
+	wormholeQuery.on("removeListener", this.__removeListener);
+
+	return this.selector;
+};
+wormholeQuery.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeQuery.prototype.__newListener = function(ev, fn) {
+	// body...
+};
+wormholeQuery.prototype.__removeListener = function(ev, fn) {
+	// body...
+};
+wormholeQuery.prototype.selector = function(selector) {
+	// Send selector down to client, get data, then continue.
+	this.emit("selector", selector);
+	this._selector = selector;
+	return this.selected;
+};
+
+// Mimic jQuery API.
+wormholeQuery.prototype.selected = function() {
+	var self = this;
+	return {
+		bind: function () {
+			self.emit("event", [this._selector, "bind"].slice.call(arguments));
+		},
+		blur: function () {
+			self.emit("event", [this._selector, "blur"].slice.call(arguments));
+		},
+		change: function () {
+			self.emit("event", [this._selector, "change"].slice.call(arguments));
+		},
+		click: function () {
+			// Execute this-- server-side.
+			self.emit("event", [this._selector, "click"].slice.call(arguments));
+		},
+		dblclick: function () {
+			self.emit("event", [this._selector, "dblclick"].slice.call(arguments));
+		}
+	}
+};
+
 __randomString = function() {
 	var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
 	var string_length = 64;

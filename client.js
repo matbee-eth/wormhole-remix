@@ -200,7 +200,7 @@ wormhole.prototype.setupSocket = function(socket) {
 			functino = self.charcodeArrayToString(functino);
 			functino = JSON.parse(functino);
 		}
-		functino = eval("(function() {return " + functino + ";})()");
+		functino = new Function("function() {return " + functino + ";}");
 		functino.apply(self, args);
 	});
 	var socketTimeout;
