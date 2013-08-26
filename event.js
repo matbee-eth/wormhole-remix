@@ -48,7 +48,7 @@ wormhole.prototype.setupListeners = function(cb) {
 			// Oh, this is an RPC, Add the fucker!
 			var method = {};
 			method[event] = func;
-			self.serverMethods([method]);
+			self.serverMethods(method);
 		}
 	});
 };
@@ -111,7 +111,9 @@ wormhole.prototype.start = function(options, callback) {
 		}
 		this._pubsub = this._sessionStore.pubsub || new redispubsub({pubClient: this._redisPubClient, subClient: this._redisSubClient});
 	}
-	self._reporter = new wormholeReport(this._pubsub);
+	if (options.report) {
+		self._reporter = new wormholeReport(this._pubsub);
+	}
 	if (this._namespaces.length == 0) {
 		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
 	}
@@ -256,7 +258,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						// So fancy!
 						!err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
 							handshake.sessionId = handshake.signedCookies[self._sessionKey];
-							self._reporter.report(handshake.sessionId, "handshake");
+							self._reporter && self._reporter.report(handshake.sessionId, "handshake");
 							callback(err, true);
 						});
 					});
@@ -276,7 +278,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 							traveller.setSessionId(socket.handshake.sessionId);
 							traveller.sessionId = socket.handshake.sessionId;
 							socket.setSessionId(socket.handshake.sessionId);
-							self._reporter.report(traveller.sessionId, "connection", {
+							self._reporter && self._reporter.report(traveller.sessionId, "connection", {
 
 							});
 						}
@@ -285,7 +287,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 							console.log("Traveller events set up.");
 							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
 								console.log("Sent RPC functions to traveller.");
-								self._reporter.report(traveller.sessionId, "sync", {
+								self._reporter && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
 								self.emit("connection", traveller);
@@ -377,7 +379,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					self._uuidList[out.uuid] = callback;
 				}
 				
-				self._reporter.report(traveller.sessionId, "clientrpc", out);
+				self._reporter && self._reporter.report(traveller.sessionId, "clientrpc", out);
 
 				traveller.sendClientRPC(out);
 			});
@@ -389,7 +391,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
 				self._redisPubClient.publish(channel, JSON.stringify({func: func, args: args}));
-				self._reporter.report(traveller.sessionId, "clientrpc", out);
+				self._reporter && self._reporter.report(traveller.sessionId, "clientrpc", out);
 			});
 			done();
 		},
@@ -408,12 +410,12 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				 			// UUID
 				 			var args = [null, UUID].concat([].slice.call(arguments));
 				 			console.log("RPC CALLBACK: ", args);
-							self._reporter.report(traveller.sessionId, "clientrpcCallback", args);
+							self._reporter && self._reporter.report(traveller.sessionId, "clientrpcCallback", args);
 				 			traveller.callback.apply(traveller, args);
 				 		}
 				 		args.push(rpcCallback);
 				 	}
-					self._reporter.report(traveller.sessionId, "serverrpc", {
+					self._reporter && self._reporter.report(traveller.sessionId, "serverrpc", {
 						uuid: UUID,
 						args: UUID ? args.slice(0,args.length-2) : args,
 						func: func
@@ -431,7 +433,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				if (uuid && self._uuidList[uuid]) {
 					var args = [].slice.call(arguments).slice(1)[0];
 					self._uuidList[uuid].apply(traveller, args);
-					self._reporter.report(traveller.sessionId, "serverrpcCallback", {
+					self._reporter && self._reporter.report(traveller.sessionId, "serverrpcCallback", {
 						uuid: uuid,
 						args: args
 					});
@@ -450,7 +452,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				} else {
 					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
-					self._reporter.report(traveller.sessionId, "sessionUpdated", session);
+					self._reporter && self._reporter.report(traveller.sessionId, "sessionUpdated", session);
 					traveller.emit.call(traveller, "sessionUpdated", session);
 				}
 			};
@@ -463,7 +465,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
-				self._reporter.report(traveller.sessionId, "disconnect");
+				self._reporter && self._reporter.report(traveller.sessionId, "disconnect");
 			});
 			done();
 		},
