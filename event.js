@@ -111,6 +111,7 @@ wormhole.prototype.start = function(options, callback) {
 		}
 		this._pubsub = this._sessionStore.pubsub || new redispubsub({pubClient: this._redisPubClient, subClient: this._redisSubClient});
 	}
+	self._reporter = new wormholeReport(this._pubsub);
 	if (this._namespaces.length == 0) {
 		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
 	}
@@ -168,6 +169,16 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 		} else {
 			res.end();
 		}
+	});
+	this._express.get('/wormhole/follow', function (req, res) {
+		self._reporter.getUsers(function (err, list) {
+          res.send(list);
+        });
+	});
+	this._express.get('/wormhole/follow/:id', function (req, res) {
+		self._reporter.getUser(req.params.id, function (err, list) {
+          res.send(list);
+        });
 	});
 	cb();
 };
@@ -244,7 +255,8 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						err && callback(err, false);
 						// So fancy!
 						!err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
-						handshake.sessionId = handshake.signedCookies[self._sessionKey];
+							handshake.sessionId = handshake.signedCookies[self._sessionKey];
+							self._reporter.report(handshake.sessionId, "handshake");
 							callback(err, true);
 						});
 					});
@@ -264,12 +276,18 @@ wormhole.prototype.setupIOEvents = function (cb) {
 							traveller.setSessionId(socket.handshake.sessionId);
 							traveller.sessionId = socket.handshake.sessionId;
 							socket.setSessionId(socket.handshake.sessionId);
+							self._reporter.report(traveller.sessionId, "connection", {
+
+							});
 						}
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
 							console.log("Traveller events set up.");
 							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
 								console.log("Sent RPC functions to traveller.");
+								self._reporter.report(traveller.sessionId, "sync", {
+
+								});
 								self.emit("connection", traveller);
 							});
 						});
@@ -358,6 +376,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					out.uuid = __randomString();
 					self._uuidList[out.uuid] = callback;
 				}
+				
+				self._reporter.report(traveller.sessionId, "clientrpc", out);
 
 				traveller.sendClientRPC(out);
 			});
@@ -369,6 +389,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
 				self._redisPubClient.publish(channel, JSON.stringify({func: func, args: args}));
+				self._reporter.report(traveller.sessionId, "clientrpc", out);
 			});
 			done();
 		},
@@ -385,11 +406,18 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				 	if (UUID) {
 				 		rpcCallback = function () {
 				 			// UUID
-				 			console.log("RPC CALLBACK: ", [null, UUID].concat([].slice.call(arguments)));
-				 			traveller.callback.apply(traveller, [null, UUID].concat([].slice.call(arguments)));
+				 			var args = [null, UUID].concat([].slice.call(arguments));
+				 			console.log("RPC CALLBACK: ", args);
+							self._reporter.report(traveller.sessionId, "clientrpcCallback", args);
+				 			traveller.callback.apply(traveller, args);
 				 		}
 				 		args.push(rpcCallback);
 				 	}
+					self._reporter.report(traveller.sessionId, "serverrpc", {
+						uuid: UUID,
+						args: UUID ? args.slice(0,args.length-2) : args,
+						func: func
+					});
 				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
 			 	} else {
 			 		traveller.callback("No such method.");
@@ -400,10 +428,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("callback", function (uuid) {
 				console.log("RPC CALLBACK", uuid);
-				var args = [].slice.call(arguments);
-				args.shift();
 				if (uuid && self._uuidList[uuid]) {
-					self._uuidList[uuid].apply(traveller, [].slice.call(arguments).slice(1)[0]);
+					var args = [].slice.call(arguments).slice(1)[0];
+					self._uuidList[uuid].apply(traveller, args);
+					self._reporter.report(traveller.sessionId, "serverrpcCallback", {
+						uuid: uuid,
+						args: args
+					});
 					delete self._uuidList[uuid];
 				}
 			});
@@ -419,6 +450,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				} else {
 					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
+					self._reporter.report(traveller.sessionId, "sessionUpdated", session);
 					traveller.emit.call(traveller, "sessionUpdated", session);
 				}
 			};
@@ -431,6 +463,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
+				self._reporter.report(traveller.sessionId, "disconnect");
 			});
 			done();
 		},
@@ -642,6 +675,51 @@ wormholeTraveller.prototype.sendClientRPC = function(out) {
 	this.socket.emit("rpc", out);
 };
 
+/*
+* Add following of a user through the wormhole pipe. Use redis.
+*/
+var wormholeReport = function (redissubclient) {
+	events.EventEmitter.call(this);
+	this._pubsub = redissubclient;
+	this._client = this._pubsub.pubClient;
+}
+wormholeReport.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeReport.prototype.report = function (id, direction) {
+	// body...
+	var args = [].slice.call(arguments);
+	args.shift();
+	args.shift();
+	var obj = JSON.stringify({id: id, direction: direction, args: args});
+	this._pubsub.publish("wormholeReport", obj);
+	this._pubsub.publish("wormholeReport:"+id, obj);
+	this._client.rpush("wormholeReport:"+id, obj);
+	this._client.expire("wormholeReport:"+id, 1800); // 30 minutes.
+	this.emit(id, obj);
+	this.emit("newReport", obj);
+};
+wormholeReport.prototype.getUser = function (id, cb) {
+	var self = this;
+	this._client.llen("wormholeReport:"+id, function (err, len) {
+		if (!err && len) {
+			self._client.lrange("wormholeReport:"+id, 0, len-1, cb);
+		} else {
+			cb(err, len);
+		}
+	});
+};
+wormholeReport.prototype.getUsers = function(cb) {
+	this._client.keys("wormholeReport:*", function (err, list) {
+		for (var i = 0; i < list.length; i++) {
+			list[i] = list[i].replace("wormholeReport:", "");
+		}
+		cb(err, list);
+	});
+};
+
+//traveller.pipe.report("init", ["clientcallback", "servercallback", "clientRpc", "serverRpc"], "acidhax", "mail@matbee.com", "www.groupnotes.ca");
+/*
+* Fun attempt at doing client-side event handling on the server.
+*/
 var wormholeQuery = function () {
 	events.EventEmitter.call(this);
 
