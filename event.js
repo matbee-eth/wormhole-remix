@@ -112,8 +112,9 @@ wormhole.prototype.start = function(options, callback) {
 		this._pubsub = this._sessionStore.pubsub || new redispubsub({pubClient: this._redisPubClient, subClient: this._redisSubClient});
 	}
 	if (options.report) {
-		self._reporter = new wormholeReport(this._pubsub);
+		self._reporting = true;
 	}
+	self._reporter = new wormholeReport(this._pubsub);
 	if (this._namespaces.length == 0) {
 		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
 	}
@@ -258,7 +259,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						// So fancy!
 						!err && self._sessionStore.get(handshake.signedCookies[self._sessionKey], function (err, session) {
 							handshake.sessionId = handshake.signedCookies[self._sessionKey];
-							self._reporter && self._reporter.report(handshake.sessionId, "handshake");
+							self._reporting && self._reporter.report(handshake.sessionId, "handshake");
 							callback(err, true);
 						});
 					});
@@ -278,7 +279,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 							traveller.setSessionId(socket.handshake.sessionId);
 							traveller.sessionId = socket.handshake.sessionId;
 							socket.setSessionId(socket.handshake.sessionId);
-							self._reporter && self._reporter.report(traveller.sessionId, "connection", {
+							self._reporting && self._reporter.report(traveller.sessionId, "connection", {
 
 							});
 						}
@@ -287,7 +288,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 							console.log("Traveller events set up.");
 							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
 								console.log("Sent RPC functions to traveller.");
-								self._reporter && self._reporter.report(traveller.sessionId, "sync", {
+								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
 								self.emit("connection", traveller);
@@ -379,7 +380,11 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					self._uuidList[out.uuid] = callback;
 				}
 				
-				self._reporter && self._reporter.report(traveller.sessionId, "clientrpc", out);
+				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
+					func: func,
+					args: args,
+					uuid: out.uuid
+				});
 
 				traveller.sendClientRPC(out);
 			});
@@ -391,7 +396,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
 				self._redisPubClient.publish(channel, JSON.stringify({func: func, args: args}));
-				self._reporter && self._reporter.report(traveller.sessionId, "clientrpc", out);
+				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {func: func, args: args});
 			});
 			done();
 		},
@@ -409,15 +414,14 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				 		rpcCallback = function () {
 				 			// UUID
 				 			var args = [null, UUID].concat([].slice.call(arguments));
-				 			console.log("RPC CALLBACK: ", args);
-							self._reporter && self._reporter.report(traveller.sessionId, "clientrpcCallback", args);
-				 			traveller.callback.apply(traveller, args);
-				 		}
+							self._reporting && self._reporter.report(traveller.sessionId, "clientrpcCallback", {args: [].slice.call(arguments), uuid: UUID});
+							traveller.callback.apply(traveller, args);
+						}
 				 		args.push(rpcCallback);
 				 	}
-					self._reporter && self._reporter.report(traveller.sessionId, "serverrpc", {
+					self._reporting && self._reporter.report(traveller.sessionId, "serverrpc", {
 						uuid: UUID,
-						args: UUID ? args.slice(0,args.length-2) : args,
+						args: args,
 						func: func
 					});
 				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
@@ -433,7 +437,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				if (uuid && self._uuidList[uuid]) {
 					var args = [].slice.call(arguments).slice(1)[0];
 					self._uuidList[uuid].apply(traveller, args);
-					self._reporter && self._reporter.report(traveller.sessionId, "serverrpcCallback", {
+					self._reporting && self._reporter.report(traveller.sessionId, "serverrpcCallback", {
 						uuid: uuid,
 						args: args
 					});
@@ -452,7 +456,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				} else {
 					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
-					self._reporter && self._reporter.report(traveller.sessionId, "sessionUpdated", session);
+					self._reporting && self._reporter.report(traveller.sessionId, "sessionUpdated", session);
 					traveller.emit.call(traveller, "sessionUpdated", session);
 				}
 			};
@@ -465,7 +469,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
-				self._reporter && self._reporter.report(traveller.sessionId, "disconnect");
+				self._reporting && self._reporter.report(traveller.sessionId, "disconnect");
 			});
 			done();
 		},
@@ -686,11 +690,8 @@ var wormholeReport = function (redissubclient) {
 	this._client = this._pubsub.pubClient;
 }
 wormholeReport.prototype.__proto__ = events.EventEmitter.prototype;
-wormholeReport.prototype.report = function (id, direction) {
+wormholeReport.prototype.report = function (id, direction, args) {
 	// body...
-	var args = [].slice.call(arguments);
-	args.shift();
-	args.shift();
 	var obj = JSON.stringify({id: id, direction: direction, args: args});
 	this._pubsub.publish("wormholeReport", obj);
 	this._pubsub.publish("wormholeReport:"+id, obj);
@@ -703,7 +704,12 @@ wormholeReport.prototype.getUser = function (id, cb) {
 	var self = this;
 	this._client.llen("wormholeReport:"+id, function (err, len) {
 		if (!err && len) {
-			self._client.lrange("wormholeReport:"+id, 0, len-1, cb);
+			self._client.lrange("wormholeReport:"+id, 0, len-1, function (err, list) {
+				for (var i = 0; i < list.length; i++) {
+					list[i] = JSON.parse(list[i]);
+				}
+				cb(err, list);
+			});
 		} else {
 			cb(err, len);
 		}
@@ -716,6 +722,9 @@ wormholeReport.prototype.getUsers = function(cb) {
 		}
 		cb(err, list);
 	});
+};
+wormholeReport.prototype.clear = function(id, cb) {
+	this._client.del("wormholeReport:"+id, cb)
 };
 
 //traveller.pipe.report("init", ["clientcallback", "servercallback", "clientRpc", "serverRpc"], "acidhax", "mail@matbee.com", "www.groupnotes.ca");
