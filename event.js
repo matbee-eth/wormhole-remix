@@ -662,7 +662,7 @@ wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
 	this.socket.on("connection", function () {
-		traveller.isConnected = false;
+		self.isConnected = false;
 	});
 	this.socket.on("rpc", function (data) {
 		/* data.func, data.async, data.arguments, data.uuid */
@@ -677,7 +677,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		self.emit.apply(self, ["callback", data.uuid].concat(data.args));
 	});
 	this.socket.on("disconnect", function () {
-		traveller.isConnected = false;
+		self.isConnected = false;
 		self.emit("disconnect");
 	});
 	this.socket.on("syncClientFunctions", function (method) {
