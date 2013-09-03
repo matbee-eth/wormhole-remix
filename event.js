@@ -363,6 +363,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("executeClientRPC", function (func) {
 				// Send RPC data to Client.
+				console.log("executeClientRPC", func, "Am I Connected?", traveller.isConnected);
 				var hasCallback = false;
 				var callback;
 				var args = [].slice.call(arguments);
