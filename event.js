@@ -591,6 +591,7 @@ var wormholeTraveller = function (socket) {
 	this._clientMethods = {};
 	this.rpc = {};
 	this.channelRpc = {};
+	this._uuidList = {};
 
 	this._sessionId = null;
 };
