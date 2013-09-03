@@ -378,6 +378,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				if (hasCallback) {
 					out.uuid = __randomString();
 					self._uuidList[out.uuid] = callback;
+					traveller.addCallbackId(out.uuid);
 				}
 				
 				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
@@ -442,6 +443,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						args: args
 					});
 					delete self._uuidList[uuid];
+					traveller.removeCallbackId(uuid);
 				}
 			});
 			done();
@@ -469,6 +471,15 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
+				var ids = traveller.getCallbackIds();
+				for (var i = 0; i < ids.length; i++) {
+					var uuid = ids[i];
+					if (self._uuidList[uuid]) {
+						self._uuidList[uuid]("wormhole disconnected");
+					}
+					delete self._uuidList[uuid];
+					traveller.removeCallbackId(uuid);
+				}
 				self._reporting && self._reporter.report(traveller.sessionId, "disconnect");
 			});
 			done();
@@ -680,7 +691,17 @@ wormholeTraveller.prototype.callback = function (err, uuid) {
 wormholeTraveller.prototype.sendClientRPC = function(out) {
 	this.socket.emit("rpc", out);
 };
-
+wormholeTraveller.prototype.addCallbackId = function(id) {
+	// body...
+	this._uuidList[id] = true;
+};
+wormholeTraveller.prototype.removeCallbackId = function(id) {
+	// body...
+	delete this._uuidList[id];
+};
+wormholeTraveller.prototype.getCallbackIds = function() {
+	return Object.keys(this._uuidList);
+};
 /*
 * Add following of a user through the wormhole pipe. Use redis.
 */
