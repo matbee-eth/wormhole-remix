@@ -468,6 +468,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("disconnect", function () {
 				// wut?
 				// unsubscribe from session id
+				console.log("Traveller disconnected.");
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
@@ -476,6 +477,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					var uuid = ids[i];
 					if (self._uuidList[uuid]) {
 						self._uuidList[uuid]("wormhole disconnected");
+						console.log("Traveller disconnected. Executing dead callback with error.");
 					}
 					delete self._uuidList[uuid];
 					traveller.removeCallbackId(uuid);
