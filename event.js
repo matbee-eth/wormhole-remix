@@ -440,7 +440,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("callback", function (uuid) {
-				console.log("RPC CALLBACK", uuid);
 				if (uuid && self._uuidList[uuid]) {
 					var args = [].slice.call(arguments).slice(1)[0];
 					self._uuidList[uuid].apply(traveller, args);
@@ -457,7 +456,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			// Subscribe to session Id.
 			var id = traveller.getSessionId();
-			console.log("Subscribing to: ", id);
 			var sessionSubscribe = function (session) {
 				if (!traveller.isConnected) {
 					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
@@ -496,7 +494,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			// Setting up Filesystem watching.
 			if (self.__watcher) {
 				var watchFunction = function (ev, filename) {
-					console.log("File updated", filename);
 					traveller.emit.call(traveller, "fileUpdated", ev, filename);
 				};
 				self.__watcher.on("all", watchFunction);
@@ -504,7 +501,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.on("disconnect", function () {
 					self.__watcher.removeListener("all", watchFunction);
 				});
-				console.log("Set up file listeners for traveller");
 				done();
 			} else {
 				done();
@@ -530,17 +526,14 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 		// Should it only execute from Client->Server!?
 		// Or Could we enable Server->Server(s)?
 		data = JSON.parse(data);
-		console.log("SocketID publishies", data.func, data.args);
 		allTheFunctions(data.func, data.args);
 	};
 	var sessionIdSub = function (data) {
 		// Now what!?
 		data = JSON.parse(data);
-		console.log("SessionID publishies", data.func, data.args);
 		allTheFunctions(data.func, data.args);
 	};
 	var allTheFunctions = function (clientFunc, args) {
-		console.log("MOTHER OF ALL THE FUNCTIONS!", clientFunc);
 		traveller.executeClientRPC([clientFunc].concat(args))
 	};
 	var sessionIdString;
@@ -558,7 +551,6 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 				self._pubsub.removeListener(sessionIdString, sessionIdSub);
 			}
 		});
-		console.log("Set up pubsub channels");
 		cb && cb();
 	});
 };
@@ -651,7 +643,6 @@ wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 wormholeTraveller.prototype.executeChannelClientRPC = function(channel, funcName) {
 	// Server triggers client RPC execution
 	var argsArray = ["executeChannelClientRPC", "wormhole:"+channel, funcName];
-	console.log(argsArray.concat([].slice.call(arguments).slice(2)));
 	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(2)));
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
@@ -666,7 +657,6 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	});
 	this.socket.on("rpc", function (data) {
 		/* data.func, data.async, data.arguments, data.uuid */
-		console.log("Executing Server RPC");
 		if (data && data.function) {
 			self.executeServerRPC.apply(self, [data.function, data.uuid].concat(data.arguments));
 		}
@@ -681,7 +671,6 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		self.emit("disconnect");
 	});
 	this.socket.on("syncClientFunctions", function (method) {
-		console.log("LOLO?", method);
 		if (Array.isArray(method)) {
 			// Array of client functions
 			for (var i in method) {
@@ -698,7 +687,6 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 wormholeTraveller.prototype.callback = function (err, uuid) {
 	var self = this;
 	var args = [].slice.call(arguments);
-	console.log("CALLBACK");
 	this.socket.emit.apply(this.socket, ["callback"].concat(args));
 };
 wormholeTraveller.prototype.sendClientRPC = function(out) {
