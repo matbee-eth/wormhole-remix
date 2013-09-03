@@ -371,23 +371,29 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					hasCallback = true;
 					callback = args.pop();
 				}
-				var out = {
-					"function": func,
-					"arguments": args
-				};
-				if (hasCallback) {
-					out.uuid = __randomString();
-					self._uuidList[out.uuid] = callback;
-					traveller.addCallbackId(out.uuid);
-				}
-				
-				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
-					func: func,
-					args: args,
-					uuid: out.uuid
-				});
+				if (traveller.isConnected) {
+					var out = {
+						"function": func,
+						"arguments": args
+					};
+					if (hasCallback) {
+						out.uuid = __randomString();
+						self._uuidList[out.uuid] = callback;
+						traveller.addCallbackId(out.uuid);
+					}
+					
+					self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
+						func: func,
+						args: args,
+						uuid: out.uuid
+					});
 
-				traveller.sendClientRPC(out);
+					traveller.sendClientRPC(out);
+				} else {
+					if (callback) {
+						callback("disconnected");
+					}
+				}
 			});
 			done();
 		},
@@ -619,6 +625,7 @@ wormholeTraveller.prototype.syncClientMethods = function(methods) {
 wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	var self = this;
 	this.rpc[method] = function () {
+		if (self.)
 		self.executeClientRPC.apply(self, [method].concat([].slice.call(arguments)));
 	};
 	this.channelRpc[method] = function (channel) {
@@ -655,6 +662,9 @@ wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 };
 wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
+	this.socket.on("connection", function () {
+		traveller.isConnected = false;
+	});
 	this.socket.on("rpc", function (data) {
 		/* data.func, data.async, data.arguments, data.uuid */
 		console.log("Executing Server RPC");
@@ -668,6 +678,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		self.emit.apply(self, ["callback", data.uuid].concat(data.args));
 	});
 	this.socket.on("disconnect", function () {
+		traveller.isConnected = false;
 		self.emit("disconnect");
 	});
 	this.socket.on("syncClientFunctions", function (method) {
