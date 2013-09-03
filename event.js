@@ -618,7 +618,15 @@ wormholeTraveller.prototype.syncClientMethods = function(methods) {
 wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	var self = this;
 	this.rpc[method] = function () {
-		self.executeClientRPC.apply(self, [method].concat([].slice.call(arguments)));
+		if (self.isConnected) {
+			self.executeClientRPC.apply(self, [method].concat([].slice.call(arguments)));
+		} else {
+			var args = [].slice.call(arguments);
+			var funky = args[args.length-1];
+			if (funky && typeof funky == "function") {
+				funky("disconnected");
+			}
+		}
 	};
 	this.channelRpc[method] = function (channel) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
