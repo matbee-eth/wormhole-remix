@@ -208,9 +208,7 @@ wormhole.prototype.setupSocket = function(socket) {
 	var socketTimeout;
 	socket.on('connect', function () {
 		self._connected = true;
-		if (socketTimeout) {
-			clearTimeout(socketTimeout);
-		}
+		self.syncClientFunctions()
 		self.emit("connection");
 	});
 	var getScript = function (self) {
