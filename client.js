@@ -208,8 +208,9 @@ wormhole.prototype.setupSocket = function(socket) {
 	var socketTimeout;
 	socket.on('connect', function () {
 		self._connected = true;
-		self.syncClientFunctions()
-		self.emit("connection");
+		self.syncClientFunctions(function () {
+			self.emit("connection");
+		});
 	});
 	var getScript = function (self) {
 		var scripty = document.createElement("script");
@@ -251,7 +252,7 @@ wormhole.prototype.syncClientFunctions = function() {
 		clearTimeout(this.syncTimeout);
 	}
 	this.syncTimeout = setTimeout(function () {
-		socket.emit("syncClientFunctions", self.customClientfunctions);
+		self.socket.emit("syncClientFunctions", self.customClientfunctions);
 	}, 300);
 };
 wormhole.prototype.setPath = function(hostnameOfConnect) {
