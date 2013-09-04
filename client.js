@@ -71,6 +71,8 @@ var wormhole = function (socket) {
 	this.setupSocket(socket);
 	this.setupClientEvents();
 
+	this.syncTimeout;
+
 };
 wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
 wormhole.prototype.setupClientEvents = function() {
@@ -81,7 +83,7 @@ wormhole.prototype.setupClientEvents = function() {
 			this.customClientfunctions.push(event);
 			self.addClientFunction(event, func);
 			if (self._connected) {
-				socket.emit("syncClientFunctions", self.customClientfunctions);
+				self.syncClientFunctions();
 			}
 		}
 	});
@@ -209,7 +211,6 @@ wormhole.prototype.setupSocket = function(socket) {
 		if (socketTimeout) {
 			clearTimeout(socketTimeout);
 		}
-		socket.emit("syncClientFunctions", self.customClientfunctions);
 		self.emit("connection");
 	});
 	var getScript = function (self) {
@@ -245,6 +246,15 @@ wormhole.prototype.setupSocket = function(socket) {
 			getScript(self);
 		}
 	});
+};
+wormhole.prototype.syncClientFunctions = function() {
+	var self = this;
+	if (this.syncTimeout) {
+		clearTimeout(this.syncTimeout);
+	}
+	this.syncTimeout = setTimeout(function () {
+		socket.emit("syncClientFunctions", self.customClientfunctions);
+	}, 300);
 };
 wormhole.prototype.setPath = function(hostnameOfConnect) {
 	this._path = hostnameOfConnect;
