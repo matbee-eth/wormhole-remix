@@ -455,20 +455,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
-			// Subscribe to session Id.
-			var id = traveller.getSessionId();
-			var sessionSubscribe = function (session) {
-				if (!traveller.isConnected) {
-					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
-				} else {
-					self._sessionStore.subscribeOnce(id, sessionSubscribe);
-					self.emit("sessionUpdated", traveller, session);
-					self._reporting && self._reporter.report(traveller.sessionId, "sessionUpdated", session);
-					traveller.emit.call(traveller, "sessionUpdated", session);
-				}
-			};
-			self._sessionStore.subscribeOnce(id, sessionSubscribe);
-
 			traveller.isConnected = true;
 			traveller.on("disconnect", function () {
 				// wut?
@@ -512,6 +498,20 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		// Done.
 		// Now wait for syncClientFunctionsComplete before we call back.
 		traveller.on("syncClientFunctionsComplete", function () {
+			// Subscribe to session Id.
+			var id = traveller.getSessionId();
+			var sessionSubscribe = function (session) {
+				if (!traveller.isConnected) {
+					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
+				} else {
+					self._sessionStore.subscribeOnce(id, sessionSubscribe);
+					self.emit("sessionUpdated", traveller, session);
+					self._reporting && self._reporter.report(traveller.sessionId, "sessionUpdated", session);
+					traveller.emit.call(traveller, "sessionUpdated", session);
+				}
+			};
+			self._sessionStore.subscribeOnce(id, sessionSubscribe);
+			
 			cb();
 		});
 	});
