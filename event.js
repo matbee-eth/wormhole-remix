@@ -719,15 +719,16 @@ var wormholeReport = function (redissubclient) {
 	events.EventEmitter.call(this);
 	this._pubsub = redissubclient;
 	this._client = this._pubsub.pubClient;
-}
+	this._writeClient = this._pubsub.pubClient;
+};
 wormholeReport.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeReport.prototype.report = function (id, direction, args) {
 	// body...
 	var obj = JSON.stringify({id: id, direction: direction, args: args});
-	this._pubsub.publish("wormholeReport", obj);
-	this._pubsub.publish("wormholeReport:"+id, obj);
-	this._client.rpush("wormholeReport:"+id, obj);
-	this._client.expire("wormholeReport:"+id, 1800); // 30 minutes.
+	this._writeClient.publish("wormholeReport", obj);
+	this._writeClient.publish("wormholeReport:"+id, obj);
+	this._writeClient.rpush("wormholeReport:"+id, obj);
+	this._writeClient.expire("wormholeReport:"+id, 1800); // 30 minutes.
 	this.emit(id, obj);
 	this.emit("newReport", obj);
 };
@@ -755,7 +756,7 @@ wormholeReport.prototype.getUsers = function(cb) {
 	});
 };
 wormholeReport.prototype.clear = function(id, cb) {
-	this._client.del("wormholeReport:"+id, cb)
+	this._writeClient.del("wormholeReport:"+id, cb)
 };
 
 //traveller.pipe.report("init", ["clientcallback", "servercallback", "clientRpc", "serverRpc"], "acidhax", "mail@matbee.com", "www.groupnotes.ca");
