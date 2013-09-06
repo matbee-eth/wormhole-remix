@@ -142,7 +142,7 @@ wormhole.prototype.start = function(options, callback) {
 };
 wormhole.prototype.executeChannelClientRPC = function(channel, func) {
 	var args = [].slice.call(arguments).slice(2);
-	this._redisPubClient.publish("wormhole:" + channel, JSON.stringify({func: func, args: args}));
+	this._pubsub.publish("wormhole:" + channel, JSON.stringify({func: func, args: args}));
 };
 wormhole.prototype.clientMethods = function(methods, cb) {
 	var self = this;
@@ -403,7 +403,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				// Channel RPC emitted.
 				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
-				self._redisPubClient.publish(channel, JSON.stringify({func: func, args: args}));
+				self._pubsub.publish(channel, JSON.stringify({func: func, args: args}));
 				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {func: func, args: args});
 			});
 			done();
