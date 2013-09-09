@@ -562,7 +562,7 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 	this.extendSocket(socket, function (err) {
 		traveller.setupClientEvents(function (err) {
 			self.setupPubSub(traveller, function (err) {
-				traveller.setRpcTimeout(this._rpcClientTimeout);
+				traveller.setRpcTimeout(self._rpcClientTimeout);
 				cb && cb(err, traveller);
 			});
 		});
