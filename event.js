@@ -735,28 +735,24 @@ var wormholeReport = function (redissubclient) {
 };
 wormholeReport.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeReport.prototype.report = function (id, direction, args) {
-	// body...
+	var self = this;
 	var obj = JSON.stringify({id: id, direction: direction, args: args});
 	this._writeClient.publish("wormholeReport", obj);
 	this._writeClient.publish("wormholeReport:"+id, obj);
-	this._writeClient.rpush("wormholeReport:"+id, obj);
+	this._writeClient.rpush("wormholeReport:"+id, obj, function () {
+		self._writeClient.ltrim("wormholeReport:"+id, -1000, -1);
+	});
 	this._writeClient.expire("wormholeReport:"+id, 1800); // 30 minutes.
 	this.emit(id, obj);
 	this.emit("newReport", obj);
 };
 wormholeReport.prototype.getUser = function (id, cb) {
 	var self = this;
-	this._client.llen("wormholeReport:"+id, function (err, len) {
-		if (!err && len) {
-			self._client.lrange("wormholeReport:"+id, 0, len-1, function (err, list) {
-				for (var i = 0; i < list.length; i++) {
-					list[i] = JSON.parse(list[i]);
-				}
-				cb(err, list);
-			});
-		} else {
-			cb(err, len);
+	self._client.lrange("wormholeReport:"+id, 0, -1, function (err, list) {
+		for (var i = 0; i < list.length; i++) {
+			list[i] = JSON.parse(list[i]);
 		}
+		cb(err, list);
 	});
 };
 wormholeReport.prototype.getUsers = function(cb) {
