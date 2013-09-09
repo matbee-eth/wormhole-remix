@@ -25,6 +25,8 @@ var wormhole = function (options) {
 	this._cookieParser = options.cookieParser;
 	this._sessionKey = options.sessionKey;
 
+	this._rpcClientTimeout = options.rpcTimeout || 30000;
+
 	this._port = options.port;
 	this._hostname = options.hostname;
 	this._protocol = options.protocol;
@@ -560,6 +562,7 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 	this.extendSocket(socket, function (err) {
 		traveller.setupClientEvents(function (err) {
 			self.setupPubSub(traveller, function (err) {
+				traveller.setRpcTimeout(this._rpcClientTimeout);
 				cb && cb(err, traveller);
 			});
 		});
@@ -591,10 +594,14 @@ var wormholeTraveller = function (socket) {
 	this.rpc = {};
 	this.channelRpc = {};
 	this._uuidList = {};
+	this.rpcTimeout = 30000;
 
 	this._sessionId = null;
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeTraveller.prototype.setRpcTimeout = function(timeout) {
+	this.rpcTimeout = timeout;
+};
 wormholeTraveller.prototype.setSessionId = function(sessionId) {
 	this._sessionId = sessionId;
 };
@@ -707,7 +714,7 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 		if (self._uuidList[id]) {
 			self.emit.apply(self, ["callback", id, "Callback timeout."]);
 		}
-	}, 30000);
+	}, self.rpcTimeout);
 	// Time out after -x- specified seconds.
 };
 wormholeTraveller.prototype.removeCallbackId = function(id) {
