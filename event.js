@@ -377,11 +377,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						"function": func,
 						"arguments": args
 					};
-					if (hasCallback) {
-						out.uuid = __randomString();
-						self._uuidList[out.uuid] = callback;
-						traveller.addCallbackId(out.uuid);
-					}
+					out.uuid = __randomString();
+					self._uuidList[out.uuid] = callback;
+					traveller.addCallbackId(out.uuid);
 					
 					self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
 						func: func,
@@ -704,6 +702,13 @@ wormholeTraveller.prototype.sendClientRPC = function(out) {
 wormholeTraveller.prototype.addCallbackId = function(id) {
 	// body...
 	this._uuidList[id] = true;
+	var self = this;
+	setTimeout(function () {
+		if (self._uuidList[id]) {
+			self.emit.apply(self, ["callback", id, "Callback timeout."]);
+		}
+	}, 30000);
+	// Time out after -x- specified seconds.
 };
 wormholeTraveller.prototype.removeCallbackId = function(id) {
 	// body...
