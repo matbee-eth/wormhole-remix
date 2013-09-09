@@ -712,7 +712,7 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	var self = this;
 	setTimeout(function () {
 		if (self._uuidList[id]) {
-			self.emit.apply(self, ["callback", id, "Callback timeout."]);
+			self.emit.apply(self, ["callback", id, ["Callback timeout."]]);
 		}
 	}, self.rpcTimeout);
 	// Time out after -x- specified seconds.
