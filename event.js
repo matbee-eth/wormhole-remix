@@ -379,6 +379,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						"arguments": args
 					};
 					if (!hasCallback) {
+						console.log("ADDING TIMEOUT FUNCTION NO CALLBACK LOL!");
 						out.assureFunction = true;
 						callback = function () {
 							traveller.removeCallbackId(out.uuid);
