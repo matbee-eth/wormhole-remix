@@ -448,6 +448,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						args: args
 					});
 					delete self._uuidList[uuid];
+				}
+				if (uuid) {
 					traveller.removeCallbackId(uuid);
 				}
 			});
@@ -707,9 +709,8 @@ wormholeTraveller.prototype.sendClientRPC = function(out) {
 };
 wormholeTraveller.prototype.addCallbackId = function(id) {
 	// body...
-	this._uuidList[id] = true;
 	var self = this;
-	setTimeout(function () {
+	this._uuidList[id] = setTimeout(function () {
 		if (self._uuidList[id]) {
 			self.emit.apply(self, ["callback", id, ["Callback timeout."]]);
 		}
@@ -717,7 +718,7 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	// Time out after -x- specified seconds.
 };
 wormholeTraveller.prototype.removeCallbackId = function(id) {
-	// body...
+	clearTimeout(this._uuidList[id]);
 	delete this._uuidList[id];
 };
 wormholeTraveller.prototype.getCallbackIds = function() {
