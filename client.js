@@ -157,7 +157,7 @@ wormhole.prototype.setupSocket = function(socket) {
 			data = self.charcodeArrayToString(data);
 			data = JSON.parse(data);
 		}
-		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid);
+		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid, data.assureFunction);
 	});
 	socket.on("rpcResponse", function (data) {
 		if (self.encryptAsBinary) {
@@ -263,29 +263,29 @@ wormhole.prototype.onConnectFailed = function (callback) {
 wormhole.prototype.setSocket = function(socket) {
 	this.socket = socket;
 };
-wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
+wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assureFunction) {
 	var self = this;
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
-		if (isAsync && uuid) {
+		if (!assureFunction && isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
 			this.clientFunctions[methodName].bound.apply(self, argsWithCallback);
-		} else if (uuid) {
+		} else if (assureFunction || uuid) {
 			var returnValue = this.clientFunctions[methodName].bound.apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
 			this.clientFunctions[methodName].bound.apply(self, args);
 		}
 	} else if (this.clientFunctions[methodName]) {
-		if (isAsync && uuid) {
+		if (!assureFunction && isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
 			this.clientFunctions[methodName].apply(self, argsWithCallback);
-		} else if (uuid) {
+		} else if (assureFunction || uuid) {
 			var returnValue = this.clientFunctions[methodName].apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
