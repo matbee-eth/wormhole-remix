@@ -378,9 +378,11 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						"function": func,
 						"arguments": args
 					};
-					out.uuid = __randomString();
-					self._uuidList[out.uuid] = callback;
-					traveller.addCallbackId(out.uuid);
+					if (hasCallback) {
+						out.uuid = __randomString();
+						self._uuidList[out.uuid] = callback;
+						traveller.addCallbackId(out.uuid);
+					}
 					
 					self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {
 						func: func,
