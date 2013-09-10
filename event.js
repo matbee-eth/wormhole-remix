@@ -382,6 +382,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						console.log("ADDING TIMEOUT FUNCTION NO CALLBACK LOL!");
 						out.assureFunction = true;
 						callback = function () {
+							console.log("CALLBACK FOR TIMEOUT FNCTION LOL", out.uuid);
 							traveller.removeCallbackId(out.uuid);
 						};
 					}
