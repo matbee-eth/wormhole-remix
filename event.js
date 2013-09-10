@@ -719,6 +719,7 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	// body...
 	var self = this;
 	this._uuidList[id] = setTimeout(function () {
+		console.log("CALLBACK ID TIMED OUT :'(", id);
 		if (self._uuidList[id]) {
 			self.emit.apply(self, ["callback", id, ["Callback timeout."]]);
 		}
@@ -726,6 +727,7 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	// Time out after -x- specified seconds.
 };
 wormholeTraveller.prototype.removeCallbackId = function(id) {
+	console.log("Removing callback ID:", id, this._uuidList[id]);
 	clearTimeout(this._uuidList[id]);
 	delete this._uuidList[id];
 };
