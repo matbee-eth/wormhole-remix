@@ -157,7 +157,6 @@ wormhole.prototype.setupSocket = function(socket) {
 			data = self.charcodeArrayToString(data);
 			data = JSON.parse(data);
 		}
-		console.log("FORCING SYNCHRONOUS CALLBACK??", data.assureFunction);
 		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid, data.assureFunction);
 	});
 	socket.on("rpcResponse", function (data) {
@@ -288,7 +287,6 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assure
 			this.clientFunctions[methodName].apply(self, argsWithCallback);
 		} else if (assureFunction || uuid) {
 			var returnValue = this.clientFunctions[methodName].apply(self, args);
-			console.log("RETURNING SYNCHRONOUS ASSURECALLBACK LOLO", returnValue);
 			self.callbackRpc(uuid, returnValue);
 		} else {
 			this.clientFunctions[methodName].apply(self, args);

@@ -321,13 +321,11 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 	socket.setSession = function (session, cb) {
 		socket.get("sessionId", function (err, id) {
 			self._sessionStore.set(id, session, function (err) {
-				console.log("setSession, err?", arguments);
 				cb(err);
 			});
 		});
 	};
 	socket.setSessionKey = function (key, value, cb) {
-		console.log("setSessionKey", key, value, cb);
 		socket.getSession(function (err, session) {
 			if (!err && session) {
 				session[key] = value;
@@ -379,10 +377,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						"arguments": args
 					};
 					if (!hasCallback) {
-						console.log("ADDING TIMEOUT FUNCTION NO CALLBACK LOL!");
 						out.assureFunction = true;
 						callback = function () {
-							console.log("CALLBACK FOR TIMEOUT FNCTION LOL", out.uuid);
 							traveller.removeCallbackId(out.uuid);
 						};
 					}
@@ -408,7 +404,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("executeChannelClientRPC", function (channel, func) {
 				// Channel RPC emitted.
-				console.log("CHANNEL RPC EMITTED", channel, func);
 				var args = [].slice.call(arguments).slice(2);
 				self._pubsub.publish(channel, JSON.stringify({func: func, args: args}));
 				self._reporting && self._reporter.report(traveller.sessionId, "clientrpc", {func: func, args: args});
@@ -719,7 +714,6 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	// body...
 	var self = this;
 	this._uuidList[id] = setTimeout(function () {
-		console.log("CALLBACK ID TIMED OUT :'(", id);
 		if (self._uuidList[id]) {
 			self.emit.apply(self, ["callback", id, ["Callback timeout."]]);
 		}
@@ -727,7 +721,6 @@ wormholeTraveller.prototype.addCallbackId = function(id) {
 	// Time out after -x- specified seconds.
 };
 wormholeTraveller.prototype.removeCallbackId = function(id) {
-	console.log("Removing callback ID:", id, this._uuidList[id]);
 	clearTimeout(this._uuidList[id]);
 	delete this._uuidList[id];
 };
