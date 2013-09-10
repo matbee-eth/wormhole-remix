@@ -315,7 +315,6 @@ wormhole.prototype.extendSocket = function(socket, cb) {
 	};
 	socket.getSessionKey = function (key, cb) {
 		socket.getSession(function (err, session) {
-			console.log("getSession", err, session);
 			cb(err, session ? session[key] : null);
 		});
 	};
