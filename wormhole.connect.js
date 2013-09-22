@@ -1,5 +1,6 @@
 (function () {
 	var module = {}, socket, io = module.exports = window.gnio = {};
+	var customTransports;
 	(function () {
 		THISSTRINGISTHESOCKETIOSCRIPTLOL;
 	})();
@@ -10,10 +11,14 @@
 			'try multiple transports': true
 		});
 	} else {
-		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', {
+		var socketOptions = {
 			reconnect: false,
 			'try multiple transports': true
-		});
+		};
+		if (customTransports) {
+			socketOptions = customTransports;
+		}
+		socket = io.connect('THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/THISISTHENAMESPACEFORSOCKETIO', socketOptions);
 	}
 	var theFunctionToDo = function () {
 		REPLACETHISSTRINGOKAY
