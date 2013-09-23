@@ -195,12 +195,12 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
-	if (this._cachedNamespaceCallback[namespace]) {
-		this._cachedNamespaceCallback[namespace](req, res, function (connectArgs) {
-			res.send(this._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', JSON.stringify(connectArgs)));
+	if (this._namespaceClientFunctionsCallback[namespace]) {
+		this._namespaceClientFunctionsCallback[namespace](req, res, function (connectArgs) {
+			res.send(this._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', connectArgs ? JSON.stringify(connectArgs) : ''));
 		});
 	} else {
-		res.send(this._cachedNamespace["/"+namespace]);
+		res.send(this._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', ''));
 	}
 };
 wormhole.prototype.getScripts = function (cb) {
@@ -592,9 +592,9 @@ wormhole.prototype.addNamespace = function (namespace, func, customCB) {
 		args.shift();
 		func = "(" + func.toString() + "('" + args.join("','") + "'))";
 		this._namespaceClientFunctions[namespace] = func;
-		if (customCB) {
-			this._namespaceClientFunctionsCallback[namespace] = customCB;
-		}
+	}
+	if (customCB) {
+		this._namespaceClientFunctionsCallback[namespace] = customCB;
 	}
 	this._namespaces.push(namespace);
 };
