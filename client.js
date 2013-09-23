@@ -71,8 +71,12 @@ var wormhole = function (socket) {
 	this.setupSocket(socket);
 	this.setupClientEvents();
 
+	this.on("wormholeReady", function () {
+		self.emit("ready");
+		self.ready();
+	});
+	
 	this.syncTimeout;
-
 };
 wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
 wormhole.prototype.setupClientEvents = function() {
@@ -131,19 +135,9 @@ wormhole.prototype.setupSocket = function(socket) {
 	});
 	socket.on("syncClientFunctions", function (data) {
 		self.syncClientRpc(data);
-		self._clientFunctionsSynced = true;
-		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
-			self.ready();
-			self.emit("ready");
-		}
 	});
 	socket.on("syncServerFunctions", function (data) {
 		self.syncRpc(data);
-		self._serverFunctionsSynced = true;
-		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
-			self.ready();
-			self.emit("ready");
-		}
 	});
 	socket.on("syncB", function (data) {
 		data = self.charcodeArrayToString(data);
@@ -231,8 +225,6 @@ wormhole.prototype.setupSocket = function(socket) {
 	};
 	socket.on('disconnect', function () {
 		self._connected = false;
-		self._clientFunctionsSynced = false;
-		self._serverFunctionsSynced = false;
 		if (self.forcingDisconnect) {
 			for (var sock in socket.socket.namespaces) {
 				if (sock) {
