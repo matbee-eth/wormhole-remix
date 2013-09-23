@@ -32,7 +32,7 @@ wormholeConnect.prototype.connect = function(THISISTHECONNECTOBJECTOVERRIDE) {
 	}
 };
 
-(function () {
+(function (connectArgs) {
 	var connect = new wormholeConnect();
-	connect.connect(/*ThisIsTheConnectOverrideArgs*/);
-})();
+	connect.connect(connectArgs);
+})(ThisIsTheConnectOverrideArgs);

@@ -195,7 +195,13 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
-	res.send(this._cachedNamespace["/"+namespace]);
+	if (this._cachedNamespaceCallback[namespace]) {
+		this._cachedNamespaceCallback[namespace](req, res, function (connectArgs) {
+			res.send(this._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', JSON.stringify(connectArgs)));
+		});
+	} else {
+		res.send(this._cachedNamespace["/"+namespace]);
+	}
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -579,13 +585,16 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 		});
 	});
 };
-wormhole.prototype.addNamespace = function (namespace, func) {
+wormhole.prototype.addNamespace = function (namespace, func, customCB) {
 	if (func && typeof func === "function") {
 		var args = [].slice.call(arguments);
 		args.shift();
 		args.shift();
 		func = "(" + func.toString() + "('" + args.join("','") + "'))";
 		this._namespaceClientFunctions[namespace] = func;
+		if (customCB) {
+			this._namespaceClientFunctionsCallback[namespace] = customCB;
+		}
 	}
 	this._namespaces.push(namespace);
 };
