@@ -16,7 +16,12 @@ var wormhole = function (options) {
 	events.EventEmitter.call(this);
 	// Stores the actual reference to the functions.
 	this._serverMethods = {};
-	this._clientMethods = {};
+	this._clientMethods = {
+		wormholeReady: function () {
+			this.emit("ready");
+			this.ready();
+		}
+	};
 	this._io = options.io;
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
@@ -33,6 +38,7 @@ var wormhole = function (options) {
 
 	this._namespaces = [];
 	this._cachedNamespace = {};
+	this._cachedNamespaceCallback = {};
 	this._namespaceClientFunctions = {};
 	this._uuidList = {};
 
@@ -189,7 +195,14 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
-	res.send(this._cachedNamespace["/"+namespace]);
+	var self = this;
+	if (this._cachedNamespaceCallback["/"+namespace]) {
+		this._cachedNamespaceCallback["/"+namespace](req, res, function (connectArgs) {
+			res.send(self._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', connectArgs ? JSON.stringify(connectArgs) : ''));
+		});
+	} else {
+		res.send(this._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', ''));
+	}
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -210,7 +223,7 @@ wormhole.prototype.getScripts = function (cb) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
 				} else {
-					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js');
+					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname +":"+ self._port + '/socket.io/socket.io.js');
 				}
 				done(error);
 			});
@@ -293,6 +306,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
+								traveller.rpc.wormholeReady();
 								self.emit("connection", traveller);
 							});
 						});
@@ -572,10 +586,14 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 		});
 	});
 };
-wormhole.prototype.addNamespace = function (namespace, func) {
-	if (func && typeof func === "function") {
-		var args = [].slice.call(arguments);
+wormhole.prototype.addNamespace = function (namespace, customCB, func) {
+	var args = [].slice.call(arguments);
+	args.shift(); // namespace.
+	if (customCB && typeof customCB == "function") {
 		args.shift();
+		this._cachedNamespaceCallback[namespace] = customCB;
+	}
+	if (func && typeof func === "function") {
 		args.shift();
 		func = "(" + func.toString() + "('" + args.join("','") + "'))";
 		this._namespaceClientFunctions[namespace] = func;
