@@ -217,7 +217,7 @@ wormhole.prototype.getScripts = function (cb) {
 		}
 	], function (err) {
 		if (!err) {
-			fs.readFile(__dirname + '/event.wormhole.connect.js', function (err, data) {
+			fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
 				if (!err) {
 					async.forEach(self._namespaces, function (namespace, next) {
 						// data = uglify.minify(data.toString(), {fromString: true}).code;
