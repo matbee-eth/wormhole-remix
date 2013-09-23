@@ -196,7 +196,6 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
 	var self = this;
-	console.log(this._cachedNamespaceCallback);
 	if (this._cachedNamespaceCallback["/"+namespace]) {
 		this._cachedNamespaceCallback["/"+namespace](req, res, function (connectArgs) {
 			res.send(self._cachedNamespace["/"+namespace].replace('ThisIsTheConnectOverrideArgs', connectArgs ? JSON.stringify(connectArgs) : ''));
