@@ -16,7 +16,12 @@ var wormhole = function (options) {
 	events.EventEmitter.call(this);
 	// Stores the actual reference to the functions.
 	this._serverMethods = {};
-	this._clientMethods = {};
+	this._clientMethods = {
+		wormholeReady: function () {
+			this.emit("ready");
+			this.ready();
+		}
+	};
 	this._io = options.io;
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
@@ -33,6 +38,7 @@ var wormhole = function (options) {
 
 	this._namespaces = [];
 	this._cachedNamespace = {};
+	this._cachedNamespaceCallback = {};
 	this._namespaceClientFunctions = {};
 	this._namespaceClientFunctionsCallback = {};
 	this._uuidList = {};
@@ -219,7 +225,7 @@ wormhole.prototype.getScripts = function (cb) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
 				} else {
-					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname + self._port + '/socket.io/socket.io.js');
+					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname +":"+ self._port + '/socket.io/socket.io.js');
 				}
 				done(error);
 			});
@@ -304,6 +310,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
+								traveller.rpc.wormholeReady();
 								self.emit("connection", traveller);
 							});
 						});
