@@ -34,6 +34,7 @@ var wormhole = function (options) {
 	this._namespaces = [];
 	this._cachedNamespace = {};
 	this._namespaceClientFunctions = {};
+	this._namespaceClientFunctionsCallback = {};
 	this._uuidList = {};
 
 	// Javascript file cache.
@@ -189,7 +190,15 @@ wormhole.prototype.setupExpressRoutes = function (cb) {
 };
 wormhole.prototype.sendConnectScript = function(namespace, req, res) {
 	res.setHeader("Content-Type", "application/javascript");
-	res.send(this._cachedNamespace["/"+namespace]);
+	if (this._namespaceClientFunctionsCallback[namespace]) {
+		this._namespaceClientFunctionsCallback[namespace](req, res, function () {
+			var func = "("+this._cachedNamespace[namespace]+"("+[].slice.call(arguments).join("','")+"));"
+			func = this._cachedNamespace["/"+namespace].replace("/REPLACETHISSTRINGOKAY/g", func);
+			res.send(func);
+		});
+	} else {
+		res.send(this._cachedNamespace["/"+namespace]);
+	}
 };
 wormhole.prototype.getScripts = function (cb) {
 	var self = this;
@@ -217,7 +226,7 @@ wormhole.prototype.getScripts = function (cb) {
 		}
 	], function (err) {
 		if (!err) {
-			fs.readFile(__dirname + '/wormhole.connect.js', function (err, data) {
+			fs.readFile(__dirname + '/event.wormhole.connect.js', function (err, data) {
 				if (!err) {
 					async.forEach(self._namespaces, function (namespace, next) {
 						// data = uglify.minify(data.toString(), {fromString: true}).code;
@@ -227,8 +236,10 @@ wormhole.prototype.getScripts = function (cb) {
 								self._cachedNamespace[namespace] = clientJSData + ";\n";
 								self._cachedNamespace[namespace] = self._cachedNamespace[namespace] + data;
 							}
-							var func = self._namespaceClientFunctions[namespace] || "(" + function(){}.toString() + "())";
-							data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func);
+							var func = self._namespaceClientFunctions[namespace] || "(function(){}())";
+							if (!self._namespaceClientFunctionsCallback[namespace]) {
+								data = self._cachedNamespace[namespace].replace(/REPLACETHISSTRINGOKAY/g, func);
+							}
 							data = data.replace(/THISISTHENAMESPACEFORSOCKETIO/g, namespace ? namespace.replace("/", "") : "");
 							data = data.replace(/THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER/g, self._protocol + "://" + self._hostname + ":" + self._port);
 							data = data.replace(/THISSTRINGISTHESOCKETIOSCRIPTLOL/g, self.__socketIOJs);
@@ -572,13 +583,21 @@ wormhole.prototype.createTraveller = function(socket, cb) {
 		});
 	});
 };
-wormhole.prototype.addNamespace = function (namespace, func) {
-	if (func && typeof func === "function") {
+wormhole.prototype.addNamespace = function (namespace, clientFunction, clientFunctionArgsCallback) {
+	// Call clientFunction on client, with arguments callback'd from clientFunctionArgsCallback
+	// clientFunctionArgsCallback("1", "2", "3");
+	// clientFunction("1", "2". "3");
+	if (clientFunction && typeof clientFunction === "function") {
 		var args = [].slice.call(arguments);
 		args.shift();
 		args.shift();
-		func = "(" + func.toString() + "('" + args.join("','") + "'))";
-		this._namespaceClientFunctions[namespace] = func;
+		clientFunction = clientFunction.toString();
+		if (clientFunctionArgsCallback && typeof clientFunctionArgsCallback == "function") {
+			this._namespaceClientFunctionsCallback[namespace] = clientFunctionArgsCallback;
+		} else {
+			clientFunction = "(" + clientFunction + "('" + args.join("','") + "'))";
+		}
+		this._namespaceClientFunctions[namespace] = clientFunction;
 	}
 	this._namespaces.push(namespace);
 };
