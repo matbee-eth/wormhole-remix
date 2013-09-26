@@ -78,7 +78,7 @@ var wormhole = function (socket) {
 	
 	this.syncTimeout;
 };
-wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
+wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
 wormhole.prototype.setupClientEvents = function() {
 	var self = this;
 	this.on("newListener", function (event, func) {
