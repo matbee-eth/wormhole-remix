@@ -561,7 +561,7 @@ wormhole.prototype.setupPubSub = function(traveller, cb) {
 	traveller.socket.get("sessionId", function (err, sessionId) {
 		if (sessionId) {
 			sessionIdString = "wormhole:"+sessionIdString
-			this._pubsub.on(sessionIdString, sessionIdSub);
+			self._pubsub.on(sessionIdString, sessionIdSub);
 		}
 		// Kill subscriptions-- memory stuff.
 		traveller.socket.on("disconnect", function () {
