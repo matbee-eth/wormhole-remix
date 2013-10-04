@@ -28,7 +28,6 @@ wormholeConnect.prototype.connect = function(THISISTHECONNECTOBJECTOVERRIDE) {
 		console.log("Wormhole exists!");
 		window.wh.setSocket(socket);
 		window.wh.setupSocket(socket);
-		window.wh.ready(this.ready);
 	}
 };
 

@@ -9,7 +9,7 @@ var util = require('util')
   , request = require('request')
   , events = require('events')
   , redispubsub = require('redis-sub')
-  , fswatch = require('gaze').Gaze;;
+  , fswatch = require('gaze').Gaze;
 
 var wormhole = function (options) {
 	options = options || {};
@@ -515,7 +515,19 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	function (err) {
 		// Done.
 		// Now wait for syncClientFunctionsComplete before we call back.
+
 		traveller.on("syncClientFunctionsComplete", function () {
+			traveller.rpc.getServerFunctions(function (clientMethods) {
+				async.forEach(clientMethods, function (method, next) {
+					traveller.addClientMethod(method);
+					next();
+				}, function (err) {
+					console.log("ARRAYOFSTEPS", traveller.arrayOfSteps);
+				});
+			});
+		});
+
+		traveller.once("syncClientFunctionsComplete", function () {
 			// Subscribe to session Id.
 			var id = traveller.getSessionId();
 			var sessionSubscribe = function (session) {
@@ -618,6 +630,8 @@ var wormholeTraveller = function (socket) {
 	this._uuidList = {};
 	this.rpcTimeout = 30000;
 
+	this.arrayOfSteps = [];
+
 	this._sessionId = null;
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
@@ -631,11 +645,12 @@ wormholeTraveller.prototype.getSessionId = function() {
 	return this._sessionId;
 };
 wormholeTraveller.prototype.sendRPCFunctions = function(clientMethods, serverMethods, cb) {
+	var self = this;
 	this.socket.emit("syncClientFunctions", clientMethods);
 	this.socket.emit("syncServerFunctions", serverMethods);
 	cb && cb();
 };
-wormholeTraveller.prototype.syncClientMethods = function(methods) {
+wormholeTraveller.prototype.syncClientMethods = function(methods, cb) {
 	var keys = Object.keys(methods);
 	async.forEach(keys, function (method, next) {
 		this.addClientMethod(method, methods[method]);
@@ -706,7 +721,9 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		self.isConnected = false;
 		self.emit("disconnect");
 	});
+	this.syncClientFunctionsTimeout = null;
 	this.socket.on("syncClientFunctions", function (method) {
+		self.arrayOfSteps.push("syncClientFunctions:" + method);
 		if (Array.isArray(method)) {
 			// Array of client functions
 			for (var i in method) {
@@ -716,7 +733,14 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 			// Single client function name.
 			self.addClientMethod(method);
 		}
-		self.emit("syncClientFunctionsComplete");
+
+		if (self.syncClientFunctionsTimeout) {
+			cleartimeout(self.syncClientFunctionsTimeout);
+		}
+		self.syncClientFunctionsTimeout = setTimeout(function () {
+			self.emit("syncClientFunctionsComplete");
+			self.arrayOfSteps.push("syncClientFunctionsComplete");
+		}, 150);
 	});
 	cb && cb();
 };

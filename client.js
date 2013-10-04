@@ -76,6 +76,10 @@ var wormhole = function (socket) {
 		self.ready();
 	});
 	
+	this.on("getServerFunctions", function (cb) {
+		cb(self.customClientfunctions);
+	});
+	
 	this.syncTimeout;
 };
 wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
