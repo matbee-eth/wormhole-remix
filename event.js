@@ -515,7 +515,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	function (err) {
 		// Done.
 		// Now wait for syncClientFunctionsComplete before we call back.
-
+		var hasCallbacked = false;
 		traveller.on("syncClientFunctionsComplete", function () {
 			traveller.rpc.getServerFunctions(function (clientMethods) {
 				async.forEach(clientMethods, function (method, next) {
@@ -524,6 +524,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				}, function (err) {
 					console.log("ARRAYOFSTEPS", traveller.arrayOfSteps);
 				});
+				if (!hasCallbacked) {
+					hasCallbacked = true;
+					cb();
+				}
 			});
 		});
 
@@ -542,7 +546,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			};
 			self._sessionStore.subscribeOnce(id, sessionSubscribe);
 			
-			cb();
 		});
 	});
 };
