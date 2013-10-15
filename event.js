@@ -738,7 +738,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		}
 
 		if (self.syncClientFunctionsTimeout) {
-			cleartimeout(self.syncClientFunctionsTimeout);
+			clearTimeout(self.syncClientFunctionsTimeout);
 		}
 		self.syncClientFunctionsTimeout = setTimeout(function () {
 			self.emit("syncClientFunctionsComplete");
