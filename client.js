@@ -351,7 +351,7 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 		this.uuidList[out.uuid] = _callback;
 		setTimeout(function () {
 			if (self.uuidList[out.uuid]) {
-				self.uuidList[out.uuid].apply(self, "disconnected");
+				self.uuidList[out.uuid].apply(self, "timeout");
 				delete self.uuidList[out.uuid];
 			}
 		}, 30000);
