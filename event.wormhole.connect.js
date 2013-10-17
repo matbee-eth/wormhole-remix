@@ -1,5 +1,7 @@
 var wormholeConnect = function () {
+	console.log("OLD GNIO WINDOW", window.gnio);
 	var module = {}, socket, io = module.exports = window.gnio = {};
+	console.log("NEW GNIO WINDOW", window.gnio);
 	THISSTRINGISTHESOCKETIOSCRIPTLOL;
 	this.io = io;
 };

@@ -228,6 +228,10 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.emit("reconnect", scripty);
 	};
 	socket.on('disconnect', function () {
+		for (var k in self.uuidList) {
+			self.uuidList[k].apply(self, "disconnected");
+			delete self.uuidList[k];
+		}
 		self._connected = false;
 		if (self.forcingDisconnect) {
 			for (var sock in socket.socket.namespaces) {
@@ -332,6 +336,7 @@ var generateRPCFunction = function (self, methodName, async) {
 	};
 };
 wormhole.prototype.executeServerFunction = function (functionName, isAsync, args, callback) {
+	var self = this;
 	var _callback = function () {
 		callback.apply(null, [].slice.call(arguments));
 	}
@@ -344,6 +349,12 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 	if (hasCallback) {
 		out.uuid = __randomString();
 		this.uuidList[out.uuid] = _callback;
+		setTimeout(function () {
+			if (self.uuidList[out.uuid]) {
+				self.uuidList[out.uuid].apply(self, "disconnected");
+				delete self.uuidList[out.uuid];
+			}
+		}, 30000);
 	}
 	if (this.encryptAsBinary) {
 		out = this.stringToCharcodeArray(JSON.stringify(out));
