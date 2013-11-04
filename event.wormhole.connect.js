@@ -23,6 +23,8 @@ wormholeConnect.prototype.connect = function(THISISTHECONNECTOBJECTOVERRIDE) {
 	
 	if (!window.wh) {
 		var wh = new wormhole(socket);
+		// wh.io = this.io;
+		window.io = this.io;
 		wh.ready(this.ready);
 		wh.setPath('THISISTHEHOSTNAMEOFTHESCRIPTSERVER');
 		window.wh = wh;

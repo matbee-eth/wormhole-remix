@@ -229,8 +229,13 @@ wormhole.prototype.setupSocket = function(socket) {
 	};
 	socket.on('disconnect', function () {
 		for (var k in self.uuidList) {
-			self.uuidList[k].apply(self, "disconnected");
-			delete self.uuidList[k];
+			try {
+				self.uuidList[k].call(self, "disconnected");
+				delete self.uuidList[k];
+			} catch (ex) {
+				delete self.uuidList[k];
+				throw ex;
+			}
 		}
 		self._connected = false;
 		if (self.forcingDisconnect) {
@@ -351,8 +356,13 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 		this.uuidList[out.uuid] = _callback;
 		setTimeout(function () {
 			if (self.uuidList[out.uuid]) {
-				self.uuidList[out.uuid].apply(self, "timeout");
-				delete self.uuidList[out.uuid];
+				try {
+					self.uuidList[out.uuid].call(self, "timeout");
+					delete self.uuidList[out.uuid];
+				} catch (ex) {
+					delete self.uuidList[out.uuid];
+					throw ex;
+				}
 			}
 		}, 30000);
 	}

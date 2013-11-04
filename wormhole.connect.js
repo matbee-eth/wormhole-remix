@@ -25,6 +25,7 @@
 	};
 	if (!window.wh) {
 		var wh = new wormhole(socket);
+		window.io = io;
 		wh.ready(theFunctionToDo);
 		wh.setPath('THISISTHEHOSTNAMEOFTHESCRIPTSERVER');
 		window.wh = wh;
