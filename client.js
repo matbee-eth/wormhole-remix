@@ -75,6 +75,10 @@ var wormhole = function (socket) {
 		self.emit("ready");
 		self.ready();
 	});
+
+	this.on("whSettings", function (opts) {
+		self.socketid = opts.socketid;
+	});
 	
 	this.on("getServerFunctions", function (cb) {
 		cb(self.customClientfunctions);
