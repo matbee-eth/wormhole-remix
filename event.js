@@ -517,6 +517,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		// Now wait for syncClientFunctionsComplete before we call back.
 		var hasCallbacked = false;
 		traveller.on("syncClientFunctionsComplete", function () {
+			console.log("syncClientFunctionsComplete", traveller.rpc);
 			traveller.rpc.getServerFunctions(function (clientMethods) {
 				async.forEach(clientMethods, function (method, next) {
 					traveller.addClientMethod(method);
