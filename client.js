@@ -301,6 +301,7 @@ wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assure
 			this.clientFunctions[methodName].apply(self, args);
 		}
 	}
+	this.emit.apply(this, ["executeRPC", methodName].concat(args));
 };
 wormhole.prototype.syncClientRpc = function (data) {
 	var self = this;
