@@ -85,6 +85,8 @@ var wormhole = function (socket, options) {
 	this.on("getServerFunctions", function (cb) {
 		cb(self.customClientfunctions);
 	});
+
+	this.gatherRTC();
 	
 	this.syncTimeout;
 };
@@ -406,6 +408,27 @@ wormhole.prototype.ready = function (cb) {
 			this.callback[i].call(this);
 		}
 	}
+};
+
+wormhole.prototype.gatherRTC = function () {
+	var self = this;
+	var connect = new webkitRTCPeerConnection({
+		iceServers: [
+			{ url: "stun:stun.l.google.com:19302" },
+			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
+		]
+	});
+	connect.onicecandidate = function (candidate) {
+		self.rpc.addIceCandidate(candidate);
+	};
+	connect.createOffer(
+		function(desc) {
+			connect.setLocalDescription(desc)
+		},
+		function(){
+			console.log(arguments);
+		}
+	);
 };
 
 var __randomString = function() {
