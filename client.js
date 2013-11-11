@@ -413,6 +413,7 @@ wormhole.prototype.ready = function (cb) {
 
 wormhole.prototype.createOffer = function(id, cb) {
 	var _offerDescription;
+	var self = this;
 	var connect = this.createConnection(id);
 	connect.onicecandidate = function (event) {
 		self.rpc.addIceCandidate(event.candidate);
@@ -421,6 +422,7 @@ wormhole.prototype.createOffer = function(id, cb) {
 		function(desc) {
 			_offerDescription = desc;
 			connect.setLocalDescription(desc);
+			self.rpc.sendOffer(id, desc);
 		},
 		function(){
 			console.log(arguments);
@@ -452,12 +454,13 @@ wormhole.prototype.onicecandidate = function(id, candidate) {
 };
 
 wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
+	var self = this;
 	var connect = this.createConnection(id);
 	var remoteDescription = new RTCSessionDescription(offerDescription);
 	connect.setRemoteDescription(remoteDescription);
 	connection.createAnswer(function (answer) {
 		connect.setLocalDescription(answer);
-		// 
+		self.rpc.sendAnswer(id, answer);
 	}, function (err) {
 		// 
 	});
