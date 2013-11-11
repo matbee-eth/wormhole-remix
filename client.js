@@ -64,6 +64,7 @@ var wormhole = function (socket, options) {
 	this.rpc = {};
 	this.callback = [];
 	this.customClientfunctions = [];
+	this.peers = [];
 
 	this.options = options;
 
@@ -418,8 +419,8 @@ wormhole.prototype.gatherRTC = function () {
 			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
 		]
 	});
-	connect.onicecandidate = function (candidate) {
-		self.rpc.addIceCandidate(candidate);
+	connect.onicecandidate = function (event) {
+		self.rpc.addIceCandidate(event.candidate);
 	};
 	connect.createOffer(
 		function(desc) {
@@ -429,6 +430,22 @@ wormhole.prototype.gatherRTC = function () {
 			console.log(arguments);
 		}
 	);
+};
+
+wormhole.prototype.getPeers = function(cb) {
+	
+};
+
+var wormholePeer = function (type, transport, rpcFunctions) {
+	this.type = type;
+	this.transport = transport;
+	this.convertFunctions(rpcFunctions);
+};
+wormholePeer.prototype.send = function() {
+	
+};
+wormholePeer.prototype.convertFunctions = function(rpcFunctions) {
+	this._rpcFunctions = rpcFunctions;
 };
 
 var __randomString = function() {
