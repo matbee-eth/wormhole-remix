@@ -415,9 +415,6 @@ wormhole.prototype.createOffer = function(id, cb) {
 	var _offerDescription;
 	var self = this;
 	var connect = this.createConnection(id);
-	connect.onicecandidate = function (event) {
-		self.rpc.addIceCandidate(id, event.candidate);
-	};
 	connect.createOffer(
 		function(desc) {
 			_offerDescription = desc;
