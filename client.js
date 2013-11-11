@@ -416,7 +416,7 @@ wormhole.prototype.createOffer = function(id, cb) {
 	var self = this;
 	var connect = this.createConnection(id);
 	connect.onicecandidate = function (event) {
-		self.rpc.addIceCandidate(event.candidate);
+		self.rpc.addIceCandidate(id, event.candidate);
 	};
 	connect.createOffer(
 		function(desc) {
@@ -443,7 +443,7 @@ wormhole.prototype.createConnection = function(id) {
 	});
 
 	this.peers[id].onicecandidate = function (event) {
-		self.rpc.onicecandidate(id, event.candidate);
+		self.rpc.addIceCandidate(id, event.candidate);
 	};
 
 	return this.peers[id];
