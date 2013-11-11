@@ -55,7 +55,7 @@ var EventEmitter = (typeof window !== 'undefined') ?
   };
 })(EventEmitter);
 
-var wormhole = function (socket) {
+var wormhole = function (socket, options) {
 	EventEmitter.EventEmitter.call(this);
 	this.clientFunctions = {};
 	this.serverFunctions = {};
@@ -64,6 +64,8 @@ var wormhole = function (socket) {
 	this.rpc = {};
 	this.callback = [];
 	this.customClientfunctions = [];
+
+	this.options = options;
 
 	this._connected = false;
 

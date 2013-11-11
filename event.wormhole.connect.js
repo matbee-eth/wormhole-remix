@@ -22,7 +22,14 @@ wormholeConnect.prototype.connect = function(THISISTHECONNECTOBJECTOVERRIDE) {
 	}
 	
 	if (!window.wh) {
-		var wh = new wormhole(socket);
+		var wh = new wormhole(socket, {
+			webrtc: {
+                iceServers: [
+                    { url: "stun:stun.l.google.com:19302" },
+                    { url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
+                ]
+			}
+		});
 		// wh.io = this.io;
 		window.io = this.io;
 		wh.ready(this.ready);
