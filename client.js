@@ -411,25 +411,62 @@ wormhole.prototype.ready = function (cb) {
 	}
 };
 
-wormhole.prototype.gatherRTC = function () {
-	var self = this;
-	var connect = new webkitRTCPeerConnection({
-		iceServers: [
-			{ url: "stun:stun.l.google.com:19302" },
-			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
-		]
-	});
+wormhole.prototype.createOffer = function(id, cb) {
+	var _offerDescription;
+	var connect = this.createConnection(id);
 	connect.onicecandidate = function (event) {
 		self.rpc.addIceCandidate(event.candidate);
 	};
 	connect.createOffer(
 		function(desc) {
-			connect.setLocalDescription(desc)
+			_offerDescription = desc;
+			connect.setLocalDescription(desc);
 		},
 		function(){
 			console.log(arguments);
 		}
 	);
+};
+
+wormhole.prototype.createConnection = function(id) {
+	var self = this;
+	if (!this.peers) {
+		this.peers = {};
+	}
+	this.peers[id] = new webkitRTCPeerConnection({
+		iceServers: [
+			{ url: "stun:stun.l.google.com:19302" },
+			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
+		]
+	});
+
+	this.peers[id].onicecandidate = function (event) {
+		self.rpc.onicecandidate(id, event.candidate);
+	};
+
+	return this.peers[id];
+};
+
+wormhole.prototype.onicecandidate = function(id, candidate) {
+	this.peers[id].addIceCandidate(candidate);
+};
+
+wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
+	var connect = this.createConnection(id);
+	var remoteDescription = new RTCSessionDescription(offerDescription);
+	connect.setRemoteDescription(remoteDescription);
+	connection.createAnswer(function (answer) {
+		connect.setLocalDescription(answer);
+		// 
+	}, function (err) {
+		// 
+	});
+};
+
+wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
+	var connect = this.peers[id];
+	var remoteDescription = new RTCSessionDescription(answerDescription);
+	connect.setRemoteDescription(remoteDescription);
 };
 
 wormhole.prototype.getPeers = function(cb) {
