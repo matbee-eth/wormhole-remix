@@ -513,8 +513,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("joinRTCChannel", function (channel) {
-				addToChannel(this._redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function () {
-					
+				addToChannel(self._redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function (members) {
+					// 
 				});
 				traveller.on("disconnect", function () {
 					traveller.leaveRTCChannel(channel);
@@ -524,7 +524,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
-				removeFromChannel(this._redisPubClient, channel, traveller.socket.id, function () {
+				removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function () {
 					// 
 				});
 			});
