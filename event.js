@@ -514,7 +514,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("joinRTCChannel", function (channel) {
 				addToChannel(_redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function () {
-
+					// 
 				});
 			});
 			done();
@@ -522,7 +522,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
 				removeFromChannel(_redisPubClient, channel, traveller.socket.id, function () {
-
+					// 
 				});
 			});
 			done();
@@ -915,7 +915,9 @@ var getChannel = function (readClient, channel, cb) {
 	});
 };
 var addToChannel = function (client, channel, id, obj, cb) {
-	client.hset(prefix+channel, id, JSON.stringify(obj), cb);
+	client.hset(prefix+channel, id, JSON.stringify(obj), function () {
+		getChannel(channel, cb);
+	});
 };
 
 var removeFromChannel = function (client, channel, id, cb) {
