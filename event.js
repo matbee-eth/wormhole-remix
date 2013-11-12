@@ -516,6 +516,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				addToChannel(_redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function () {
 					// 
 				});
+				traveller.on("disconnect", function () {
+					traveller.leaveRTCChannel(channel);
+				});
 			});
 			done();
 		},
