@@ -513,22 +513,42 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("joinRTCChannel", function (channel) {
-				addToChannel(self._redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function (members) {
-					// 
+				addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
+					async.forEach(members, function (member, next) {
+						traveller.rpc.createOffer(member, function (offer) {
+							// 
+							next();
+						});
+					}, function (err) {
+						// 
+					});
 				});
 				traveller.on("disconnect", function () {
 					traveller.leaveRTCChannel(channel);
+				});
+
+				self._pubsub.on(prefix+channel, function (action) {
+					action = JSON.parse(action);
+					if (action.leave) {
+						traveller.rpc.handleLeave(action.id);
+					}
 				});
 			});
 			done();
 		},
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
-				removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function () {
-					// 
+				removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
+					async.forEach(members, function (member, next) {
+						self._pubsub.publish(prefix+channel, JSON.stringify({action: "leave", id: traveller.socket.id}));
+					}, function (err) {
+
+					});
 				});
 			});
 			done();
+		},
+		function (done) {
 		}
 	],
 	function (err) {

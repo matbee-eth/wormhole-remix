@@ -90,6 +90,7 @@ var wormhole = function (socket, options) {
 	this.on("createOffer", this.createOffer);
 	this.on("handleOffer", this.handleOffer);
 	this.on("handleAnswer", this.handleAnswer);
+	this.on("handleLeave", this.handleLeave)
 	
 	this.syncTimeout;
 };
@@ -465,6 +466,10 @@ wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
 	var connect = this.peers[id];
 	var remoteDescription = new RTCSessionDescription(answerDescription);
 	connect.setRemoteDescription(remoteDescription);
+};
+
+wormhole.prototype.handleLeave = function(id) {
+	// remove ID
 };
 
 wormhole.prototype.getPeers = function(cb) {
