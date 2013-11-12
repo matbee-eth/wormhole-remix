@@ -14,9 +14,11 @@ var util = require('util')
 var wormhole = function (options) {
 	options = options || {};
 	events.EventEmitter.call(this);
+	var self = this;
 	// Stores the actual reference to the functions.
 	this._serverMethods = {
 		joinRTCChannel: function (channel) {
+			var traveller = this;
 			wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
 				async.forEach(members, function (member, next) {
 					traveller.rpc.createOffer(member, function (offer) {
@@ -32,6 +34,7 @@ var wormhole = function (options) {
 			});
 		},
 		leaveRTCChannel: function (channel) {
+			var traveller = this;
 			wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
 				async.forEach(members, function (member, next) {
 					self._pubsub.publish(prefix+member, JSON.stringify({action: "leave", id: traveller.socket.id, channel: channel}));
@@ -41,6 +44,7 @@ var wormhole = function (options) {
 			});
 		},
 		addIceCandidate: function (id, candidate) {
+			var traveller = this;
 			self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
 		}
 	};
