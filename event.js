@@ -526,13 +526,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				traveller.on("disconnect", function () {
 					traveller.leaveRTCChannel(channel);
 				});
-
-				self._pubsub.on(prefix+channel, function (action) {
-					action = JSON.parse(action);
-					if (action.leave) {
-						traveller.rpc.handleLeave(action.id);
-					}
-				});
 			});
 			done();
 		},
@@ -540,7 +533,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("leaveRTCChannel", function (channel) {
 				removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
 					async.forEach(members, function (member, next) {
-						self._pubsub.publish(prefix+channel, JSON.stringify({action: "leave", id: traveller.socket.id}));
+						self._pubsub.publish(prefix+member, JSON.stringify({action: "leave", id: traveller.socket.id, channel: channel}));
 					}, function (err) {
 
 					});
@@ -549,6 +542,18 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
+			self._pubsub.on(prefix+traveller.socket.id, function (obj) {
+				obj = JSON.parse(obj);
+				if (obj.action == "leave") {
+					traveller.rpc.handleLeave(obj.id);
+				} else if (obj.action == "offer") {
+					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
+						self._pubsub.publish(prefix+obj.id, {obj: "answer", id: obj.id, answer: answer});
+					});
+				} else if (obj.action == "answer") {
+					traveller.rpc.handleAnswer(obj.id, obj.answer);
+				}
+			});
 		}
 	],
 	function (err) {
