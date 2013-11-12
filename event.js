@@ -15,7 +15,35 @@ var wormhole = function (options) {
 	options = options || {};
 	events.EventEmitter.call(this);
 	// Stores the actual reference to the functions.
-	this._serverMethods = {};
+	this._serverMethods = {
+		joinRTCChannel: function (channel) {
+			wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
+				async.forEach(members, function (member, next) {
+					traveller.rpc.createOffer(member, function (offer) {
+						self._pubsub.publish(prefix+member, JSON.stringify({action: "offer", id: traveller.socket.id, offer: offer}));
+						next();
+					});
+				}, function (err) {
+					// 
+				});
+			});
+			traveller.on("disconnect", function () {
+				traveller.leaveRTCChannel(channel);
+			});
+		}
+		leaveRTCChannel: function (channel) {
+			wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
+				async.forEach(members, function (member, next) {
+					self._pubsub.publish(prefix+member, JSON.stringify({action: "leave", id: traveller.socket.id, channel: channel}));
+				}, function (err) {
+
+				});
+			});
+		}
+		addIceCandidate: function (id, candidate) {
+			self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
+		}
+	};
 	this._clientMethods = {
 		wormholeReady: function () {
 			this.emit("ready");
