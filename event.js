@@ -560,9 +560,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 						// 
 					});
 				});
-			}
+			});
 			done();
-		});
+		}
 	],
 	function (err) {
 		// Done.
