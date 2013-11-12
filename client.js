@@ -457,7 +457,7 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 	var connect = this.createConnection(id);
 	var remoteDescription = new RTCSessionDescription(offerDescription);
 	connect.setRemoteDescription(remoteDescription);
-	connection.createAnswer(function (answer) {
+	connect.createAnswer(function (answer) {
 		connect.setLocalDescription(answer);
 		// self.rpc.sendAnswer(id, answer);
 		cb(answer);
