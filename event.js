@@ -19,7 +19,7 @@ var wormhole = function (options) {
 	this._serverMethods = {
 		addIceCandidate: function (id, candidate) {
 			var traveller = this;
-			self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
+			self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "candidate", id: traveller.socket.id, candidate: candidate }));
 		}
 	};
 	this._clientMethods = {
@@ -524,7 +524,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					traveller.rpc.handleLeave(obj.id, obj.channel);
 				} else if (obj.action == "offer") {
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
-						self._pubsub.publish(prefix+obj.id, {action: "answer", id: obj.id, answer: answer});
+						self._pubsub.publish(prefix+obj.id, JSON.stringify({action: "answer", id: obj.id, answer: answer}));
 					});
 				} else if (obj.action == "answer") {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);
@@ -532,11 +532,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					traveller.rpc.handleIceCandidate(obj.id, obj.candidate);
 				}
 			});
+			done();
 		},
 		function (done) {
 			traveller.on("joinRTCChannel", function (channel) {
-				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
-					async.forEach(members, function (member, next) {
+				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
+					async.forEach(Object.keys(members), function (member, next) {
+						console.log("CHANNEL MEMBER", member);
 						traveller.rpc.createOffer(member, function (offer) {
 							self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
 							next();
@@ -546,14 +548,15 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				});
 				traveller.on("disconnect", function () {
-					traveller.leaveRTCChannel(channel);
+					traveller.leaveRTCChannel(self._redisPubClient, channel);
 				});
 			});
 			done();
 		},
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
-				wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
+				wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
+					console.log("CHANNEL MEMBERS:::", err, members);
 					async.forEach(members, function (member, next) {
 						self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 					}, function (err) {
@@ -947,18 +950,18 @@ wormhole.getChannel = function (readClient, channel, cb) {
 				members[member] = JSON.parse(members[member]);
 			}
 		}
-		cb(err, members);
+		cb(err, members || []);
 	});
 };
 wormhole.addToChannel = function (client, channel, id, obj, cb) {
 	client.hset(prefix+channel, id, JSON.stringify(obj), function () {
-		wormhole.getChannel(channel, cb);
+		wormhole.getChannel(client, channel, cb);
 	});
 };
 
 wormhole.removeFromChannel = function (client, channel, id, cb) {
 	client.hdel(prefix+channel, id, function (err) {
-		wormhole.getChannel(channel, cb);
+		wormhole.getChannel(client, channel, cb);
 	});
 };
 

@@ -415,6 +415,7 @@ wormhole.prototype.ready = function (cb) {
 };
 
 wormhole.prototype.createOffer = function(id, cb) {
+	console.log("Creating RTC offer for ID", id);
 	var _offerDescription;
 	var self = this;
 	var connect = this.createConnection(id);
@@ -431,6 +432,7 @@ wormhole.prototype.createOffer = function(id, cb) {
 };
 
 wormhole.prototype.createConnection = function(id) {
+	console.log("createConnection RTC for ID", id);
 	var self = this;
 	if (!this.peers) {
 		this.peers = {};
@@ -450,6 +452,7 @@ wormhole.prototype.createConnection = function(id) {
 };
 
 wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
+	console.log("handleOffer RTC for ID", id, offerDescription);
 	var self = this;
 	var connect = this.createConnection(id);
 	var remoteDescription = new RTCSessionDescription(offerDescription);
@@ -464,12 +467,14 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 };
 
 wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
+	console.log("handleOffer RTC for ID", id, answerDescription);
 	var connect = this.peers[id];
 	var remoteDescription = new RTCSessionDescription(answerDescription);
 	connect.setRemoteDescription(remoteDescription);
 };
 
 wormhole.prototype.handleIceCandidate = function(id, candidate) {
+	console.log("handleIceCandidate RTC for ID", id, candidate);
 	this.peers[id].addIceCandidate(candidate);
 };
 
