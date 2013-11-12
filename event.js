@@ -22,7 +22,7 @@ var wormhole = function (options) {
 			wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
 				async.forEach(members, function (member, next) {
 					traveller.rpc.createOffer(member, function (offer) {
-						self._pubsub.publish(prefix+member, JSON.stringify({action: "offer", id: traveller.socket.id, offer: offer}));
+						self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
 						next();
 					});
 				}, function (err) {
@@ -37,9 +37,9 @@ var wormhole = function (options) {
 			var traveller = this;
 			wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
 				async.forEach(members, function (member, next) {
-					self._pubsub.publish(prefix+member, JSON.stringify({action: "leave", id: traveller.socket.id, channel: channel}));
+					self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 				}, function (err) {
-
+					// 
 				});
 			});
 		},
