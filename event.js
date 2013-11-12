@@ -522,13 +522,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				obj = JSON.parse(obj);
 				if (obj.action == "leave") {
 					traveller.rpc.handleLeave(obj.id, obj.channel);
-				} else if (obj.action == "offer") {
+				} else if (obj.action == "offer" && obj.id != traveller.socket.id) {
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
 						self._pubsub.publish(prefix+obj.id, JSON.stringify({action: "answer", id: obj.id, answer: answer}));
 					});
-				} else if (obj.action == "answer") {
+				} else if (obj.action == "answer" && obj.id != traveller.socket.id) {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);
-				} else if (obj.action == "candidate") {
+				} else if (obj.action == "candidate" && obj.id != traveller.socket.id) {
 					traveller.rpc.handleIceCandidate(obj.id, obj.candidate);
 				}
 			});
@@ -539,10 +539,14 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
 						console.log("CHANNEL MEMBER", member);
-						traveller.rpc.createOffer(member, function (offer) {
-							self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
+						if (member != traveller.socket.id) {
+							traveller.rpc.createOffer(member, function (offer) {
+								self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
+								next();
+							});	
+						} else {
 							next();
-						});
+						}
 					}, function (err) {
 						// 
 					});
