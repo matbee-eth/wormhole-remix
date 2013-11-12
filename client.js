@@ -64,7 +64,7 @@ var wormhole = function (socket, options) {
 	this.rpc = {};
 	this.callback = [];
 	this.customClientfunctions = [];
-	this.peers = [];
+	this.peers = {};
 
 	this.options = options;
 
@@ -442,8 +442,17 @@ wormhole.prototype.createConnection = function(id) {
 			{ url: "stun:stun.l.google.com:19302" },
 			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
 		]
-	});
-
+	}, { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] });
+	this.peers[id].ondatachannel = function (ev) {
+		console.log("DATA CHANNEL!!!", ev);
+		console.log("DATA CHANNEL!!!", ev);
+		console.log("DATA CHANNEL!!!", ev);
+		console.log("DATA CHANNEL!!!", ev);
+		console.log("DATA CHANNEL!!!", ev);
+		event.channel.onmessage = function (ev) {
+			alert('msg', ev.data);
+		};
+	};
 	this.peers[id].onicecandidate = function (event) {
 		self.rpc.addIceCandidate(id, event.candidate);
 	};
@@ -474,6 +483,7 @@ wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
 		var connect = this.peers[id];
 		var remoteDescription = new RTCSessionDescription(answerDescription);
 		connect.setRemoteDescription(remoteDescription);
+    	connect.createDataChannel("RTCDataChannel", {});
 	}
 };
 

@@ -19,7 +19,7 @@ var wormhole = function (options) {
 	this._serverMethods = {
 		addIceCandidate: function (id, candidate) {
 			var traveller = this;
-			self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "candidate", id: traveller.socket.id, candidate: candidate }));
+			self._pubsub.publish(prefix+id, JSON.stringify({ action: "candidate", id: traveller.socket.id, candidate: candidate }));
 		}
 	};
 	this._clientMethods = {
@@ -522,13 +522,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				obj = JSON.parse(obj);
 				if (obj.action == "leave") {
 					traveller.rpc.handleLeave(obj.id, obj.channel);
-				} else if (obj.action == "offer" && obj.id != traveller.socket.id) {
+				} else if (obj.action == "offer") {
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
-						self._pubsub.publish(prefix+obj.id, JSON.stringify({action: "answer", id: obj.id, answer: answer}));
+						self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({action: "answer", id: obj.id, answer: answer}));
 					});
-				} else if (obj.action == "answer" && obj.id != traveller.socket.id) {
+				} else if (obj.action == "answer") {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);
-				} else if (obj.action == "candidate" && obj.id != traveller.socket.id) {
+				} else if (obj.action == "candidate") {
 					traveller.rpc.handleIceCandidate(obj.id, obj.candidate);
 				}
 			});
