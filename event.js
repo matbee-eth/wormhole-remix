@@ -512,41 +512,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			}
 		},
 		function (done) {
-			traveller.on("joinRTCChannel", function (channel) {
-				addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (members) {
-					async.forEach(members, function (member, next) {
-						traveller.rpc.createOffer(member, function (offer) {
-							self._pubsub.publish(prefix+member, JSON.stringify({action: "offer", id: traveller.socket.id, offer: offer}));
-							next();
-						});
-					}, function (err) {
-						// 
-					});
-				});
-				traveller.on("disconnect", function () {
-					traveller.leaveRTCChannel(channel);
-				});
-			});
-			done();
-		},
-		function (done) {
-			traveller.on("leaveRTCChannel", function (channel) {
-				removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
-					async.forEach(members, function (member, next) {
-						self._pubsub.publish(prefix+member, JSON.stringify({action: "leave", id: traveller.socket.id, channel: channel}));
-					}, function (err) {
-
-					});
-				});
-			});
-			done();
-		},
-		function (done) {
-			traveller.on("addIceCandidate", function (id, candidate) {
-				self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
-			});
-		},
-		function (done) {
 			self._pubsub.on(prefix+traveller.socket.id, function (obj) {
 				obj = JSON.parse(obj);
 				if (obj.action == "leave") {
