@@ -524,7 +524,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					traveller.rpc.handleLeave(obj.id, obj.channel);
 				} else if (obj.action == "offer") {
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
-						self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({action: "answer", id: obj.id, answer: answer}));
+						self._pubsub.publish(prefix+obj.id, JSON.stringify({action: "answer", id: traveller.socket.id, answer: answer}));
 					});
 				} else if (obj.action == "answer") {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);

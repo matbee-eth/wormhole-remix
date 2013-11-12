@@ -419,6 +419,7 @@ wormhole.prototype.createOffer = function(id, cb) {
 	var _offerDescription;
 	var self = this;
 	var connect = this.createConnection(id);
+	this.peerTransports[id] = connect.createDataChannel("baba");
 	connect.createOffer(
 		function(desc) {
 			_offerDescription = desc;
@@ -437,6 +438,9 @@ wormhole.prototype.createConnection = function(id) {
 	if (!this.peers) {
 		this.peers = {};
 	}
+	if (!this.peerTransports) {
+		this.peerTransports = {};
+	}
 	this.peers[id] = new webkitRTCPeerConnection({
 		iceServers: [
 			{ url: "stun:stun.l.google.com:19302" },
@@ -449,10 +453,14 @@ wormhole.prototype.createConnection = function(id) {
 		console.log("DATA CHANNEL!!!", ev);
 		console.log("DATA CHANNEL!!!", ev);
 		console.log("DATA CHANNEL!!!", ev);
+		this.peerTransports[id] = ev.channel;
 		event.channel.onmessage = function (ev) {
-			alert('msg', ev.data);
+			alert('msg'+ev.data);
 		};
 	};
+	this.peers[id].onnegotiationneeded = this.peers[id].onsignalingstatechange = this.peers[id].onaddstream = this.peers[id].onremovestream = this.peers[id].oniceconnectionstatechange = function (ev) {
+		console.log("EVEVEV", ev, arguments);
+	}
 	this.peers[id].onicecandidate = function (event) {
 		self.rpc.addIceCandidate(id, event.candidate);
 	};
@@ -469,7 +477,6 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 		connect.setRemoteDescription(remoteDescription);
 		connect.createAnswer(function (answer) {
 			connect.setLocalDescription(answer);
-			// self.rpc.sendAnswer(id, answer);
 			cb(answer);
 		}, function (err) {
 			// 
@@ -477,13 +484,22 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 	}
 };
 
-wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
+wormhole.prototype.handleAnswer = function(id, answerDescription) {
 	console.log("handleAnswer RTC for ID", id, answerDescription);
 	if (id && answerDescription) {
 		var connect = this.peers[id];
 		var remoteDescription = new RTCSessionDescription(answerDescription);
 		connect.setRemoteDescription(remoteDescription);
-    	connect.createDataChannel("RTCDataChannel", {});
+    	var chan = connect.createDataChannel("RTCDataChannel", {});
+    	chan.onerror = function () {
+    		console.log("ERRR", arguments);
+    	}
+    	chan.onopen = function () {
+    		console.log("ONOPEN", arguments);
+    	}
+    	chan.onclose = function () {
+    		console.log("ONCLOSE", arguments);
+    	}
 	}
 };
 
