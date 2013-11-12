@@ -30,7 +30,7 @@ var wormhole = function (options) {
 			traveller.on("disconnect", function () {
 				traveller.leaveRTCChannel(channel);
 			});
-		}
+		},
 		leaveRTCChannel: function (channel) {
 			wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (members) {
 				async.forEach(members, function (member, next) {
@@ -39,7 +39,7 @@ var wormhole = function (options) {
 
 				});
 			});
-		}
+		},
 		addIceCandidate: function (id, candidate) {
 			self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
 		}
