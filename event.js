@@ -510,6 +510,22 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			} else {
 				done();
 			}
+		},
+		function (done) {
+			traveller.on("joinRTCChannel", function (channel) {
+				addToChannel(_redisPubClient, channel, traveller.socket.id, {audio:false, video: false, screen: false, data: true}, function () {
+
+				});
+			});
+			done();
+		},
+		function (done) {
+			traveller.on("leaveRTCChannel", function (channel) {
+				removeFromChannel(_redisPubClient, channel, traveller.socket.id, function () {
+
+				});
+			});
+			done();
 		}
 	],
 	function (err) {
@@ -637,8 +653,18 @@ var wormholeTraveller = function (socket) {
 	this.arrayOfSteps = [];
 
 	this._sessionId = null;
+
+	this._RTCChannels = [];
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
+wormholeTraveller.prototype.joinRTCChannel = function (channel) {
+	this._RTCChannels.push(channel);
+	this.emit("joinRTCChannel", channel);
+};
+wormholeTraveller.prototype.leaveRTCChannel = function(channel) {
+	this._RTCChannels.splice(this._RTCChannels.indexOf(channel), 1);
+	this.emit("leaveRTCChannel", channel);
+};
 wormholeTraveller.prototype.setRpcTimeout = function(timeout) {
 	this.rpcTimeout = timeout;
 };
@@ -874,6 +900,32 @@ __randomString = function() {
 		randomstring += chars.substring(rnum,rnum+1);
 	}
 	return randomstring;
+};
+
+// WebRTC Redis functions...
+var prefix = "wormhole:";
+var getChannel = function (readClient, channel, cb) {
+	readClient.hgetall(prefix+channel, function (err, members) {
+		for (var member in members) {
+			if (members.hasOwnProperty(member)) {
+				members[member] = JSON.parse(members[member]);
+			}
+		}
+		cb(err, members);
+	});
+};
+var addToChannel = function (client, channel, id, obj, cb) {
+	client.hset(prefix+channel, id, JSON.stringify(obj), cb);
+};
+
+var removeFromChannel = function (client, channel, id, cb) {
+	client.hdel(prefix+channel, id, function (err) {
+		getChannel(channel, cb);
+	});
+};
+
+var clearChannel = function (client, channel, cb) {
+	client.del(prefix+channel, cb);
 };
 
 module.exports = wormhole;

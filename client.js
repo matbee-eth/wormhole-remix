@@ -422,7 +422,6 @@ wormhole.prototype.createOffer = function(id, cb) {
 			_offerDescription = desc;
 			connect.setLocalDescription(desc);
 			cb(desc);
-			// self.rpc.sendOffer(id, desc);
 		},
 		function(){
 			console.log(arguments);
