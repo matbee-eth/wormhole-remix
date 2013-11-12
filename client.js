@@ -87,7 +87,9 @@ var wormhole = function (socket, options) {
 		cb(self.customClientfunctions);
 	});
 
-	this.gatherRTC();
+	this.on("createOffer", this.createOffer);
+	this.on("handleOffer", this.handleOffer);
+	this.on("handleAnswer", this.handleAnswer);
 	
 	this.syncTimeout;
 };
@@ -419,7 +421,8 @@ wormhole.prototype.createOffer = function(id, cb) {
 		function(desc) {
 			_offerDescription = desc;
 			connect.setLocalDescription(desc);
-			self.rpc.sendOffer(id, desc);
+			cb(desc);
+			// self.rpc.sendOffer(id, desc);
 		},
 		function(){
 			console.log(arguments);
@@ -444,10 +447,6 @@ wormhole.prototype.createConnection = function(id) {
 	};
 
 	return this.peers[id];
-};
-
-wormhole.prototype.onicecandidate = function(id, candidate) {
-	this.peers[id].addIceCandidate(candidate);
 };
 
 wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
