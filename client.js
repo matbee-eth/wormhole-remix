@@ -91,7 +91,7 @@ var wormhole = function (socket, options) {
 	this.on("handleOffer", this.handleOffer);
 	this.on("handleAnswer", this.handleAnswer);
 	this.on("handleLeave", this.handleLeave)
-	
+	this.on("handleIceCandidate", this.handleIceCandidate);
 	this.syncTimeout;
 };
 wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
@@ -467,6 +467,10 @@ wormhole.prototype.handleAnswer = function(id, answerDescription, cb) {
 	var connect = this.peers[id];
 	var remoteDescription = new RTCSessionDescription(answerDescription);
 	connect.setRemoteDescription(remoteDescription);
+};
+
+wormhole.prototype.handleIceCandidate = function(id, candidate) {
+	this.peers[id].addIceCandidate(candidate);
 };
 
 wormhole.prototype.handleLeave = function(id) {

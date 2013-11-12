@@ -543,7 +543,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("addIceCandidate", function (id, candidate) {
-				self._pubsub.publish(prefix+traveller.socket.id, {action: "candidate", id: traveller.socket.id, })
+				self._pubsub.publish(prefix+traveller.socket.id, { action: "candidate", id: traveller.socket.id, candidate: candidate });
 			});
 		},
 		function (done) {
@@ -558,7 +558,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				} else if (obj.action == "answer") {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);
 				} else if (obj.action == "candidate") {
-					traveller.rpc.handleIceCandidate(obj.id, obj.candidate)
+					traveller.rpc.handleIceCandidate(obj.id, obj.candidate);
 				}
 			});
 		}
@@ -939,7 +939,7 @@ __randomString = function() {
 
 // WebRTC Redis functions...
 var prefix = "wormhole:";
-var getChannel = function (readClient, channel, cb) {
+wormhole.getChannel = function (readClient, channel, cb) {
 	readClient.hgetall(prefix+channel, function (err, members) {
 		for (var member in members) {
 			if (members.hasOwnProperty(member)) {
@@ -949,19 +949,19 @@ var getChannel = function (readClient, channel, cb) {
 		cb(err, members);
 	});
 };
-var addToChannel = function (client, channel, id, obj, cb) {
+wormhole.addToChannel = function (client, channel, id, obj, cb) {
 	client.hset(prefix+channel, id, JSON.stringify(obj), function () {
-		getChannel(channel, cb);
+		wormhole.getChannel(channel, cb);
 	});
 };
 
-var removeFromChannel = function (client, channel, id, cb) {
+wormhole.removeFromChannel = function (client, channel, id, cb) {
 	client.hdel(prefix+channel, id, function (err) {
-		getChannel(channel, cb);
+		wormhole.getChannel(channel, cb);
 	});
 };
 
-var clearChannel = function (client, channel, cb) {
+wormhole.clearChannel = function (client, channel, cb) {
 	client.del(prefix+channel, cb);
 };
 
