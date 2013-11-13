@@ -421,7 +421,7 @@ wormhole.prototype.ready = function (cb) {
 };
 
 wormhole.prototype.createOffer = function(id, channel, cb) {
-	console.log("Creating RTC offer for ID", id);
+	// console.log("Creating RTC offer for ID", id);
 	var _offerDescription;
 	var self = this;
 	var connect = this.createConnection(id);
@@ -440,13 +440,13 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 			cb(desc);
 		},
 		function(){
-			console.log(arguments);
+			// console.log(arguments);
 		}
 	);
 };
 
 wormhole.prototype.createConnection = function(id) {
-	console.log("createConnection RTC for ID", id);
+	// console.log("createConnection RTC for ID", id);
 	var self = this;
 	if (!this.peers) {
 		this.peers = {};
@@ -476,7 +476,7 @@ wormhole.prototype.createConnection = function(id) {
 };
 
 wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
-	console.log("handleOffer RTC for ID", id, offerDescription);
+	// console.log("handleOffer RTC for ID", id, offerDescription);
 	if (id && offerDescription) {
 		var self = this;
 		var connect = this.createConnection(id);
@@ -492,7 +492,7 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 };
 
 wormhole.prototype.handleAnswer = function(id, answerDescription) {
-	console.log("handleAnswer RTC for ID", id, answerDescription);
+	// console.log("handleAnswer RTC for ID", id, answerDescription);
 	if (id && answerDescription) {
 		var connect = this.peers[id];
 		var remoteDescription = new RTCSessionDescription(answerDescription);
@@ -501,7 +501,7 @@ wormhole.prototype.handleAnswer = function(id, answerDescription) {
 };
 
 wormhole.prototype.handleIceCandidate = function(id, candidate) {
-	console.log("handleIceCandidate RTC for ID", id, candidate);
+	// console.log("handleIceCandidate RTC for ID", id, candidate);
 	if (id && candidate) {
 		this.peers[id].addIceCandidate(new RTCIceCandidate(candidate));
 	}
@@ -540,9 +540,9 @@ var wormholePeer = function (transport, rtcFunctions) {
 			var func = self.uuidList[uuid];
 			if (func && typeof func === "function") {
 				// Remove function from uuidList.
-				console.log("Removing CallbackID from UUIDLIST", uuid);
+				// console.log("Removing CallbackID from UUIDLIST", uuid);
 				delete self.uuidList[uuid];
-				console.log("CallbackID removed??", self.uuidList[uuid] != null);
+				// console.log("CallbackID removed??", self.uuidList[uuid] != null);
 				// Execute function with arguments! Blama llama lamb! Blam alam alam
 				func.apply(self, params);
 			}
@@ -585,7 +585,7 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 		this.uuidList[out.uuid] = _callback;
 		setTimeout(function () {
 			if (self.uuidList[out.uuid]) {
-				console.log("Timing out Callback", out.uuid);
+				// console.log("Timing out Callback", out.uuid);
 				try {
 					self.uuidList[out.uuid].call(self, "timeout");
 					delete self.uuidList[out.uuid];
@@ -593,7 +593,7 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 					delete self.uuidList[out.uuid];
 					throw ex;
 				}
-				console.log("Deleting UUID from callback", out.uuid);
+				// console.log("Deleting UUID from callback", out.uuid);
 			}
 		}, 30000);
 	}
