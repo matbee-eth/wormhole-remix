@@ -552,7 +552,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				});
 				traveller.on("disconnect", function () {
-					traveller.leaveRTCChannel(self._redisPubClient, channel);
+					traveller.leaveRTCChannel(channel);
 				});
 			});
 			done();
