@@ -448,19 +448,14 @@ wormhole.prototype.createConnection = function(id) {
 		]
 	}, { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] });
 	this.peers[id].ondatachannel = function (ev) {
-		console.log("DATA CHANNEL!!!", ev);
-		console.log("DATA CHANNEL!!!", ev);
-		console.log("DATA CHANNEL!!!", ev);
-		console.log("DATA CHANNEL!!!", ev);
-		console.log("DATA CHANNEL!!!", ev);
 		this.peerTransports[id] = ev.channel;
 		event.channel.onmessage = function (ev) {
 			alert('msg'+ev.data);
 		};
 	};
-	this.peers[id].onnegotiationneeded = this.peers[id].onsignalingstatechange = this.peers[id].onaddstream = this.peers[id].onremovestream = this.peers[id].oniceconnectionstatechange = function (ev) {
+	this.peers[id].onaddstream = this.peers[id].onremovestream = function (ev) {
 		console.log("EVEVEV", ev, arguments);
-	}
+	};
 	this.peers[id].onicecandidate = function (event) {
 		self.rpc.addIceCandidate(id, event.candidate);
 	};
