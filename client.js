@@ -585,6 +585,7 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 		this.uuidList[out.uuid] = _callback;
 		setTimeout(function () {
 			if (self.uuidList[out.uuid]) {
+				console.log("Timing out Callback", out.uuid);
 				try {
 					self.uuidList[out.uuid].call(self, "timeout");
 					delete self.uuidList[out.uuid];
@@ -592,6 +593,7 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 					delete self.uuidList[out.uuid];
 					throw ex;
 				}
+				console.log("Deleting UUID from callback", out.uuid);
 			}
 		}, 30000);
 	}
