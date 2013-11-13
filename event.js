@@ -540,7 +540,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					async.forEach(Object.keys(members), function (member, next) {
 						console.log("CHANNEL MEMBER", member);
 						if (member != traveller.socket.id) {
-							traveller.rpc.createOffer(member, function (offer) {
+							traveller.rpc.createOffer(member, channel, function (offer) {
 								self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
 								next();
 							});	
