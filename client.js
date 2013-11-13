@@ -426,7 +426,13 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 	var self = this;
 	var connect = this.createConnection(id);
 	this.peerTransports[id] = connect.createDataChannel(channel);
-	this.wormholePeers[id] = new wormholePeer(this.peerTransports[id], this.rtcFunctions);
+	this.peerTransports[id].onopen = function () {
+		self.wormholePeers[id] = new wormholePeer(self.peerTransports[id], self.rtcFunctions);
+		self.emit("rtcConnection", self.wormholePeers[id]);
+	};
+	this.peerTransports[id].onclose = function () {
+		self.emit("rtcDisonnection", self.wormholePeers[id]);
+	};
 	connect.createOffer(
 		function(desc) {
 			_offerDescription = desc;
@@ -513,6 +519,8 @@ wormhole.prototype.getPeer = function(id) {
 };
 
 var wormholePeer = function (transport, rtcFunctions) {
+	EventEmitter.EventEmitter.call(this);
+
 	var self = this;
 	this.transport = transport;
 	this.rtc = {};
@@ -538,6 +546,7 @@ var wormholePeer = function (transport, rtcFunctions) {
 		}
 	};
 };
+wormholePeer.prototype = Object.create(EventEmitter.EventEmitter.prototype);
 
 wormholePeer.prototype.syncRtc = function (data) {
 	for (var j in data) {
