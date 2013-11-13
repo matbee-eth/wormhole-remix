@@ -62,6 +62,7 @@ var wormhole = function (socket, options) {
 	this.socket = socket;
 	this.uuidList = {};
 	this.rpc = {};
+	this.rtc = {};
 	this.callback = [];
 	this.customClientfunctions = [];
 	this.peers = {};
@@ -420,6 +421,10 @@ wormhole.prototype.createOffer = function(id, cb) {
 	var self = this;
 	var connect = this.createConnection(id);
 	this.peerTransports[id] = connect.createDataChannel("baba");
+	this.wormholePeers[id] = new wormholePeer(this.peerTransports[id], this.rtcFunctions);
+	this.peerTransports[id].onmessage = function (ev) {
+		self.emit("rtc", this.getPeer(id), ev.channel, ev.data);
+	};
 	connect.createOffer(
 		function(desc) {
 			_offerDescription = desc;
@@ -441,6 +446,9 @@ wormhole.prototype.createConnection = function(id) {
 	if (!this.peerTransports) {
 		this.peerTransports = {};
 	}
+	if (!this.wormholePeers) {
+		this.wormholePeers = {};
+	}
 	this.peers[id] = new webkitRTCPeerConnection({
 		iceServers: [
 			{ url: "stun:stun.l.google.com:19302" },
@@ -449,8 +457,9 @@ wormhole.prototype.createConnection = function(id) {
 	}, { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] });
 	this.peers[id].ondatachannel = function (ev) {
 		this.peerTransports[id] = ev.channel;
-		event.channel.onmessage = function (ev) {
-			alert('msg'+ev.data);
+		this.wormholePeers[id] = new wormholePeer(this.peerTransports[id], self.rtcFunctions);
+		this.peerTransports[id].onmessage = function (ev) {
+			self.emit("rtc", this.getPeer(id), ev.channel, ev.data);
 		};
 	};
 	this.peers[id].onaddstream = this.peers[id].onremovestream = function (ev) {
@@ -513,16 +522,82 @@ wormhole.prototype.getPeers = function(cb) {
 	
 };
 
-var wormholePeer = function (type, transport, rpcFunctions) {
-	this.type = type;
+wormhole.prototype.getPeer = function(id) {
+	return this.wormholePeers[id];
+};w
+
+var wormholePeer = function (transport, rtcFunctions) {
+	var self = this;
 	this.transport = transport;
-	this.convertFunctions(rpcFunctions);
+	this.rtc = {};
+	this.syncRtc(rtcFunctions);
+	this.rtcFunctions = rtcFunctions;
+	transport.onmessage = function (ev) {
+		var data = ev.data;
+		if (data.rtc) {
+			self.executeRtc(ev.channel, data.function, data.arguments, data.uuid);
+		}
+	};
 };
-wormholePeer.prototype.send = function() {
-	
+
+wormholePeer.prototype.syncRtc = function (data) {
+	for (var j in data) {
+		this.rtc[data[j]] = generateRTCFunction(this, data[j], true);
+	}
 };
-wormholePeer.prototype.convertFunctions = function(rpcFunctions) {
-	this._rpcFunctions = rpcFunctions;
+
+var generateRTCFunction = function (self, functionName, async) {
+	var self = this;
+	return function () {
+		var args = [].slice.call(arguments);
+		var callback = null;
+		if (typeof(args[args.length-1]) == "function") {
+			// do something
+			callback = args.splice(args.length-1, 1)[0];
+		}
+		self.executeRTCFunction(functionName, async, args, callback);
+	};
+};
+
+wormholePeer.prototype.executeRTCFunction = function(functionName, args, callback) {
+	var self = this;
+	var _callback = function () {
+		callback.apply(null, [].slice.call(arguments));
+	}
+	var hasCallback = (typeof callback === "function");
+	var out = {
+		"function": functionName,
+		"async": isAsync && hasCallback,
+		"arguments": args
+	};
+	if (hasCallback) {
+		out.uuid = __randomString();
+		this.uuidList[out.uuid] = _callback;
+		setTimeout(function () {
+			if (self.uuidList[out.uuid]) {
+				try {
+					self.uuidList[out.uuid].call(self, "timeout");
+					delete self.uuidList[out.uuid];
+				} catch (ex) {
+					delete self.uuidList[out.uuid];
+					throw ex;
+				}
+			}
+		}, 30000);
+	}
+	this.transport.send("rtc", out);
+};
+
+wormholePeer.prototype.executeRtc = function(dataChannel, methodName, args, uuid) {
+	var argsWithCallback = args.slice(0);
+	argsWithCallback.push(function () {
+		self.callbackRtc(dataChannel, uuid, [].slice.call(arguments));
+	});
+	this.rtcFunctions[methodName].apply(self, argsWithCallback);
+};
+
+wormholePeer.prototype.callbackRtc = function(uuid) {
+	this.transport.send("rtcResponse", {uuid: uuid, args: [].slice.call(arguments).slice(1)});
 };
 
 var __randomString = function() {
