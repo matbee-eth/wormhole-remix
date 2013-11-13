@@ -540,7 +540,9 @@ var wormholePeer = function (transport, rtcFunctions) {
 			var func = self.uuidList[uuid];
 			if (func && typeof func === "function") {
 				// Remove function from uuidList.
+				console.log("Removing CallbackID from UUIDLIST", uuid);
 				delete self.uuidList[uuid];
+				console.log("CallbackID removed??", self.uuidList[uuid] != null);
 				// Execute function with arguments! Blama llama lamb! Blam alam alam
 				func.apply(self, params);
 			}
