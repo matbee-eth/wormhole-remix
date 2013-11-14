@@ -514,6 +514,7 @@ wormhole.prototype.handleIceCandidate = function(id, candidate) {
 
 wormhole.prototype.handleLeave = function(id) {
 	// remove ID
+	console.log("TODO: Remove Peer", id);
 };
 
 wormhole.prototype.getPeers = function(cb) {
