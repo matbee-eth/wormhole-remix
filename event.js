@@ -521,6 +521,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			self._pubsub.on(prefix+traveller.socket.id, function (obj) {
 				obj = JSON.parse(obj);
 				if (obj.action == "leave") {
+					console.log("LEAVE LEAVE LEAVE");
 					traveller.rpc.handleLeave(obj.id, obj.channel);
 				} else if (obj.action == "offer") {
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (answer) {
@@ -555,8 +556,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					console.log("DISCONNECT", channel);
 					// traveller.emit("leaveRTCChannel", channel);
 					wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
-						console.log("CHANNEL MEMBERS:::", err, members);
-						async.forEach(members, function (member, next) {
+						console.log("CHANNEL MEMBERS:::", err, Object.keys(members));
+						async.forEach(Object.keys(members), function (member, next) {
 							self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 						}, function (err) {
 							// 
@@ -570,8 +571,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("leaveRTCChannel", function (channel) {
 				console.log("Leaving RTC channel", channel, traveller.socket.id);
 				wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
-					console.log("CHANNEL MEMBERS:::", err, members);
-					async.forEach(members, function (member, next) {
+					console.log("CHANNEL MEMBERS:::", err, Object.keys(members));
+					async.forEach(Object.keys(members), function (member, next) {
 						self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 					}, function (err) {
 						// 
