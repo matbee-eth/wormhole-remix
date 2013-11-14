@@ -552,13 +552,23 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				});
 				traveller.on("disconnect", function () {
-					traveller.leaveRTCChannel(channel);
+					console.log("DISCONNECT", channel);
+					// traveller.emit("leaveRTCChannel", channel);
+					wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
+						console.log("CHANNEL MEMBERS:::", err, members);
+						async.forEach(members, function (member, next) {
+							self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
+						}, function (err) {
+							// 
+						});
+					});
 				});
 			});
 			done();
 		},
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
+				console.log("Leaving RTC channel", channel, traveller.socket.id);
 				wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
 					console.log("CHANNEL MEMBERS:::", err, members);
 					async.forEach(members, function (member, next) {
@@ -705,7 +715,7 @@ wormholeTraveller.prototype.joinRTCChannel = function (channel) {
 	this.emit("joinRTCChannel", channel);
 };
 wormholeTraveller.prototype.leaveRTCChannel = function(channel) {
-	this._RTCChannels.splice(this._RTCChannels.indexOf(channel), 1);
+	// this._RTCChannels.splice(this._RTCChannels.indexOf(channel), 1);
 	this.emit("leaveRTCChannel", channel);
 };
 wormholeTraveller.prototype.setRpcTimeout = function(timeout) {
