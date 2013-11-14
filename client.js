@@ -466,7 +466,9 @@ wormhole.prototype.createConnection = function(id) {
 	this.peers[id].ondatachannel = function (ev) {
 		self.peerTransports[id] = ev.channel;
 		self.wormholePeers[id] = new wormholePeer(self.peerTransports[id], self.rtcFunctions);
-		self.emit("rtcConnection", self.wormholePeers[id]);
+		ev.channel.onopen = function () {
+			self.emit("rtcConnection", self.wormholePeers[id]);
+		}
 	};
 	this.peers[id].onicecandidate = function (event) {
 		self.rpc.addIceCandidate(id, event.candidate);
