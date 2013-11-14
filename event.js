@@ -574,6 +574,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					console.log("CHANNEL MEMBERS:::", err, Object.keys(members));
 					async.forEach(Object.keys(members), function (member, next) {
 						self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
+						self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "leave", id: member, channel: channel }));
 					}, function (err) {
 						// 
 					});

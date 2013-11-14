@@ -515,7 +515,7 @@ wormhole.prototype.handleIceCandidate = function(id, candidate) {
 wormhole.prototype.handleLeave = function(id) {
 	// remove ID
 	console.log("TODO: Remove Peer", id);
-	this.emit("rtcDisonnection", self.wormholePeers[id]);
+	this.emit("rtcDisonnection", this.wormholePeers[id]);
 };
 
 wormhole.prototype.getPeers = function(cb) {
