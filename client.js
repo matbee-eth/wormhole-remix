@@ -608,7 +608,11 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 			}
 		}, 30000);
 	}
-	this.transport.send(JSON.stringify({"rtc": true, data: out}));
+	if (this.transport.readyState == "open") {
+		this.transport.send(JSON.stringify({"rtc": true, data: out}));
+	} else {
+		callback && callback("Transport closed.");
+	}
 };
 
 wormholePeer.prototype.executeRtc = function(methodName, args, uuid) {
