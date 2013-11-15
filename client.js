@@ -516,6 +516,10 @@ wormhole.prototype.handleLeave = function(id) {
 	// remove ID
 	console.log("TODO: Remove Peer", id);
 	this.emit("rtcDisonnection", this.wormholePeers[id]);
+	this.peers[id].close();
+	delete this.peers[id];
+	delete this.wormholePeers[id];
+	delete this.peerTransports[id];
 };
 
 wormhole.prototype.getPeers = function(cb) {
