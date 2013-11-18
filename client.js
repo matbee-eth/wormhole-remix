@@ -508,7 +508,7 @@ wormhole.prototype.handleTimeout = function(id, channel) {
 	delete this.peerTransports[id];
 	delete this.wormholePeers[id];
 
-	self.rpc.reinitiateOffer(id);
+	self.rpc.reinitiateOffer(id, channel);
 };
 
 wormhole.prototype.handleAnswer = function(id, answerDescription) {
