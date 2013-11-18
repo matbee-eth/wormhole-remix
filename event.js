@@ -20,6 +20,10 @@ var wormhole = function (options) {
 		addIceCandidate: function (id, candidate) {
 			var traveller = this;
 			self._pubsub.publish(prefix+id, JSON.stringify({ action: "candidate", id: traveller.socket.id, candidate: candidate }));
+		},
+		reinitiateOffer: function (id, channel) {
+			var traveller = this;
+			self._pubsub.publish(prefix+traveller.socket.id, { action: "reinitiateOffer", id: id, channel: channel })
 		}
 	};
 	this._clientMethods = {
@@ -531,6 +535,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					traveller.rpc.handleAnswer(obj.id, obj.answer);
 				} else if (obj.action == "candidate") {
 					traveller.rpc.handleIceCandidate(obj.id, obj.candidate);
+				} else if (obj.action == "reinitiateOffer") {
+					traveller.rpc.createOffer(obj.id, obj.channel, function (offer) {
+						self._pubsub.publish(prefix+obj.id, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
+					});	
 				}
 			});
 			done();

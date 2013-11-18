@@ -425,6 +425,12 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 	var _offerDescription;
 	var self = this;
 	var connect = this.createConnection(id);
+	setTimeout(function () {
+		if (connect.readyState == "connecting") {
+			// failed.
+			self.handleTimeout(id, channel);
+		}
+	}, 30000);
 	this.peerTransports[id] = connect.createDataChannel(channel);
 	this.peerTransports[id].onopen = function () {
 		self.wormholePeers[id] = new wormholePeer(self.peerTransports[id], self.rtcFunctions);
@@ -494,6 +500,15 @@ wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
 			// 
 		});
 	}
+};
+
+wormhole.prototype.handleTimeout = function(id, channel) {
+	this.peers[id].close();
+	delete this.peers[id];
+	delete this.peerTransports[id];
+	delete this.wormholePeers[id];
+
+	self.rpc.reinitiateOffer(id);
 };
 
 wormhole.prototype.handleAnswer = function(id, answerDescription) {
