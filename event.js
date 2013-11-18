@@ -23,7 +23,7 @@ var wormhole = function (options) {
 		},
 		reinitiateOffer: function (id, channel) {
 			var traveller = this;
-			self._pubsub.publish(prefix+traveller.socket.id, { action: "reinitiateOffer", id: id, channel: channel })
+			self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "reinitiateOffer", id: id, channel: channel }));
 		}
 	};
 	this._clientMethods = {
