@@ -625,7 +625,7 @@ wormholePeer.prototype.executeRTCFunction = function(functionName, args, callbac
 	}
 	if (this.transport.readyState == "open") {
 		this.transport.send(JSON.stringify({"rtc": true, data: out}));
-	} else {
+	} else if (self.uuidList[out.uuid]) {
 		self.uuidList[out.uuid].call(self, "Transport closed");
 		delete self.uuidList[out.uuid];
 	}
