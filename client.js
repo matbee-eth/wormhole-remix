@@ -71,8 +71,22 @@ var wormhole = function (socket) {
 	this.setupSocket(socket);
 	this.setupClientEvents();
 
+	this.on("wormholeReady", function () {
+		self.emit("ready");
+		self.ready();
+	});
+
+	this.on("whSettings", function (opts) {
+		self.socketid = opts.socketid;
+	});
+	
+	this.on("getServerFunctions", function (cb) {
+		cb(self.customClientfunctions);
+	});
+	
+	this.syncTimeout;
 };
-wormhole.prototype.__proto__ = EventEmitter.EventEmitter.prototype;
+wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
 wormhole.prototype.setupClientEvents = function() {
 	var self = this;
 	this.on("newListener", function (event, func) {
@@ -81,7 +95,7 @@ wormhole.prototype.setupClientEvents = function() {
 			this.customClientfunctions.push(event);
 			self.addClientFunction(event, func);
 			if (self._connected) {
-				socket.emit("syncClientFunctions", self.customClientfunctions);
+				self.syncClientFunctions();
 			}
 		}
 	});
@@ -129,19 +143,9 @@ wormhole.prototype.setupSocket = function(socket) {
 	});
 	socket.on("syncClientFunctions", function (data) {
 		self.syncClientRpc(data);
-		self._clientFunctionsSynced = true;
-		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
-			self.ready();
-			self.emit("ready");
-		}
 	});
 	socket.on("syncServerFunctions", function (data) {
 		self.syncRpc(data);
-		self._serverFunctionsSynced = true;
-		if (self._clientFunctionsSynced && self._serverFunctionsSynced) {
-			self.ready();
-			self.emit("ready");
-		}
 	});
 	socket.on("syncB", function (data) {
 		data = self.charcodeArrayToString(data);
@@ -155,7 +159,7 @@ wormhole.prototype.setupSocket = function(socket) {
 			data = self.charcodeArrayToString(data);
 			data = JSON.parse(data);
 		}
-		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid);
+		self.executeRpc(data.function, data.uuid ? true : false, data.arguments, data.uuid, data.assureFunction);
 	});
 	socket.on("rpcResponse", function (data) {
 		if (self.encryptAsBinary) {
@@ -200,23 +204,20 @@ wormhole.prototype.setupSocket = function(socket) {
 			functino = self.charcodeArrayToString(functino);
 			functino = JSON.parse(functino);
 		}
-		functino = eval("(function() {return " + functino + ";})()");
+		functino = new Function("function() {return " + functino + ";}");
 		functino.apply(self, args);
 	});
 	var socketTimeout;
 	socket.on('connect', function () {
 		self._connected = true;
-		if (socketTimeout) {
-			clearTimeout(socketTimeout);
-		}
-		socket.emit("syncClientFunctions", self.customClientfunctions);
+		self.syncClientFunctions();
 		self.emit("connection");
 	});
 	var getScript = function (self) {
 		var scripty = document.createElement("script");
 		scripty.src = self._path;
 		scripty.onload = function (e) {
-			if (e.status = 200 || e.responseCode = 200) {
+			if (e.status == 200 || e.responseCode == 200) {
 				// Yay.
 			} else {
 				self.emit("reconnect", scripty);
@@ -231,9 +232,16 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.emit("reconnect", scripty);
 	};
 	socket.on('disconnect', function () {
+		for (var k in self.uuidList) {
+			try {
+				self.uuidList[k].call(self, "disconnected");
+				delete self.uuidList[k];
+			} catch (ex) {
+				delete self.uuidList[k];
+				throw ex;
+			}
+		}
 		self._connected = false;
-		self._clientFunctionsSynced = false;
-		self._serverFunctionsSynced = false;
 		if (self.forcingDisconnect) {
 			for (var sock in socket.socket.namespaces) {
 				if (sock) {
@@ -246,6 +254,15 @@ wormhole.prototype.setupSocket = function(socket) {
 		}
 	});
 };
+wormhole.prototype.syncClientFunctions = function() {
+	var self = this;
+	if (this.syncTimeout) {
+		clearTimeout(this.syncTimeout);
+	}
+	this.syncTimeout = setTimeout(function () {
+		self.socket.emit("syncClientFunctions", self.customClientfunctions);
+	}, 300);
+};
 wormhole.prototype.setPath = function(hostnameOfConnect) {
 	this._path = hostnameOfConnect;
 };
@@ -255,35 +272,36 @@ wormhole.prototype.onConnectFailed = function (callback) {
 wormhole.prototype.setSocket = function(socket) {
 	this.socket = socket;
 };
-wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid) {
+wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assureFunction) {
 	var self = this;
 	if (this.clientFunctions[methodName] && this.clientFunctions[methodName].bound) {
-		if (isAsync && uuid) {
+		if (!assureFunction && isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
 			this.clientFunctions[methodName].bound.apply(self, argsWithCallback);
-		} else if (uuid) {
+		} else if (assureFunction || uuid) {
 			var returnValue = this.clientFunctions[methodName].bound.apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
 			this.clientFunctions[methodName].bound.apply(self, args);
 		}
 	} else if (this.clientFunctions[methodName]) {
-		if (isAsync && uuid) {
+		if (!assureFunction && isAsync && uuid) {
 			var argsWithCallback = args.slice(0);
 			argsWithCallback.push(function () {
 				self.callbackRpc(uuid, [].slice.call(arguments));
 			});
 			this.clientFunctions[methodName].apply(self, argsWithCallback);
-		} else if (uuid) {
+		} else if (assureFunction || uuid) {
 			var returnValue = this.clientFunctions[methodName].apply(self, args);
 			self.callbackRpc(uuid, returnValue);
 		} else {
 			this.clientFunctions[methodName].apply(self, args);
 		}
 	}
+	this.emit.apply(this, ["executeRPC", methodName].concat(args));
 };
 wormhole.prototype.syncClientRpc = function (data) {
 	var self = this;
@@ -328,6 +346,7 @@ var generateRPCFunction = function (self, methodName, async) {
 	};
 };
 wormhole.prototype.executeServerFunction = function (functionName, isAsync, args, callback) {
+	var self = this;
 	var _callback = function () {
 		callback.apply(null, [].slice.call(arguments));
 	}
@@ -340,6 +359,17 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 	if (hasCallback) {
 		out.uuid = __randomString();
 		this.uuidList[out.uuid] = _callback;
+		setTimeout(function () {
+			if (self.uuidList[out.uuid]) {
+				try {
+					self.uuidList[out.uuid].call(self, "timeout");
+					delete self.uuidList[out.uuid];
+				} catch (ex) {
+					delete self.uuidList[out.uuid];
+					throw ex;
+				}
+			}
+		}, 30000);
 	}
 	if (this.encryptAsBinary) {
 		out = this.stringToCharcodeArray(JSON.stringify(out));
@@ -370,7 +400,7 @@ wormhole.prototype.ready = function (cb) {
 		}
 	} else {
 		this._readyFired = true;
-		for (var i in this.callback) {
+		for (var i =0; i < this.callback.length; i++) {
 			this.callback[i].call(this);
 		}
 	}
