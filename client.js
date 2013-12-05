@@ -433,7 +433,7 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 	}, 30000);
 	this.peerTransports[id] = connect.createDataChannel(channel);
 	this.peerTransports[id].onopen = function () {
-		self.wormholePeers[id] = new wormholePeer(self.peerTransports[id], self.rtcFunctions);
+		self.wormholePeers[id] = new wormholePeer(id, self.peerTransports[id], self.rtcFunctions);
 		self.emit("rtcConnection", self.wormholePeers[id]);
 	};
 	this.peerTransports[id].onclose = function () {
@@ -471,7 +471,7 @@ wormhole.prototype.createConnection = function(id) {
 	}, { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] });
 	this.peers[id].ondatachannel = function (ev) {
 		self.peerTransports[id] = ev.channel;
-		self.wormholePeers[id] = new wormholePeer(self.peerTransports[id], self.rtcFunctions);
+		self.wormholePeers[id] = new wormholePeer(id, self.peerTransports[id], self.rtcFunctions);
 		ev.channel.onopen = function () {
 			self.emit("rtcConnection", self.wormholePeers[id]);
 		}
@@ -545,10 +545,11 @@ wormhole.prototype.getPeer = function(id) {
 	return this.wormholePeers[id];
 };
 
-var wormholePeer = function (transport, rtcFunctions) {
+var wormholePeer = function (id, transport, rtcFunctions) {
 	EventEmitter.EventEmitter.call(this);
 
 	var self = this;
+	this.id = id;
 	this.transport = transport;
 	this.rtc = {};
 	this.syncRtc(rtcFunctions);
