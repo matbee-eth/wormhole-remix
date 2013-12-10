@@ -67,6 +67,7 @@ var wormhole = function (socket, options) {
 	this.callback = [];
 	this.customClientfunctions = [];
 	this.peers = {};
+	this.channelMembers = {};
 
 	this.options = options;
 
@@ -87,6 +88,11 @@ var wormhole = function (socket, options) {
 	
 	this.on("getServerFunctions", function (cb) {
 		cb(self.customClientfunctions);
+	});
+
+	this.on("addChannelClients", function (channel, clients) {
+		self.syncChannelClients(channel, clients);
+		// self.channelMembers[channel] = clients;
 	});
 
 	this.on("createOffer", this.createOffer);
@@ -420,6 +426,33 @@ wormhole.prototype.ready = function (cb) {
 	}
 };
 
+wormhole.prototype.addChannelClients = function(channel, clients) {
+	if (!this.channelMembers[channel]) {
+		this.channelMembers[channel] = {};
+	}
+	for (var i = 0; i < clients.length; i++) {
+		if (this.channelMembers[channel][i]) {
+			// Exists
+		} else {
+			// Doesn't exists.
+			this.channelMembers[channel][i] = null;
+		}
+	}
+};
+
+wormhole.prototype.message = function(id, channel) {
+	var args = [].slice.call(arguments);
+	args.shift();
+	args.shift();
+	if (this.channelMembers[channel][id] && this.wormholePeers[id]) {
+		// Use RTC
+		this.wormholePeers[id].rtc.message.apply(this, args);
+	} else {
+		// Use Socket.IO messaging.
+		this.rpc.message.apply(this, arguments);
+	}
+};
+
 wormhole.prototype.createOffer = function(id, channel, cb) {
 	// console.log("Creating RTC offer for ID", id);
 	var _offerDescription;
@@ -543,106 +576,6 @@ wormhole.prototype.getPeers = function(cb) {
 
 wormhole.prototype.getPeer = function(id) {
 	return this.wormholePeers[id];
-};
-
-var wormholePeer = function (id, transport, rtcFunctions) {
-	EventEmitter.EventEmitter.call(this);
-
-	var self = this;
-	this.id = id;
-	this.transport = transport;
-	this.rtc = {};
-	this.syncRtc(rtcFunctions);
-	this.rtcFunctions = rtcFunctions;
-	this.uuidList = {};
-	transport.onmessage = function (ev) {
-		var data = JSON.parse(ev.data);
-		if (data.rtc) {
-			self.executeRtc(data.data.function, data.data.arguments, data.data.uuid);
-		} else if (data.rtcResponse) {
-			var uuid = data.data.uuid;
-			// The arguments to send to the callback function.
-			var params = data.data.args;
-			// Get function to call from uuidList.
-			var func = self.uuidList[uuid];
-			if (func && typeof func === "function") {
-				// Remove function from uuidList.
-				// console.log("Removing CallbackID from UUIDLIST", uuid);
-				delete self.uuidList[uuid];
-				// console.log("CallbackID removed??", self.uuidList[uuid] != null);
-				// Execute function with arguments! Blama llama lamb! Blam alam alam
-				func.apply(self, params);
-			}
-		}
-	};
-};
-wormholePeer.prototype = Object.create(EventEmitter.EventEmitter.prototype);
-
-wormholePeer.prototype.syncRtc = function (data) {
-	for (var j in data) {
-		this.rtc[j] = this.generateRTCFunction(j, true);
-	}
-};
-
-wormholePeer.prototype.generateRTCFunction = function (functionName) {
-	var self = this;
-	return function () {
-		var args = [].slice.call(arguments);
-		var callback = null;
-		if (typeof(args[args.length-1]) == "function") {
-			// do something
-			callback = args.splice(args.length-1, 1)[0];
-		}
-		self.executeRTCFunction(functionName, args, callback);
-	};
-};
-
-wormholePeer.prototype.executeRTCFunction = function(functionName, args, callback) {
-	var self = this;
-	var _callback = function () {
-		callback.apply(null, [].slice.call(arguments));
-	}
-	var hasCallback = (typeof callback === "function");
-	var out = {
-		"function": functionName,
-		"arguments": args
-	};
-	if (hasCallback) {
-		out.uuid = __randomString();
-		this.uuidList[out.uuid] = _callback;
-		setTimeout(function () {
-			if (self.uuidList[out.uuid]) {
-				// console.log("Timing out Callback", out.uuid);
-				try {
-					self.uuidList[out.uuid].call(self, "timeout");
-					delete self.uuidList[out.uuid];
-				} catch (ex) {
-					delete self.uuidList[out.uuid];
-					throw ex;
-				}
-				// console.log("Deleting UUID from callback", out.uuid);
-			}
-		}, 30000);
-	}
-	if (this.transport.readyState == "open") {
-		this.transport.send(JSON.stringify({"rtc": true, data: out}));
-	} else if (self.uuidList[out.uuid]) {
-		self.uuidList[out.uuid].call(self, "Transport closed");
-		delete self.uuidList[out.uuid];
-	}
-};
-
-wormholePeer.prototype.executeRtc = function(methodName, args, uuid) {
-	var self = this;
-	var argsWithCallback = args.slice(0);
-	argsWithCallback.push(function () {
-		self.callbackRtc(uuid, [].slice.call(arguments));
-	});
-	this.rtcFunctions[methodName].apply(self, argsWithCallback);
-};""
-
-wormholePeer.prototype.callbackRtc = function(uuid, args) {
-	this.transport.send(JSON.stringify({"rtcResponse": true, data: {uuid: uuid, args: args}}));
 };
 
 var __randomString = function() {
