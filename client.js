@@ -66,7 +66,6 @@ var wormhole = function (socket, options) {
 	this.rtc = {};
 	this.callback = [];
 	this.customClientfunctions = [];
-	this.peers = {};
 	this.channelMembers = {};
 
 	this.options = options;
@@ -94,12 +93,6 @@ var wormhole = function (socket, options) {
 		self.syncChannelClients(channel, clients);
 		// self.channelMembers[channel] = clients;
 	});
-
-	this.on("createOffer", this.createOffer);
-	this.on("handleOffer", this.handleOffer);
-	this.on("handleAnswer", this.handleAnswer);
-	this.on("handleLeave", this.handleLeave)
-	this.on("handleIceCandidate", this.handleIceCandidate);
 	this.syncTimeout;
 };
 wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
@@ -336,10 +329,6 @@ wormhole.prototype.addClientFunction = function(key, func) {
 		}
 	})(key);
 };
-wormhole.prototype.addRTCFunction = function(key, func) {
-	var self = this;
-	this.rtcFunctions[key] = func;
-};
 wormhole.prototype.syncRpc = function (data) {
 	for (var j in data) {
 		this.rpc[data[j]] = generateRPCFunction(this, data[j], true);
@@ -438,144 +427,6 @@ wormhole.prototype.addChannelClients = function(channel, clients) {
 			this.channelMembers[channel][i] = null;
 		}
 	}
-};
-
-wormhole.prototype.message = function(id, channel) {
-	var args = [].slice.call(arguments);
-	args.shift();
-	args.shift();
-	if (this.channelMembers[channel][id] && this.wormholePeers[id]) {
-		// Use RTC
-		this.wormholePeers[id].rtc.message.apply(this, args);
-	} else {
-		// Use Socket.IO messaging.
-		this.rpc.message.apply(this, arguments);
-	}
-};
-
-wormhole.prototype.createOffer = function(id, channel, cb) {
-	// console.log("Creating RTC offer for ID", id);
-	var _offerDescription;
-	var self = this;
-	var connect = this.createConnection(id);
-	setTimeout(function () {
-		if (connect.readyState == "connecting") {
-			// failed.
-			self.handleTimeout(id, channel);
-		}
-	}, 30000);
-	this.peerTransports[id] = connect.createDataChannel(channel);
-	this.peerTransports[id].onopen = function () {
-		self.wormholePeers[id] = new wormholePeer(id, self.peerTransports[id], self.rtcFunctions);
-		self.emit("rtcConnection", self.wormholePeers[id]);
-	};
-	this.peerTransports[id].onclose = function () {
-		self.emit("rtcDisonnection", self.wormholePeers[id]);
-	};
-	connect.createOffer(
-		function(desc) {
-			_offerDescription = desc;
-			connect.setLocalDescription(desc);
-			cb(desc);
-		},
-		function(){
-			// console.log(arguments);
-		}
-	);
-};
-
-wormhole.prototype.createConnection = function(id) {
-	// console.log("createConnection RTC for ID", id);
-	var self = this;
-	if (!this.peers) {
-		this.peers = {};
-	}
-	if (!this.peerTransports) {
-		this.peerTransports = {};
-	}
-	if (!this.wormholePeers) {
-		this.wormholePeers = {};
-	}
-	this.peers[id] = new webkitRTCPeerConnection({
-		iceServers: [
-			{ url: "stun:stun.l.google.com:19302" },
-			{ url: 'turn:asdf@ec2-54-227-128-105.compute-1.amazonaws.com:3479', credential:'asdf' }
-		]
-	}, { 'optional': [{'DtlsSrtpKeyAgreement': true}, {'RtpDataChannels': true }] });
-	this.peers[id].ondatachannel = function (ev) {
-		self.peerTransports[id] = ev.channel;
-		self.wormholePeers[id] = new wormholePeer(id, self.peerTransports[id], self.rtcFunctions);
-		ev.channel.onopen = function () {
-			self.emit("rtcConnection", self.wormholePeers[id]);
-		}
-		ev.channel.onclose = function () {
-			self.emit("rtcDisonnection", self.wormholePeers[id]);
-		}
-	};
-	this.peers[id].onicecandidate = function (event) {
-		self.rpc.addIceCandidate(id, event.candidate);
-	};
-
-	return this.peers[id];
-};
-
-wormhole.prototype.handleOffer = function(id, offerDescription, cb) {
-	// console.log("handleOffer RTC for ID", id, offerDescription);
-	if (id && offerDescription) {
-		var self = this;
-		var connect = this.createConnection(id);
-		var remoteDescription = new RTCSessionDescription(offerDescription);
-		connect.setRemoteDescription(remoteDescription);
-		connect.createAnswer(function (answer) {
-			connect.setLocalDescription(answer);
-			cb(answer);
-		}, function (err) {
-			// 
-		});
-	}
-};
-
-wormhole.prototype.handleTimeout = function(id, channel) {
-	this.peers[id].close();
-	delete this.peers[id];
-	delete this.peerTransports[id];
-	delete this.wormholePeers[id];
-
-	self.rpc.reinitiateOffer(id, channel);
-};
-
-wormhole.prototype.handleAnswer = function(id, answerDescription) {
-	// console.log("handleAnswer RTC for ID", id, answerDescription);
-	if (id && answerDescription) {
-		var connect = this.peers[id];
-		var remoteDescription = new RTCSessionDescription(answerDescription);
-		connect.setRemoteDescription(remoteDescription);
-	}
-};
-
-wormhole.prototype.handleIceCandidate = function(id, candidate) {
-	// console.log("handleIceCandidate RTC for ID", id, candidate);
-	if (id && candidate) {
-		this.peers[id].addIceCandidate(new RTCIceCandidate(candidate));
-	}
-};
-
-wormhole.prototype.handleLeave = function(id) {
-	// remove ID
-	console.log("TODO: Remove Peer", id);
-	this.emit("rtcDisonnection", this.wormholePeers[id]);
-	this.peers[id].close();
-	delete this.peers[id];
-	delete this.wormholePeers[id];
-	delete this.peerTransports[id];
-};
-
-wormhole.prototype.getPeers = function(cb) {
-	
-};
-
-wormhole.prototype.getPeer = function(id) {
-	return this.wormholePeers[id];
 };
 
 var __randomString = function() {
