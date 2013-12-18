@@ -24,6 +24,10 @@ var wormhole = function (options) {
 		reinitiateOffer: function (id, channel) {
 			var traveller = this;
 			self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "reinitiateOffer", id: id, channel: channel }));
+		},
+		getChannelList: function (channel, cb) {
+			var traveller = this;
+			wormhole.getChannel(self._redisPubClient, channel, cb);
 		}
 	};
 	this._clientMethods = {
