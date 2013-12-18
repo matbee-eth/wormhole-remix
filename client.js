@@ -437,7 +437,7 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 		self.emit("rtcConnection", self.wormholePeers[id]);
 	};
 	this.peerTransports[id].onclose = function () {
-		self.emit("rtcDisonnection", self.wormholePeers[id]);
+		self.emit("rtcDisconnection", self.wormholePeers[id], channel);
 	};
 	connect.createOffer(
 		function(desc) {
