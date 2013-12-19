@@ -39,7 +39,7 @@ var wormhole = function (options) {
 			cb(null, this.customClientfunctions);
 		}
 	};
-	this._stubbedClientMethods = {};
+	this._stubbedClientMethods = [];
 	this.addStubbedMethods(["createOffer", "handleOffer", "handleAnswer", "handleLeave", "handleIceCandidate"]);
 	this._io = options.io;
 	this._express = options.express;
