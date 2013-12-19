@@ -35,7 +35,7 @@ var wormhole = function (options) {
 			this.emit("ready");
 			this.ready();
 		},
-		getClientFunctions: function (funcs, cb) {
+		getClientFunctions: function (cb) {
 			cb(null, this.customClientfunctions);
 		}
 	};
