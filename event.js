@@ -392,7 +392,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			async.forEach(self._stubbedClientMethods, function (method, next) {
 				traveller.addStubbedMethod(method);
 				next();
-			});
+			}, done);
 		},
 		function (done) {
 			async.forEach(Object.keys(self._serverMethods), function (method, next) {
