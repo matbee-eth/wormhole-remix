@@ -40,6 +40,7 @@ var wormhole = function (options) {
 		}
 	};
 	this._stubbedClientMethods = {};
+	this.addStubbedMethods(["createOffer", "handleOffer", "handleAnswer", "handleLeave", "handleIceCandidate"]);
 	this._io = options.io;
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
@@ -172,6 +173,11 @@ wormhole.prototype.executeChannelClientRPC = function(channel, func) {
 };
 wormhole.prototype.addStubbedMethod = function(func) {
 	this._stubbedClientMethods.push(func);
+};
+wormhole.prototype.addStubbedMethods = function(functions) {
+	for (var i = 0; i < functions.length; i++) {
+		this.addStubbedMethod(functions[i]);
+	}
 };
 wormhole.prototype.clientMethods = function(methods, cb) {
 	var self = this;
