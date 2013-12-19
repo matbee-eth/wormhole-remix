@@ -34,8 +34,12 @@ var wormhole = function (options) {
 		wormholeReady: function () {
 			this.emit("ready");
 			this.ready();
+		},
+		getClientFunctions: function (funcs, cb) {
+			cb(null, this.customClientfunctions);
 		}
 	};
+	this._stubbedClientMethods = {};
 	this._io = options.io;
 	this._express = options.express;
 	this._redisPubClient = options.redisPubClient;
@@ -165,6 +169,9 @@ wormhole.prototype.start = function(options, callback) {
 wormhole.prototype.executeChannelClientRPC = function(channel, func) {
 	var args = [].slice.call(arguments).slice(2);
 	this._pubsub.publish("wormhole:" + channel, JSON.stringify({func: func, args: args}));
+};
+wormhole.prototype.addStubbedMethod = function(func) {
+	this._stubbedClientMethods.push(func);
 };
 wormhole.prototype.clientMethods = function(methods, cb) {
 	var self = this;
@@ -377,14 +384,20 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 	async.parallel([
 		function (done) {
 			async.forEach(Object.keys(self._clientMethods), function (method, next) {
-				next();
 				traveller.addClientMethod(method);
+				next();
 			}, done);
 		},
 		function (done) {
-			async.forEach(Object.keys(self._serverMethods), function (method, next) {
+			async.forEach(self._stubbedClientMethods, function (method, next) {
+				traveller.addStubbedMethod(method);
 				next();
+			});
+		},
+		function (done) {
+			async.forEach(Object.keys(self._serverMethods), function (method, next) {
 				traveller.addServerMethod(method);
+				next();
 			}, done);
 		},
 		function (done) {
@@ -556,7 +569,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 							traveller.rpc.createOffer(member, channel, function (offer) {
 								self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
 								next();
-							});	
+							});
 						} else {
 							next();
 						}
@@ -770,6 +783,20 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	this.channelRpc[method] = function (channel) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
+};
+wormholeTraveller.prototype.addStubbedMethod = function(method) {
+	var self = this;
+	if (!this.rpc[method]) {
+		this.rpc[method] = function () {
+			self.rpc.getClientFunctions(function (err, functions) {
+				if (!err && functions) {
+					if (functions.indexOf(method) > -1) {
+						self.addClientMethod(method);
+					}
+				}
+			});
+		};
+	}
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 	var keys = Object.keys(methods);
