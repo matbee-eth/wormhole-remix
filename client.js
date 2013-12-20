@@ -262,6 +262,7 @@ wormhole.prototype.setupSocket = function(socket) {
 		} else {
 			getScript(self);
 		}
+		self.emit("diconnect");
 	});
 };
 wormhole.prototype.syncClientFunctions = function() {
