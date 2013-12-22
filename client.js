@@ -477,7 +477,7 @@ wormhole.prototype.createConnection = function(id) {
 			self.emit("rtcConnection", self.wormholePeers[id]);
 		}
 		ev.channel.onclose = function () {
-			self.emit("rtcDisonnection", self.wormholePeers[id]);
+			self.emit("rtcDisconnection", self.wormholePeers[id]);
 		}
 	};
 	this.peers[id].onicecandidate = function (event) {
@@ -531,7 +531,7 @@ wormhole.prototype.handleIceCandidate = function(id, candidate) {
 wormhole.prototype.handleLeave = function(id) {
 	// remove ID
 	console.log("TODO: Remove Peer", id);
-	this.emit("rtcDisonnection", this.wormholePeers[id]);
+	this.emit("rtcDisconnection", this.wormholePeers[id]);
 	this.peers[id].close();
 	delete this.peers[id];
 	delete this.wormholePeers[id];
