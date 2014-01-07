@@ -415,11 +415,6 @@ wormhole.prototype.ready = function (cb) {
 	}
 };
 
-<<<<<<< HEAD
-wormhole.prototype.addChannelClients = function(channel, clients) {
-	if (!this.channelMembers[channel]) {
-		this.channelMembers[channel] = {};
-=======
 wormhole.prototype.createOffer = function(id, channel, cb) {
 	// console.log("Creating RTC offer for ID", id);
 	var _offerDescription;
