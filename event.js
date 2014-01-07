@@ -35,6 +35,9 @@ var wormhole = function (options) {
 		wormholeReady: function () {
 			this.emit("ready");
 			this.ready();
+		},
+		joinRTCChannel: function (channel) {
+			this.rpc.joinRTCChannel(channel);
 		}
 	};
 	this._io = options.io;
