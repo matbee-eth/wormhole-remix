@@ -9,7 +9,8 @@ var util = require('util')
   , request = require('request')
   , events = require('events')
   , redispubsub = require('redis-sub')
-  , fswatch = require('gaze').Gaze;
+  , fswatch = require('gaze').Gaze
+  , debug = require('debug')('wormhole-remix');
 
 var wormhole = function (options) {
 	options = options || {};
@@ -140,19 +141,19 @@ wormhole.prototype.start = function(options, callback) {
 	if (this._namespaces.length == 0) {
 		this.addNamespace('/'); // Atleast support a basic namespace ^_^, geez!
 	}
-	console.log("Initializing Wormhole.");
+	debug("Initializing Wormhole.");
 	this.getScripts(function (err, response) {
 		if (!err && self.__wormholeClientJs && self.__socketIOJs) {
-			console.log("Wormhole scripts ready.");
+			debug("Wormhole scripts ready.");
 			// Ready, Freddy!
 			self.setupExpressRoutes(function (err) {
-				console.log("Wormhole Express routes setup.");
+				debug("Wormhole Express routes setup.");
 				self.setupIOEvents(function (err) {
 					callback && callback(err);
 				})
 			});
 		} else {
-			console.log("ERROR!", err);
+			debug("ERROR!", err);
 			callback && callback(err);
 		}
 	});
@@ -237,7 +238,7 @@ wormhole.prototype.getScripts = function (cb) {
 					self.__socketIOJs = body.toString();
 					self.__socketIOJs = uglify.minify(self.__socketIOJs, {fromString: true}).code;
 				} else {
-					console.log("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname +":"+ self._port + '/socket.io/socket.io.js');
+					debug("There has been an error with downloading Local Socket.IO", error, response, self._protocol + "://" + self._hostname +":"+ self._port + '/socket.io/socket.io.js');
 				}
 				done(error);
 			});
@@ -269,7 +270,7 @@ wormhole.prototype.getScripts = function (cb) {
 				}
 			});
 		} else {
-			console.log(err);
+			debug(err);
 			cb(err);
 		}
 	});
@@ -281,7 +282,7 @@ wormhole.prototype.setupIOEvents = function (cb) {
 		function (done) {
 			if (self._cookieParser && self._sessionStore && self._sessionKey) {
 				self._io.set('authorization', function(handshake, callback) {
-					console.log("AUTHORIZATION: ", handshake);
+					debug("AUTHORIZATION: ", handshake);
 					self._cookieParser(handshake, {}, function (err) {
 						// Fancy, huh?
 						err && callback(err, false);
@@ -296,13 +297,13 @@ wormhole.prototype.setupIOEvents = function (cb) {
 			}
 			done();
 		}, function (done) {
-			console.log("Setting up namespaces", self._namespaces);
+			debug("Setting up namespaces", self._namespaces);
 			async.forEach(self._namespaces, function (namespace, next) {
-				console.log("NAMESPACE:", namespace);
+				debug("NAMESPACE:", namespace);
 				self._io.of(namespace).on("connection", function (socket) {
-					console.log("Welcome the traveller!");
+					debug("Welcome the traveller!");
 					self.createTraveller(socket, function (err, traveller) {
-						console.log("Traveller, welcome to the Wormhole.");
+						debug("Traveller, welcome to the Wormhole.");
 						// done!! HEHEHE!
 						if (socket.handshake.sessionId) {
 							traveller.setSessionId(socket.handshake.sessionId);
@@ -314,9 +315,9 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						}
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
-							console.log("Traveller events set up.");
+							debug("Traveller events set up.");
 							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
-								console.log("Sent RPC functions to traveller.");
+								debug("Sent RPC functions to traveller.");
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
@@ -390,7 +391,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("executeClientRPC", function (func) {
 				// Send RPC data to Client.
-				console.log("executeClientRPC", func, "Am I Connected?", traveller.isConnected);
+				debug("executeClientRPC", func, "Am I Connected?", traveller.isConnected);
 				var hasCallback = false;
 				var callback;
 				var args = [].slice.call(arguments);
@@ -491,7 +492,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("disconnect", function () {
 				// wut?
 				// unsubscribe from session id
-				console.log("Traveller disconnected.");
+				debug("Traveller disconnected.");
 				traveller.removeAllListeners();
 				traveller.socket.removeAllListeners();
 				traveller.isConnected = false;
@@ -500,7 +501,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					var uuid = ids[i];
 					if (self._uuidList[uuid]) {
 						self._uuidList[uuid]("wormhole disconnected");
-						console.log("Traveller disconnected. Executing dead callback with error.");
+						debug("Traveller disconnected. Executing dead callback with error.");
 					}
 					delete self._uuidList[uuid];
 					traveller.removeCallbackId(uuid);
@@ -529,28 +530,28 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			self._pubsub.on(prefix+traveller.socket.id, function (obj) {
 				obj = JSON.parse(obj);
 				if (obj.action == "leave") {
-					console.log("LEAVE LEAVE LEAVE");
+					debug("LEAVE LEAVE LEAVE");
 					traveller.rpc.handleLeave(obj.id, obj.channel);
 				} else if (obj.action == "offer") {
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer, obj);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
-					console.log("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer, obj);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
+					debug("HANDLE OFFER!!!", obj.id, obj.offer);
 					traveller.rpc.handleOffer(obj.id, obj.offer, function (err, answer) {
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
-						console.log("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
+						debug("traveller.rpc.handleOffer", err, answer);
 						if (!err && answer) {
 							self._pubsub.publish(prefix+obj.id, JSON.stringify({action: "answer", id: traveller.socket.id, answer: answer}));
 						}
@@ -573,7 +574,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			traveller.on("joinRTCChannel", function (channel) {
 				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
-						console.log("CHANNEL MEMBER", member);
+						debug("CHANNEL MEMBER", member);
 						if (member != traveller.socket.id) {
 							traveller.rpc.createOffer(member, channel, function (err, offer) {
 								if (!err && offer) {
@@ -589,10 +590,10 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				});
 				traveller.on("disconnect", function () {
-					console.log("DISCONNECT", channel);
+					debug("DISCONNECT", channel);
 					// traveller.emit("leaveRTCChannel", channel);
 					wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
-						console.log("CHANNEL MEMBERS:::", err, Object.keys(members));
+						debug("CHANNEL MEMBERS:::", err, Object.keys(members));
 						async.forEach(Object.keys(members), function (member, next) {
 							self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 						}, function (err) {
@@ -605,9 +606,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		},
 		function (done) {
 			traveller.on("leaveRTCChannel", function (channel) {
-				console.log("Leaving RTC channel", channel, traveller.socket.id);
+				debug("Leaving RTC channel", channel, traveller.socket.id);
 				wormhole.removeFromChannel(self._redisPubClient, channel, traveller.socket.id, function (err, members) {
-					console.log("CHANNEL MEMBERS:::", err, Object.keys(members));
+					debug("CHANNEL MEMBERS:::", err, Object.keys(members));
 					async.forEach(Object.keys(members), function (member, next) {
 						self._pubsub.publish(prefix+member, JSON.stringify({ action: "leave", id: traveller.socket.id, channel: channel }));
 						self._pubsub.publish(prefix+traveller.socket.id, JSON.stringify({ action: "leave", id: member, channel: channel }));
@@ -624,13 +625,13 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		// Now wait for syncClientFunctionsComplete before we call back.
 		var hasCallbacked = false;
 		traveller.on("syncClientFunctionsComplete", function () {
-			console.log("syncClientFunctionsComplete", traveller.rpc);
+			debug("syncClientFunctionsComplete", traveller.rpc);
 			traveller.rpc.getServerFunctions(function (clientMethods) {
 				async.forEach(clientMethods, function (method, next) {
 					traveller.addClientMethod(method);
 					next();
 				}, function (err) {
-					console.log("ARRAYOFSTEPS", traveller.arrayOfSteps);
+					debug("ARRAYOFSTEPS", traveller.arrayOfSteps);
 				});
 				if (!hasCallbacked) {
 					hasCallbacked = true;
@@ -644,7 +645,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			var id = traveller.getSessionId();
 			var sessionSubscribe = function (session) {
 				if (!traveller.isConnected) {
-					console.log("Session updated for dead traveller, Trying unsubscribe again.", id);
+					debug("Session updated for dead traveller, Trying unsubscribe again.", id);
 				} else {
 					self._sessionStore.subscribeOnce(id, sessionSubscribe);
 					self.emit("sessionUpdated", traveller, session);
