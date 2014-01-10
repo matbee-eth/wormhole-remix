@@ -574,6 +574,17 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
+			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
 			traveller.on("joinRTCChannel", function (channel) {
 				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
