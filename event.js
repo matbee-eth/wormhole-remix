@@ -29,9 +29,6 @@ var wormhole = function (options) {
 		getChannelList: function (channel, cb) {
 			var traveller = this;
 			wormhole.getChannel(self._redisPubClient, channel, cb);
-		},
-		joinRTCChannel: function (channel, cb) {
-			this.joinRTCChannel(channel, cb);
 		}
 	};
 	this._clientMethods = {
