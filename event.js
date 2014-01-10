@@ -593,6 +593,8 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 							traveller.rpc.createOffer(member, channel, function (err, offer) {
 								if (!err && offer) {
 									self._pubsub.publish(prefix+member, JSON.stringify({ action: "offer", id: traveller.socket.id, offer: offer }));
+								} else {
+									debug("whdebug: createOffer failed", err, member, channel);
 								}
 								next();
 							});
