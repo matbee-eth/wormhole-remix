@@ -574,18 +574,18 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
-			console.log('traveller.on("joinRTCChannel", function (channel) {', channel);
 			traveller.on("joinRTCChannel", function (channel) {
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
 				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
 						debug("CHANNEL MEMBER", member);
@@ -765,6 +765,7 @@ var wormholeTraveller = function (socket) {
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeTraveller.prototype.joinRTCChannel = function (channel) {
 	this._RTCChannels.push(channel);
+	debug("whdebug: Called on Traveller Object.");
 	this.emit("joinRTCChannel", channel);
 };
 wormholeTraveller.prototype.leaveRTCChannel = function(channel) {
