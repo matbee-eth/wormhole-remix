@@ -11,7 +11,7 @@ wormholeConnect.prototype.ready = function() {
 };
 wormholeConnect.prototype.connect = function(THISISTHECONNECTOBJECTOVERRIDE) {
 	THISISTHECONNECTOBJECTOVERRIDE = THISISTHECONNECTOBJECTOVERRIDE || {
-		reconnect: false,
+		reconnect: true,
 		'try multiple transports': true
 	};
 	if (this.io.sockets['THISSTRINGSHOULDCONTAINTHERIGHTHOSTNAMEOFTHISSERVER']) {
