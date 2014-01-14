@@ -247,7 +247,6 @@ wormhole.prototype.setupSocket = function(socket) {
 				delete self.uuidList[k];
 			} catch (ex) {
 				delete self.uuidList[k];
-				throw ex;
 			}
 		}
 		self._connected = false;
@@ -375,7 +374,6 @@ wormhole.prototype.executeServerFunction = function (functionName, isAsync, args
 					delete self.uuidList[out.uuid];
 				} catch (ex) {
 					delete self.uuidList[out.uuid];
-					throw ex;
 				}
 			}
 		}, 30000);
