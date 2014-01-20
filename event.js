@@ -847,7 +847,7 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
 	
-	if (this.syncComplete) {
+	// if (this.syncComplete) {
 		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
 		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
 		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
@@ -859,7 +859,7 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 		this.sendRPCFunctions({}, [method], function (err) {
 			// 
 		});
-	}
+	// }
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
