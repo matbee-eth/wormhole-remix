@@ -468,7 +468,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
 			 	} else {
-			 		traveller.callback("No such method.");
+			 		traveller.callback("No such method.", UUID);
 			 	}
 			});
 			done();
