@@ -450,7 +450,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			 	var UUID = args.shift();
 			 	// Execute RPC function w/ that name.
 			 	// If UUID, callback is expected.
-			 	if (self._serverMethods[func] || traveller._methods[func]) {
+			 	if (self._serverMethods[func]) {
 			 		var rpcCallback;
 				 	if (UUID) {
 				 		rpcCallback = function () {
@@ -468,7 +468,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
 			 	} else {
-			 		traveller.callback("No such method.", UUID);
+			 		traveller.callback("No such method.");
 			 	}
 			});
 			done();
@@ -651,7 +651,6 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				});
 				if (!hasCallbacked) {
 					hasCallbacked = true;
-					traveller.syncComplete = true;
 					cb();
 				}
 			});
@@ -745,13 +744,7 @@ wormhole.prototype.executeServerRPC = function (traveller, func) {
 	var args = [].slice.call(arguments);
 	traveller = args.shift();
 	func = args.shift();
-	var functouse;
-	if (traveller._methods[func] && typeof traveller._methods[func] == "function") {
- 		functouse = traveller._methods[func];
-	} else if (this._serverMethods[func]) {
-		functouse = this._serverMethods[func];
-	}
-	functouse.apply(traveller, args);
+ 	this._serverMethods[func].apply(traveller, args);
 };
 
 var wormholeTraveller = function (socket) {
@@ -769,9 +762,7 @@ var wormholeTraveller = function (socket) {
 
 	this._sessionId = null;
 
-	this._RTCChannels = [];
-
-	this.syncComplete = false;
+	this._RTCChannels = []
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeTraveller.prototype.joinRTCChannel = function (channel) {
@@ -821,19 +812,6 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	this.channelRpc[method] = function (channel) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
-	// if (this.syncComplete) {
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	this.sendRPCFunctions({method: func}, [], function (err) {
-	// 		// 
-	// 	});
-	// }
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 	var keys = Object.keys(methods);
@@ -842,24 +820,10 @@ wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 		next();
 	}, cb);
 };
-wormholeTraveller.prototype.addServerMethod = function(method, cb) {
+wormholeTraveller.prototype.addServerMethod = function(method) {
 	this._methods[method] = function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
-
-	// if (this.syncComplete) {
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-	// 	this.sendRPCFunctions({}, [method], function (err) {
-	// 		// 
-	// 	});
-	// }
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
