@@ -763,6 +763,8 @@ var wormholeTraveller = function (socket) {
 	this._sessionId = null;
 
 	this._RTCChannels = [];
+
+	this.syncComplete = false;
 };
 wormholeTraveller.prototype.__proto__ = events.EventEmitter.prototype;
 wormholeTraveller.prototype.joinRTCChannel = function (channel) {
@@ -812,6 +814,11 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	this.channelRpc[method] = function (channel) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
+	if (this.syncComplete) {
+		this.sendRPCFunctions({method: func}, [], function (err) {
+			// 
+		});
+	}
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 	var keys = Object.keys(methods);
@@ -824,6 +831,11 @@ wormholeTraveller.prototype.addServerMethod = function(method) {
 	this._methods[method] = function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
+	if (this.syncComplete) {
+		this.sendRPCFunctions({}, [method], function (err) {
+			// 
+		});
+	}
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
@@ -878,6 +890,7 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		}
 		self.syncClientFunctionsTimeout = setTimeout(function () {
 			self.emit("syncClientFunctionsComplete");
+			self.syncComplete = true;
 			self.arrayOfSteps.push("syncClientFunctionsComplete");
 		}, 150);
 	});
