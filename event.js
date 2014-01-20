@@ -744,7 +744,13 @@ wormhole.prototype.executeServerRPC = function (traveller, func) {
 	var args = [].slice.call(arguments);
 	traveller = args.shift();
 	func = args.shift();
- 	this._serverMethods[func].apply(traveller, args);
+	var executor;
+	if (this._serverMethods[func]) {
+		executor = this._serverMethods[func];
+	} else if (traveller._methods[func] && typeof traveller._methods[func] == "function") {
+		executor = traveller._methods[func];
+	}
+ 	executor.apply(traveller, args);
 };
 
 var wormholeTraveller = function (socket) {
