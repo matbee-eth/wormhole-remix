@@ -820,7 +820,7 @@ wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 		next();
 	}, cb);
 };
-wormholeTraveller.prototype.addServerMethod = function(method) {
+wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 	this._methods[method] = cb || function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
