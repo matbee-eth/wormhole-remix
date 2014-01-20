@@ -468,7 +468,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 					});
 				 	self.executeServerRPC.apply(self, [traveller, func].concat(args));
 			 	} else {
-			 		traveller.callback("No such method.");
+			 		traveller.callback("No such method.", UUID);
 			 	}
 			});
 			done();
@@ -651,6 +651,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				});
 				if (!hasCallbacked) {
 					hasCallbacked = true;
+					traveller.syncComplete = true;
 					cb();
 				}
 			});
@@ -896,7 +897,6 @@ wormholeTraveller.prototype.setupClientEvents = function (cb) {
 		}
 		self.syncClientFunctionsTimeout = setTimeout(function () {
 			self.emit("syncClientFunctionsComplete");
-			self.syncComplete = true;
 			self.arrayOfSteps.push("syncClientFunctionsComplete");
 		}, 150);
 	});
