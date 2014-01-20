@@ -833,7 +833,7 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 	};
 	if (this.syncComplete) {
 		this.sendRPCFunctions({}, [method], function () {
-			console.log("SENT NEW SERVER FUCNTION")
+			
 		});
 	}
 };
