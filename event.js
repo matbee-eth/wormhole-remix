@@ -832,7 +832,7 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
 	if (this.syncComplete) {
-		this.sendRPCFunctions({}, Object.keys(this._methods), function (err) {
+		this.sendRPCFunctions({}, [method], function (err) {
 			// 
 		});
 	}
