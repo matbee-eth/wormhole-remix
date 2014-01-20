@@ -821,19 +821,19 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 	this.channelRpc[method] = function (channel) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
-	if (this.syncComplete) {
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		this.sendRPCFunctions({method: func}, [], function (err) {
-			// 
-		});
-	}
+	// if (this.syncComplete) {
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	this.sendRPCFunctions({method: func}, [], function (err) {
+	// 		// 
+	// 	});
+	// }
 };
 wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 	var keys = Object.keys(methods);
@@ -846,20 +846,20 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 	this._methods[method] = function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
-	
-	if (this.syncComplete) {
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
-		this.sendRPCFunctions({}, [method], function (err) {
-			// 
-		});
-	}
+
+	// if (this.syncComplete) {
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	console.log("syncComplete:: syncCompletesyncCompletesyncCompletesyncComplete", method);
+	// 	this.sendRPCFunctions({}, [method], function (err) {
+	// 		// 
+	// 	});
+	// }
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
