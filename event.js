@@ -822,6 +822,7 @@ wormholeTraveller.prototype.addClientMethod = function(method, func) {
 		self.executeChannelClientRPC.apply(self, [channel, method].concat([].slice.call(arguments).slice(1)))
 	};
 	if (this.syncComplete) {
+		console.log("syncCompletesyncCompletesyncCompletesyncCompletesyncComplete", method);
 		this.sendRPCFunctions({method: func}, [], function (err) {
 			// 
 		});
