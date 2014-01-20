@@ -450,7 +450,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			 	var UUID = args.shift();
 			 	// Execute RPC function w/ that name.
 			 	// If UUID, callback is expected.
-			 	if (self._serverMethods[func] || traveller._serverMethods[func]) {
+			 	if (self._serverMethods[func]) {
 			 		var rpcCallback;
 				 	if (UUID) {
 				 		rpcCallback = function () {
