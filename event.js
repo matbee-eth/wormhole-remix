@@ -651,6 +651,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				});
 				if (!hasCallbacked) {
 					hasCallbacked = true;
+					traveller.syncComplete = true;
 					cb();
 				}
 			});
@@ -830,9 +831,11 @@ wormholeTraveller.prototype.addServerMethod = function(method, cb) {
 	this._methods[method] = cb || function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
-	this.sendRPCFunctions({}, [method], function () {
-		console.log("SENT NEW SERVER FUCNTION")
-	});
+	if (this.syncComplete) {
+		this.sendRPCFunctions({}, [method], function () {
+			console.log("SENT NEW SERVER FUCNTION")
+		});
+	}
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
