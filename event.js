@@ -824,6 +824,9 @@ wormholeTraveller.prototype.addServerMethod = function(method) {
 	this._methods[method] = cb || function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
+	this.sendRPCFunctions({}, [method], function () {
+		console.log("SENT NEW SERVER FUCNTION")
+	});
 };
 wormholeTraveller.prototype.executeClientRPC = function(funcName) {
 	// Server triggers client RPC execution
