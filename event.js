@@ -450,7 +450,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			 	var UUID = args.shift();
 			 	// Execute RPC function w/ that name.
 			 	// If UUID, callback is expected.
-			 	if (self._serverMethods[func]) {
+			 	if (self._serverMethods[func] || traveller._serverMethods[func]) {
 			 		var rpcCallback;
 				 	if (UUID) {
 				 		rpcCallback = function () {
@@ -832,7 +832,7 @@ wormholeTraveller.prototype.addServerMethod = function(method) {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
 	if (this.syncComplete) {
-		this.sendRPCFunctions({}, [method], function (err) {
+		this.sendRPCFunctions({}, Object.keys(this._methods), function (err) {
 			// 
 		});
 	}
@@ -849,8 +849,12 @@ wormholeTraveller.prototype.executeChannelClientRPC = function(channel, funcName
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 	// Client triggers server RPC execution
-	var argsArray = ["executeServerRPC", funcName];
-	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
+	if (this._methods[funcName] && typeof this._methods[funcName] == "function") {
+		this._methods[funcName].apply(this, [].slice.call(arguments).slice(1));
+	} else {
+		var argsArray = ["executeServerRPC", funcName];
+		this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
+	}
 };
 wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
