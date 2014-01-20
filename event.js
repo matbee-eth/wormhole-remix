@@ -827,8 +827,8 @@ wormholeTraveller.prototype.syncServerMethods = function (methods, cb) {
 		next();
 	}, cb);
 };
-wormholeTraveller.prototype.addServerMethod = function(method) {
-	this._methods[method] = function () {
+wormholeTraveller.prototype.addServerMethod = function(method, cb) {
+	this._methods[method] = cb || function () {
 		this.executeServerRPC.apply(this, [].slice.call(arguments));
 	};
 	if (this.syncComplete) {
@@ -849,12 +849,8 @@ wormholeTraveller.prototype.executeChannelClientRPC = function(channel, funcName
 };
 wormholeTraveller.prototype.executeServerRPC = function(funcName) {
 	// Client triggers server RPC execution
-	if (this._methods[funcName] && typeof this._methods[funcName] == "function") {
-		this._methods[funcName].apply(this, [].slice.call(arguments).slice(1));
-	} else {
-		var argsArray = ["executeServerRPC", funcName];
-		this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
-	}
+	var argsArray = ["executeServerRPC", funcName];
+	this.emit.apply(this, argsArray.concat([].slice.call(arguments).slice(1)));
 };
 wormholeTraveller.prototype.setupClientEvents = function (cb) {
 	var self = this;
