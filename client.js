@@ -76,9 +76,10 @@ var wormhole = function (socket, options) {
 	this.setupSocket(socket);
 	this.setupClientEvents();
 
-	this.on("wormholeReady", function () {
+	this.on("wormholeReady", function (cb) {
 		self.emit("ready");
 		self.ready();
+		cb();
 	});
 
 	this.on("whSettings", function (opts) {
