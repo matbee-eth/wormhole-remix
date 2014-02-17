@@ -319,6 +319,11 @@ wormhole.prototype.syncClientRpc = function (data) {
 		var func = eval("(function () { return " + data[k] + "}())");;
 		this.addClientFunction(k, func);
 	}
+	this.syncClientRpcComplete = true;
+	if (this.syncClientRpcComplete && this.syncServerRpcComplete) {
+		this.emit("ready");
+		this.ready();
+	}
 };
 wormhole.prototype.addClientFunction = function(key, func) {
 	var self = this;
@@ -332,6 +337,11 @@ wormhole.prototype.addClientFunction = function(key, func) {
 wormhole.prototype.syncRpc = function (data) {
 	for (var j in data) {
 		this.rpc[data[j]] = generateRPCFunction(this, data[j], true);
+	}
+	this.syncServerRpcComplete = true;
+	if (this.syncClientRpcComplete && this.syncServerRpcComplete) {
+		this.emit("ready");
+		this.ready();
 	}
 };
 wormhole.prototype.sync = function(data) {
@@ -441,6 +451,12 @@ wormhole.prototype.createOffer = function(id, channel, cb) {
 		},
 		function(){
 			// console.log(arguments);
+		},
+		{
+			mandatory: {
+				OfferToReceiveAudio: true,
+				OfferToReceiveVideo: true
+			}
 		}
 	);
 };
