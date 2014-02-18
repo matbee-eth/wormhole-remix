@@ -307,6 +307,8 @@ wormhole.prototype.setSocket = function(socket) {
 		this.socket.removeAllListeners();
 		this.socket.disconnect && this.socket.disconnect();
 	}
+	this.syncClientFunctionsComplete = false;
+	this.syncServerFunctionsComplete = false;
 	this.socket = socket;
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assureFunction) {
