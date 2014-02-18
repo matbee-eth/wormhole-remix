@@ -42,7 +42,7 @@ var wormhole = function (options) {
 			cb();
 		},
 		joinRTCChannel: function (channel) {
-			this.rpc.joinRTCChannel(channel, this.MediaConstraints);
+			this.rpc.joinRTCChannel(channel);
 		}
 	};
 	this._io = options.io;
@@ -588,9 +588,9 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 			done();
 		},
 		function (done) {
-			traveller.on("joinRTCChannel", function (channel, MediaConstraints) {
+			traveller.on("joinRTCChannel", function (channel) {
 				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
-				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, MediaConstraints, function (err, members) {
+				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, {audio: true, video: true}, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
 						debug("CHANNEL MEMBER", member);
 						if (member != traveller.socket.id) {
