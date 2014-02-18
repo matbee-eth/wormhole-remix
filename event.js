@@ -33,8 +33,12 @@ var wormhole = function (options) {
 	};
 	this._clientMethods = {
 		wormholeReady: function (cb) {
-			this.emit("ready");
-			this.ready();
+			if (!this.syncClientRpcComplete || !this.syncServerRpcComplete) {
+				this.emit("ready");
+				this.ready();
+				this.syncClientRpcComplete = true;
+				this.syncServerRpcComplete = true;
+			}
 			cb();
 		},
 		joinRTCChannel: function (channel) {
@@ -325,16 +329,16 @@ wormhole.prototype.setupIOEvents = function (cb) {
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
-								// traveller.rpc.wormholeReady(function (err) {
-								// 	if (err) {
-								// 		console.log("wormholeReady Error: Retrying...", err);
-								// 		traveller.rpc.wormholeReady(function (err) {
-								// 			if (err) {
-								// 				console.log("wormholeReady Error: NOT RETRYING...", err);
-								// 			}
-								// 		});
-								// 	}
-								// });
+								traveller.rpc.wormholeReady(function (err) {
+									if (err) {
+										console.log("wormholeReady Error: Retrying...", err);
+										traveller.rpc.wormholeReady(function (err) {
+											if (err) {
+												console.log("wormholeReady Error: NOT RETRYING...", err);
+											}
+										});
+									}
+								});
 								self.emit("connection", traveller);
 							});
 						});

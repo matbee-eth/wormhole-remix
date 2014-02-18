@@ -77,8 +77,12 @@ var wormhole = function (socket, options) {
 	this.setupClientEvents();
 
 	this.on("wormholeReady", function (cb) {
-		self.emit("ready");
-		self.ready();
+		if (!this.syncClientRpcComplete || !this.syncServerRpcComplete) {
+			this.emit("ready");
+			this.ready();
+			this.syncClientRpcComplete = true;
+			this.syncServerRpcComplete = true;
+		}
 		cb();
 	});
 
@@ -319,11 +323,11 @@ wormhole.prototype.syncClientRpc = function (data) {
 		var func = eval("(function () { return " + data[k] + "}())");;
 		this.addClientFunction(k, func);
 	}
-	this.syncClientRpcComplete = true;
-	if (this.syncClientRpcComplete && this.syncServerRpcComplete) {
+	if (!this.syncClientRpcComplete && this.syncServerRpcComplete) {
 		this.emit("ready");
 		this.ready();
 	}
+	this.syncClientRpcComplete = true;
 };
 wormhole.prototype.addClientFunction = function(key, func) {
 	var self = this;
@@ -338,11 +342,11 @@ wormhole.prototype.syncRpc = function (data) {
 	for (var j in data) {
 		this.rpc[data[j]] = generateRPCFunction(this, data[j], true);
 	}
-	this.syncServerRpcComplete = true;
-	if (this.syncClientRpcComplete && this.syncServerRpcComplete) {
+	if (this.syncClientRpcComplete && !this.syncServerRpcComplete) {
 		this.emit("ready");
 		this.ready();
 	}
+	this.syncServerRpcComplete = true;
 };
 wormhole.prototype.sync = function(data) {
 	this.syncRpc(data.serverRPC);
