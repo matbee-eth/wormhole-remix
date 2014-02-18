@@ -281,6 +281,9 @@ wormhole.prototype.onConnectFailed = function (callback) {
 	this._connectionFailed = callback;
 };
 wormhole.prototype.setSocket = function(socket) {
+	if (this.socket) {
+		this.socket.removeAllListeners();
+	}
 	this.socket = socket;
 };
 wormhole.prototype.executeRpc = function(methodName, isAsync, args, uuid, assureFunction) {
