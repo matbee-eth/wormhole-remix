@@ -1035,6 +1035,7 @@ wormhole.getChannel = function (readClient, channel, cb) {
 				members[member] = JSON.parse(members[member]);
 			}
 		}
+		debug('getChannel calling back', members);
 		cb(err, members || []);
 	});
 };
