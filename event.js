@@ -324,23 +324,25 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
 							debug("Traveller events set up.");
-							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
-								debug("Sent RPC functions to traveller.");
-								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
+							setTimeout(function () {
+								traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
+									debug("Sent RPC functions to traveller.");
+									self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
+									});
+									traveller.rpc.wormholeReady(function (err) {
+										if (err) {
+											console.log("wormholeReady Error: Retrying...", err);
+											traveller.rpc.wormholeReady(function (err) {
+												if (err) {
+													console.log("wormholeReady Error: NOT RETRYING...", err);
+												}
+											});
+										}
+									});
+									self.emit("connection", traveller);
 								});
-								traveller.rpc.wormholeReady(function (err) {
-									if (err) {
-										console.log("wormholeReady Error: Retrying...", err);
-										traveller.rpc.wormholeReady(function (err) {
-											if (err) {
-												console.log("wormholeReady Error: NOT RETRYING...", err);
-											}
-										});
-									}
-								});
-								self.emit("connection", traveller);
-							});
+							}, 500);
 						});
 					});
 				});
