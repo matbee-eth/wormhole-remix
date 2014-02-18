@@ -77,11 +77,11 @@ var wormhole = function (socket, options) {
 	this.setupClientEvents();
 
 	this.on("wormholeReady", function (cb) {
-		if (!this.syncClientRpcComplete || !this.syncServerRpcComplete) {
-			this.emit("ready");
-			this.ready();
-			this.syncClientRpcComplete = true;
-			this.syncServerRpcComplete = true;
+		if (!self.syncClientRpcComplete || !self.syncServerRpcComplete) {
+			self.emit("ready");
+			self.ready();
+			self.syncClientRpcComplete = true;
+			self.syncServerRpcComplete = true;
 		}
 		cb();
 	});
