@@ -1037,7 +1037,9 @@ wormhole.getChannel = function (readClient, channel, cb) {
 	});
 };
 wormhole.addToChannel = function (client, channel, id, obj, cb) {
-	client.hset(prefix+channel, id, JSON.stringify(obj), function () {
+	debug('addToChannel call', channel, id, obj);
+	client.hset(prefix+channel, id, JSON.stringify(obj), function (err) {
+		debug('addToChannel hset callback', err)
 		wormhole.getChannel(client, channel, cb);
 	});
 };
