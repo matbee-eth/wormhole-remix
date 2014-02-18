@@ -32,14 +32,9 @@ var wormhole = function (options) {
 		}
 	};
 	this._clientMethods = {
-		wormholeReady: function (cb) {
-			if (!self.syncClientRpcComplete || !self.syncServerRpcComplete) {
-				self.emit("ready");
-				self.ready();
-				self.syncClientRpcComplete = true;
-				self.syncServerRpcComplete = true;
-			}
-			cb();
+		wormholeReady: function () {
+			this.emit("ready");
+			this.ready();
 		},
 		joinRTCChannel: function (channel) {
 			this.rpc.joinRTCChannel(channel);
@@ -324,25 +319,14 @@ wormhole.prototype.setupIOEvents = function (cb) {
 						self.setupClientEvents(traveller, function (err) {
 							// LOLOLO
 							debug("Traveller events set up.");
-							setTimeout(function () {
-								traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
-									debug("Sent RPC functions to traveller.");
-									self._reporting && self._reporter.report(traveller.sessionId, "sync", {
+							traveller.sendRPCFunctions(self._clientMethods, Object.keys(self._serverMethods), function (err) {
+								debug("Sent RPC functions to traveller.");
+								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
-									});
-									traveller.rpc.wormholeReady(function (err) {
-										if (err) {
-											console.log("wormholeReady Error: Retrying...", err);
-											traveller.rpc.wormholeReady(function (err) {
-												if (err) {
-													console.log("wormholeReady Error: NOT RETRYING...", err);
-												}
-											});
-										}
-									});
-									self.emit("connection", traveller);
 								});
-							}, 500);
+								traveller.rpc.wormholeReady();
+								self.emit("connection", traveller);
+							});
 						});
 					});
 				});
@@ -592,7 +576,17 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 		function (done) {
 			traveller.on("joinRTCChannel", function (channel) {
 				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
-				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, {audio: true, video: true}, function (err, members) {
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
+				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
 					async.forEach(Object.keys(members), function (member, next) {
 						debug("CHANNEL MEMBER", member);
 						if (member != traveller.socket.id) {
