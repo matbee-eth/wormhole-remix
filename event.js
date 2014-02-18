@@ -1027,7 +1027,9 @@ __randomString = function() {
 // WebRTC Redis functions...
 var prefix = "wormhole:";
 wormhole.getChannel = function (readClient, channel, cb) {
+	debug('getChannel', channel);
 	readClient.hgetall(prefix+channel, function (err, members) {
+		debug('getChannel hgetall callback', err, members);
 		for (var member in members) {
 			if (members.hasOwnProperty(member)) {
 				members[member] = JSON.parse(members[member]);
