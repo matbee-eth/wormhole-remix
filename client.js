@@ -283,6 +283,7 @@ wormhole.prototype.onConnectFailed = function (callback) {
 wormhole.prototype.setSocket = function(socket) {
 	if (this.socket) {
 		this.socket.removeAllListeners();
+		this.socket.disconnect && this.socket.disconnect();
 	}
 	this.socket = socket;
 };
