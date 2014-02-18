@@ -587,6 +587,7 @@ wormhole.prototype.setupClientEvents = function (traveller, cb) {
 				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
 				debug('whdebug: traveller.on("joinRTCChannel", function (channel) {', channel);
 				wormhole.addToChannel(self._redisPubClient, channel, traveller.socket.id, { audio:false, video: false, screen: false, data: true }, function (err, members) {
+					debug('addToChannel callback', err, members);
 					async.forEach(Object.keys(members), function (member, next) {
 						debug("CHANNEL MEMBER", member);
 						if (member != traveller.socket.id) {
