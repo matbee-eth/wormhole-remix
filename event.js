@@ -803,9 +803,8 @@ wormholeTraveller.prototype.getSessionId = function() {
 };
 wormholeTraveller.prototype.sendRPCFunctions = function(clientMethods, serverMethods, cb) {
 	var self = this;
-	this.socket.emit("syncClientFunctions", clientMethods);
+	this.socket.emit("syncClientFunctions", clientMethods, cb);
 	this.socket.emit("syncServerFunctions", serverMethods);
-	cb && cb();
 };
 wormholeTraveller.prototype.syncClientMethods = function(methods, cb) {
 	var keys = Object.keys(methods);

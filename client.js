@@ -151,9 +151,10 @@ wormhole.prototype.setupSocket = function(socket) {
 		self.ready();
 		self.emit("ready");
 	});
-	socket.on("syncClientFunctions", function (data) {
+	socket.on("syncClientFunctions", function (data, cb) {
 		self.syncClientRpc(data);
 		self.syncClientFunctions();
+		cb();
 	});
 	socket.on("syncServerFunctions", function (data) {
 		self.syncRpc(data);
