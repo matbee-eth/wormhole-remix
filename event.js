@@ -32,9 +32,10 @@ var wormhole = function (options) {
 		}
 	};
 	this._clientMethods = {
-		wormholeReady: function () {
+		wormholeReady: function (cb) {
 			this.emit("ready");
 			this.ready();
+			cb && cb();
 		},
 		joinRTCChannel: function (channel) {
 			this.rpc.joinRTCChannel(channel);
