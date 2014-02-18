@@ -1,3 +1,4 @@
+var requestAnimationFrame = requestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame || window.webkitRequestAnimationFrame || window.requestAnimationFrame;
 // EventEmitter support
 var EventEmitter = (typeof window !== 'undefined') ?
   EventEmitter || {} :
@@ -117,7 +118,7 @@ wormhole.prototype.setupClientEvents = function() {
 		}
 		if (event == "ready") {
 			if (self.syncClientFunctionsComplete && self.syncServerFunctionsComplete) {
-				func();
+				requestAnimationFrame(func);
 			}
 		}
 	});
