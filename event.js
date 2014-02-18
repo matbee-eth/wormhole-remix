@@ -1031,7 +1031,7 @@ wormhole.getChannel = function (readClient, channel, cb) {
 	readClient.hgetall(prefix+channel, function (err, members) {
 		debug('getChannel hgetall callback', err, members);
 		for (var member in members) {
-			if (members.hasOwnProperty(member)) {
+			if (members.hasOwnProperty(member) && members[member] && members[member] !== 'undefined') {
 				members[member] = JSON.parse(members[member]);
 			}
 		}
