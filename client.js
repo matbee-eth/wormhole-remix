@@ -80,7 +80,7 @@ var wormhole = function (socket, options) {
 	this.syncClientFunctionsComplete = false;
 
 	this.on("wormholeReady", function (cb) {
-		if (!this.syncServerFunctionsComplete || !this.syncClientFunctionsComplete) {
+		if (!self.syncServerFunctionsComplete || !self.syncClientFunctionsComplete) {
 			self.emit("ready");
 			self.ready();
 			self.syncClientFunctionsComplete = true;
