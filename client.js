@@ -76,9 +76,16 @@ var wormhole = function (socket, options) {
 	this.setupSocket(socket);
 	this.setupClientEvents();
 
+	this.syncServerFunctionsComplete = false;
+	this.syncClientFunctionsComplete = false;
+
 	this.on("wormholeReady", function (cb) {
-		self.emit("ready");
-		self.ready();
+		if (!this.syncServerFunctionsComplete || !this.syncClientFunctionsComplete) {
+			self.emit("ready");
+			self.ready();
+			self.syncClientFunctionsComplete = true;
+			self.syncServerFunctionsComplete = true;
+		}
 		cb && cb();
 	});
 
@@ -154,10 +161,20 @@ wormhole.prototype.setupSocket = function(socket) {
 	socket.on("syncClientFunctions", function (data, cb) {
 		self.syncClientRpc(data);
 		self.syncClientFunctions();
+		if (!self.syncClientFunctionsComplete && self.syncServerFunctionsComplete) {
+			self.emit("ready");
+			self.ready();
+		}
+		self.syncClientFunctionsComplete = true;
 		cb();
 	});
 	socket.on("syncServerFunctions", function (data) {
 		self.syncRpc(data);
+		if (self.syncClientFunctionsComplete && !self.syncServerFunctionsComplete) {
+			self.emit("ready");
+			self.ready();
+		}
+		self.syncServerFunctionsComplete = true;
 	});
 	socket.on("syncB", function (data) {
 		data = self.charcodeArrayToString(data);
