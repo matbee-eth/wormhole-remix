@@ -324,7 +324,16 @@ wormhole.prototype.setupIOEvents = function (cb) {
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
-								traveller.rpc.wormholeReady();
+								traveller.rpc.wormholeReady(function (err) {
+									if (err) {
+										debug("ERROR: wormholeReady failed. Retrying.", err);
+										traveller.rpc.wormholeReady(function (err) {
+											if (err) {
+												debug("ERROR: wormholeReady failed. Failing.", err);
+											}
+										});
+									}
+								});
 								self.emit("connection", traveller);
 							});
 						});
