@@ -107,12 +107,17 @@ wormhole.prototype = Object.create(EventEmitter.EventEmitter.prototype);
 wormhole.prototype.setupClientEvents = function() {
 	var self = this;
 	this.on("newListener", function (event, func) {
-		if (event != "newListener" && event != "removeListener" && event != "reconnect" && self.customClientfunctions.indexOf(event) == -1) {
+		if (event != "ready" && event != "newListener" && event != "removeListener" && event != "reconnect" && self.customClientfunctions.indexOf(event) == -1) {
 			// Client RPC. Add it!
 			this.customClientfunctions.push(event);
 			self.addClientFunction(event, func);
 			if (self._connected) {
 				self.syncClientFunctions();
+			}
+		}
+		if (event == "ready") {
+			if (self.syncClientFunctionsComplete && self.syncServerFunctionsComplete) {
+				func();
 			}
 		}
 	});
