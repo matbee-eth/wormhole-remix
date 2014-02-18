@@ -325,16 +325,16 @@ wormhole.prototype.setupIOEvents = function (cb) {
 								self._reporting && self._reporter.report(traveller.sessionId, "sync", {
 
 								});
-								traveller.rpc.wormholeReady(function (err) {
-									if (err) {
-										console.log("wormholeReady Error: Retrying...", err);
-										traveller.rpc.wormholeReady(function (err) {
-											if (err) {
-												console.log("wormholeReady Error: NOT RETRYING...", err);
-											}
-										});
-									}
-								});
+								// traveller.rpc.wormholeReady(function (err) {
+								// 	if (err) {
+								// 		console.log("wormholeReady Error: Retrying...", err);
+								// 		traveller.rpc.wormholeReady(function (err) {
+								// 			if (err) {
+								// 				console.log("wormholeReady Error: NOT RETRYING...", err);
+								// 			}
+								// 		});
+								// 	}
+								// });
 								self.emit("connection", traveller);
 							});
 						});
